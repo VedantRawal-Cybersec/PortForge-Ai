@@ -13,8 +13,8 @@ serve(async (req) => {
     const { text, voiceId } = await req.json();
     const key = Deno.env.get("ELEVENLABS_API_KEY");
     if (!key) {
-      return new Response(JSON.stringify({ error: "ELEVENLABS_API_KEY not configured" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ fallback: true, reason: "no_key" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const vid = voiceId || "JBFqnCBsd6RMkjVDRZzb"; // George — calm, professional male
@@ -28,15 +28,20 @@ serve(async (req) => {
     });
     if (!r.ok) {
       const t = await r.text();
-      return new Response(JSON.stringify({ error: t }), { status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.warn("ElevenLabs unavailable:", r.status, t);
+      // Return 200 with fallback flag so client gracefully switches to browser TTS
+      return new Response(JSON.stringify({ fallback: true, reason: "elevenlabs_unavailable", status: r.status }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     const buf = await r.arrayBuffer();
     return new Response(JSON.stringify({ audioContent: b64(buf) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "err" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error("tts error:", e);
+    return new Response(JSON.stringify({ fallback: true, reason: "exception" }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
