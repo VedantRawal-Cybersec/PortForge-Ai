@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Panel, ScoreBar } from "@/components/Panel";
+import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -72,11 +73,11 @@ export default function SkillTest() {
           <div className="p-5 space-y-5">
             <form onSubmit={startTest} className="space-y-3">
               <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Target Skill</label>
-              <input
+              <SkillAutocomplete
                 value={skill}
-                onChange={(e) => setSkill(e.target.value)}
+                onChange={setSkill}
                 disabled={stage !== "input"}
-                placeholder="e.g. React hooks, SQL joins…"
+                placeholder="e.g. Python, React hooks, SQL joins…"
                 className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30 transition-all disabled:opacity-50"
               />
               <button

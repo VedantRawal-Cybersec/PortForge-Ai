@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Panel } from "@/components/Panel";
+import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Target, TrendingUp } from "lucide-react";
@@ -36,7 +37,7 @@ export default function Oracle() {
           <div className="p-5 space-y-4">
             <div>
               <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Target Role</label>
-              <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. ML Engineer at Google" className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30" />
+              <SkillAutocomplete value={role} onChange={setRole} placeholder="e.g. ML Engineer, Frontend Developer…" className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30" />
             </div>
             <div>
               <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Known Skills (optional)</label>

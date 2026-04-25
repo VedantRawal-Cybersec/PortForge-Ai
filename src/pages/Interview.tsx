@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Panel, ScoreBar } from "@/components/Panel";
+import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -131,9 +132,9 @@ export default function Interview() {
           <div className="p-5 space-y-4">
             <div>
               <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Role / Skill</label>
-              <input
-                value={skill} onChange={(e) => setSkill(e.target.value)} disabled={started}
-                placeholder="e.g. Frontend engineer"
+              <SkillAutocomplete
+                value={skill} onChange={setSkill} disabled={started}
+                placeholder="e.g. Frontend Developer, Python…"
                 className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30 disabled:opacity-50"
               />
             </div>
