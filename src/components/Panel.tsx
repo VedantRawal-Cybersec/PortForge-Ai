@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { forwardRef, ReactNode } from "react";
 
 interface PanelProps {
   children: ReactNode;
@@ -8,13 +8,16 @@ interface PanelProps {
   statusVariant?: "cyan" | "green" | "amber" | "alert";
 }
 
-export function Panel({ children, className = "", label, status, statusVariant = "cyan" }: PanelProps) {
+export const Panel = forwardRef<HTMLElement, PanelProps>(function Panel(
+  { children, className = "", label, status, statusVariant = "cyan" },
+  ref
+) {
   const statusClass =
     statusVariant === "green" ? "chip-green" :
     statusVariant === "amber" ? "chip-amber" :
     statusVariant === "alert" ? "chip-alert" : "chip-cyan";
   return (
-    <section className={`panel relative overflow-hidden ${className}`}>
+    <section ref={ref} className={`panel relative overflow-hidden ${className}`}>
       {(label || status) && (
         <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-1/60">
           {label && (
@@ -28,7 +31,7 @@ export function Panel({ children, className = "", label, status, statusVariant =
       {children}
     </section>
   );
-}
+});
 
 export function ScoreBar({ label, value, max = 5, variant = "cyan" }: { label: string; value: number; max?: number; variant?: "cyan" | "green" | "amber" | "alert" | "violet" }) {
   const pct = (value / max) * 100;

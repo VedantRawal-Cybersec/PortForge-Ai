@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Panel } from "@/components/Panel";
 import { clearPortfolio, getDecayIcon, getPortfolio, type PortfolioEntry } from "@/lib/portfolio";
 import { Briefcase, Brain, Code2, Mic, Trash2 } from "lucide-react";
@@ -88,11 +88,14 @@ export default function Portfolio() {
   );
 }
 
-function Stat({ k, v, c }: { k: string; v: number; c: string }) {
+const Stat = forwardRef<HTMLDivElement, { k: string; v: number; c: string }>(function Stat(
+  { k, v, c },
+  ref
+) {
   return (
-    <div className="panel p-4">
+    <div ref={ref} className="panel p-4">
       <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2">{k}</div>
       <div className={`text-2xl font-bold tabular-nums text-${c}`}>{v}</div>
     </div>
   );
-}
+});
