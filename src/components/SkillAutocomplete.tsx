@@ -217,8 +217,19 @@ export function SkillAutocomplete({ value, onChange, disabled, placeholder, clas
   const [activeIdx, setActiveIdx] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  const matches = value.trim()
-    ? SUGGESTIONS.filter((s) => s.toLowerCase().includes(value.toLowerCase()) && s.toLowerCase() !== value.toLowerCase()).slice(0, 8)
+  const q = value.trim().toLowerCase();
+  const matches = q
+    ? (() => {
+        const starts: string[] = [];
+        const includes: string[] = [];
+        for (const s of SUGGESTIONS) {
+          const sl = s.toLowerCase();
+          if (sl === q) continue;
+          if (sl.startsWith(q)) starts.push(s);
+          else if (sl.includes(q)) includes.push(s);
+        }
+        return [...starts, ...includes].slice(0, 10);
+      })()
     : [];
 
   useEffect(() => {
