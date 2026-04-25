@@ -95,7 +95,7 @@ export default function Workspace() {
     <div className="max-w-[1500px] mx-auto px-6 py-10 grid lg:grid-cols-12 gap-6">
       {/* CENTER — Editor */}
       <section className="lg:col-span-8 space-y-4">
-        <Panel label="WORKSPACE" status={`MOD_03 // ${lang.toUpperCase()}`} statusVariant="cyan">
+        <Panel label="WORKSPACE" status={`MOD 03 // ${lang.toUpperCase()}`} statusVariant="cyan">
           <div className="p-5 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <input
@@ -127,7 +127,7 @@ export default function Workspace() {
               </button>
               <button onClick={submit} disabled={loading} className="ml-auto bg-led-cyan text-background font-bold text-sm px-5 py-2.5 rounded hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                SUBMIT_FOR_GRADING
+                SUBMIT FOR GRADING
               </button>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function Workspace() {
 
       {/* RIGHT — Eval */}
       <aside className="lg:col-span-4 space-y-4">
-        <Panel label="AI_GRADER" status={evalData ? "GRADED" : "STANDBY"} statusVariant={evalData ? "green" : "cyan"}>
+        <Panel label="AI GRADER" status={evalData ? "GRADED" : "STANDBY"} statusVariant={evalData ? "green" : "cyan"}>
           <div className="p-5 space-y-4">
             {!evalData && (
               <p className="text-sm text-muted-foreground py-8 text-center">

@@ -3,7 +3,7 @@ import { Activity, Brain, Briefcase, Code2, Mic, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const navItems = [
-  { to: "/skill-test", label: "SKILL_TEST", icon: Brain },
+  { to: "/skill-test", label: "SKILL TEST", icon: Brain },
   { to: "/interview", label: "INTERVIEW", icon: Mic },
   { to: "/workspace", label: "WORKSPACE", icon: Code2 },
   { to: "/oracle", label: "ORACLE", icon: Target },
@@ -35,7 +35,7 @@ export default function AppLayout() {
               <div className="led-dot animate-blink" />
             </div>
             <span className="font-mono text-xs tracking-[0.25em] font-bold uppercase">
-              Aero<span className="text-led-cyan">_Launch</span>
+              Port<span className="text-led-cyan">Forge</span> AI
             </span>
             <span className="hidden md:inline font-mono text-[10px] text-muted-foreground tracking-widest">// PROOF-BASED PORTFOLIO AI</span>
           </Link>
@@ -93,8 +93,8 @@ export default function AppLayout() {
 
       <footer className="border-t border-border mt-12 py-6">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between gap-3 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-          <span>Aero_Launch © 2026 // Proof &gt; Claim</span>
-          <span className="text-led-cyan">SYS_NOMINAL</span>
+          <span>PortForge AI © 2026 // Proof &gt; Claim</span>
+          <span className="text-led-cyan">SYS NOMINAL</span>
         </div>
       </footer>
     </div>

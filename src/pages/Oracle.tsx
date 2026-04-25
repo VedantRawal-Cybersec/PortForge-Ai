@@ -32,26 +32,26 @@ export default function Oracle() {
   return (
     <div className="max-w-[1300px] mx-auto px-6 py-10 grid lg:grid-cols-12 gap-6">
       <aside className="lg:col-span-4">
-        <Panel label="ORACLE" status="MOD_04" statusVariant="cyan">
+        <Panel label="ORACLE" status="MOD 04" statusVariant="cyan">
           <div className="p-5 space-y-4">
             <div>
-              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Target_Role</label>
+              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Target Role</label>
               <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. ML Engineer at Google" className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30" />
             </div>
             <div>
-              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Known_Skills (optional)</label>
+              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Known Skills (optional)</label>
               <textarea value={known} onChange={(e) => setKnown(e.target.value)} rows={4} placeholder="React, Python, SQL…" className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-led-cyan/50" />
             </div>
             <button onClick={run} disabled={loading || !role.trim()} className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
               {loading ? <Loader2 className="size-4 animate-spin" /> : <Target className="size-4" />}
-              CONSULT_ORACLE
+              CONSULT ORACLE
             </button>
           </div>
         </Panel>
       </aside>
 
       <section className="lg:col-span-8">
-        <Panel label="JOB_INTELLIGENCE" status={data ? "READY" : "STANDBY"} statusVariant={data ? "green" : "cyan"}>
+        <Panel label="JOB INTELLIGENCE" status={data ? "READY" : "STANDBY"} statusVariant={data ? "green" : "cyan"}>
           <div className="p-6 min-h-[420px]">
             {!data && !loading && (
               <div className="text-center py-16">
@@ -69,14 +69,14 @@ export default function Oracle() {
                 </div>
 
                 <div>
-                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-3">Required_Skills</div>
+                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-3">Required Skills</div>
                   <div className="flex flex-wrap gap-2">
                     {data.requiredSkills.map((s) => <span key={s} className="chip">{s}</span>)}
                   </div>
                 </div>
 
                 <div>
-                  <div className="font-mono text-[10px] tracking-widest text-led-alert uppercase mb-3">⚠️ Gaps_Detected</div>
+                  <div className="font-mono text-[10px] tracking-widest text-led-alert uppercase mb-3">⚠️ Gaps Detected</div>
                   <div className="flex flex-wrap gap-2">
                     {data.gaps.map((g) => <span key={g} className="chip chip-alert">{g}</span>)}
                   </div>
