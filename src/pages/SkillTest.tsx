@@ -68,10 +68,10 @@ export default function SkillTest() {
     <div className="max-w-[1400px] mx-auto px-6 py-10 grid lg:grid-cols-12 gap-6">
       {/* LEFT — Input */}
       <aside className="lg:col-span-3">
-        <Panel label="PARAMETERS" status="MOD_01" statusVariant="cyan">
+        <Panel label="PARAMETERS" status="MOD 01" statusVariant="cyan">
           <div className="p-5 space-y-5">
             <form onSubmit={startTest} className="space-y-3">
-              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Target_Skill</label>
+              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Target Skill</label>
               <input
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
@@ -85,12 +85,12 @@ export default function SkillTest() {
                 className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Zap className="size-4" />}
-                INITIATE_PROBE
+                INITIATE PROBE
               </button>
             </form>
 
             <div className="pt-4 border-t border-border space-y-3">
-              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Honesty_Slider</label>
+              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Honesty Slider</label>
               <div className="flex gap-1.5">
                 {(["green","amber","alert"] as const).map((v) => (
                   <button key={v} onClick={() => setHonesty(v)} className={`flex-1 py-2 rounded text-xs font-mono uppercase tracking-wider border transition-all ${
@@ -103,7 +103,7 @@ export default function SkillTest() {
 
             {stage === "result" && (
               <button onClick={reset} className="w-full mt-4 border border-border bg-surface-2 text-foreground text-sm py-2.5 rounded hover:border-led-cyan/50 transition-colors font-mono tracking-wider text-xs">
-                NEW_PROBE
+                NEW PROBE
               </button>
             )}
           </div>
@@ -113,7 +113,7 @@ export default function SkillTest() {
       {/* CENTER — Interaction */}
       <section className="lg:col-span-6">
         <Panel
-          label="AI_EVALUATION_PROTOCOL"
+          label="AI EVALUATION PROTOCOL"
           status={stage === "input" ? "STANDBY" : stage === "result" ? "COMPLETE" : "ACTIVE"}
           statusVariant={stage === "result" ? "green" : "cyan"}
           className={stage !== "input" && stage !== "result" ? "scanline" : ""}
@@ -143,7 +143,7 @@ export default function SkillTest() {
                   <p className="text-2xl font-bold leading-snug text-balance">{question}</p>
                 </div>
                 <div>
-                  <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2 block">Your_Answer</label>
+                  <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2 block">Your Answer</label>
                   <textarea
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
@@ -158,7 +158,7 @@ export default function SkillTest() {
                     className="mt-3 bg-foreground text-background font-bold text-sm px-5 py-2.5 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center gap-2"
                   >
                     {stage === "evaluating" ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-                    SUBMIT_FOR_GRADING
+                    SUBMIT FOR GRADING
                   </button>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function SkillTest() {
               <div className="space-y-6 animate-fade-up">
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="font-mono text-[10px] tracking-widest text-led-green uppercase">// EVALUATION_COMPLETE</div>
+                    <div className="font-mono text-[10px] tracking-widest text-led-green uppercase">// EVALUATION COMPLETE</div>
                     <span className={`chip ${evalData.level === "Strong" ? "chip-green" : evalData.level === "Intermediate" ? "chip-amber" : "chip-alert"}`}>
                       LEVEL: {evalData.level.toUpperCase()}
                     </span>
@@ -186,14 +186,14 @@ export default function SkillTest() {
                   <div className="panel p-5 border-led-alert/30">
                     <div className="flex items-center gap-2 mb-2 text-led-alert">
                       <span className="text-base">❌</span>
-                      <span className="font-mono text-[10px] tracking-widest uppercase">What_Went_Wrong</span>
+                      <span className="font-mono text-[10px] tracking-widest uppercase">What Went Wrong</span>
                     </div>
                     <p className="text-sm leading-relaxed text-foreground/90">{evalData.whatWentWrong}</p>
                   </div>
                   <div className="panel p-5 border-led-green/30">
                     <div className="flex items-center gap-2 mb-2 text-led-green">
                       <span className="text-base">✅</span>
-                      <span className="font-mono text-[10px] tracking-widest uppercase">Ideal_Answer</span>
+                      <span className="font-mono text-[10px] tracking-widest uppercase">Ideal Answer</span>
                     </div>
                     <p className="text-sm leading-relaxed text-foreground/90">{evalData.idealAnswer}</p>
                   </div>
@@ -203,7 +203,7 @@ export default function SkillTest() {
                 <div className="panel p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <BookOpen className="size-4 text-led-cyan" />
-                    <span className="font-mono text-[11px] tracking-widest uppercase font-bold">LEARNING_RESOURCES</span>
+                    <span className="font-mono text-[11px] tracking-widest uppercase font-bold">LEARNING RESOURCES</span>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {evalData.resources.map((r) => (
@@ -223,7 +223,7 @@ export default function SkillTest() {
                 <div className="panel p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <Rocket className="size-4 text-led-violet" />
-                    <span className="font-mono text-[11px] tracking-widest uppercase font-bold">PROJECT_PATH</span>
+                    <span className="font-mono text-[11px] tracking-widest uppercase font-bold">PROJECT PATH</span>
                   </div>
                   <div className="grid md:grid-cols-3 gap-3">
                     {evalData.projects.map((p) => {
@@ -241,7 +241,7 @@ export default function SkillTest() {
                 </div>
 
                 <button onClick={probe} className="w-full border border-led-cyan/40 bg-led-cyan/5 text-led-cyan font-bold text-sm py-3 rounded hover:bg-led-cyan/10 transition-colors inline-flex items-center justify-center gap-2">
-                  <Lightbulb className="size-4" /> PROBE_ME — Harder Follow-up
+                  <Lightbulb className="size-4" /> PROBE ME — Harder Follow-up
                 </button>
               </div>
             )}
@@ -251,7 +251,7 @@ export default function SkillTest() {
 
       {/* RIGHT — Live readout */}
       <aside className="lg:col-span-3 space-y-4">
-        <Panel label="LIVE_READOUT" status="SYNCED" statusVariant="green">
+        <Panel label="LIVE READOUT" status="SYNCED" statusVariant="green">
           <div className="p-5 space-y-4">
             <div>
               <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-1">Skill</div>
@@ -268,7 +268,7 @@ export default function SkillTest() {
                   <span className={`chip ${evalData.level === "Strong" ? "chip-green" : evalData.level === "Intermediate" ? "chip-amber" : "chip-alert"}`}>{evalData.level}</span>
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-1">Hash_Stamp</div>
+                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-1">Hash Stamp</div>
                   <div className="font-mono text-xs bg-surface-2 border border-border rounded px-2 py-1.5 text-led-cyan">#{hash}</div>
                 </div>
               </>
@@ -276,7 +276,7 @@ export default function SkillTest() {
           </div>
         </Panel>
 
-        <Panel label="SUPPORT_SIGNALS" statusVariant="cyan">
+        <Panel label="SUPPORT SIGNALS" statusVariant="cyan">
           <div className="p-5 space-y-3 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Skill Decay</span>

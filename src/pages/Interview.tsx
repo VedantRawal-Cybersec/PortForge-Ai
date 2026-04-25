@@ -127,7 +127,7 @@ export default function Interview() {
     <div className="max-w-[1400px] mx-auto px-6 py-10 grid lg:grid-cols-12 gap-6">
       {/* LEFT */}
       <aside className="lg:col-span-3">
-        <Panel label="INTERVIEW_SETUP" status="MOD_02" statusVariant="cyan">
+        <Panel label="INTERVIEW SETUP" status="MOD 02" statusVariant="cyan">
           <div className="p-5 space-y-4">
             <div>
               <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase block mb-2">Role / Skill</label>
@@ -139,11 +139,11 @@ export default function Interview() {
             </div>
             {!started ? (
               <button onClick={startInterview} disabled={!skill.trim()} className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
-                <Play className="size-4" /> START_INTERVIEW
+                <Play className="size-4" /> START INTERVIEW
               </button>
             ) : (
               <button onClick={reset} className="w-full border border-border bg-surface-2 text-sm py-2.5 rounded hover:border-led-alert/50 transition-colors font-mono tracking-wider text-xs">
-                END_SESSION
+                END SESSION
               </button>
             )}
             <p className="text-[11px] text-muted-foreground leading-relaxed pt-3 border-t border-border">
@@ -156,8 +156,8 @@ export default function Interview() {
       {/* CENTER */}
       <section className="lg:col-span-6">
         <Panel
-          label="VOICE_PROTOCOL"
-          status={!started ? "STANDBY" : speaking ? "AI_SPEAKING" : listening ? "RECORDING" : "READY"}
+          label="VOICE PROTOCOL"
+          status={!started ? "STANDBY" : speaking ? "AI SPEAKING" : listening ? "RECORDING" : "READY"}
           statusVariant={listening ? "alert" : speaking ? "amber" : "cyan"}
           className={started ? "scanline" : ""}
         >
@@ -166,7 +166,7 @@ export default function Interview() {
             {started && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">🧠 Cognitive_Load</span>
+                  <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">🧠 Cognitive Load</span>
                   <span className="font-mono text-xs tabular-nums">{Math.round(load)}%</span>
                 </div>
                 <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
@@ -190,10 +190,10 @@ export default function Interview() {
               <>
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="font-mono text-[10px] tracking-widest text-led-cyan uppercase">// QUESTION_{qIndex + 1}/3</div>
+                    <div className="font-mono text-[10px] tracking-widest text-led-cyan uppercase">// QUESTION {qIndex + 1}/3</div>
                     {speaking && (
                       <span className="chip chip-amber text-[10px]">
-                        <Volume2 className="size-3" /> AI_SPEAKING
+                        <Volume2 className="size-3" /> AI SPEAKING
                       </span>
                     )}
                   </div>
@@ -222,7 +222,7 @@ export default function Interview() {
 
                 {/* Transcript */}
                 <div className="mt-6">
-                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2">Live_Transcript</div>
+                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2">Live Transcript</div>
                   <div className="bg-background border border-border rounded p-4 min-h-[80px] font-mono text-sm leading-relaxed">
                     {transcript || <span className="text-muted-foreground">{listening ? "Listening…" : "—"}</span>}
                     {interim && <span className="text-led-cyan/70"> {interim}</span>}
@@ -238,7 +238,7 @@ export default function Interview() {
                   )}
                   <div className="flex gap-2 mt-3">
                     <button onClick={submitAnswer} disabled={loadingE || (!transcript.trim() && !interim.trim())} className="flex-1 bg-foreground text-background font-bold text-sm py-2.5 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
-                      {loadingE ? <Loader2 className="size-4 animate-spin" /> : <>SUBMIT_ANSWER</>}
+                      {loadingE ? <Loader2 className="size-4 animate-spin" /> : <>SUBMIT ANSWER</>}
                     </button>
                     <button onClick={retry} disabled={loadingE} className="border border-border bg-surface-2 px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2 text-sm">
                       <RotateCcw className="size-4" /> RETRY
@@ -253,13 +253,13 @@ export default function Interview() {
 
       {/* RIGHT — Live evals */}
       <aside className="lg:col-span-3 space-y-4">
-        <Panel label="LIVE_EVALUATION" status={`${evals.length}/3`} statusVariant={evals.length === 3 ? "green" : "cyan"}>
+        <Panel label="LIVE EVALUATION" status={`${evals.length}/3`} statusVariant={evals.length === 3 ? "green" : "cyan"}>
           <div className="p-5 space-y-4">
             {evals.length === 0 && <p className="text-xs text-muted-foreground">Awaiting first answer…</p>}
             {evals.map((e, i) => (
               <div key={i} className="space-y-2 pb-3 border-b border-border last:border-0">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] tracking-widest text-led-cyan uppercase">Q_{i + 1}</span>
+                  <span className="font-mono text-[10px] tracking-widest text-led-cyan uppercase">Q {i + 1}</span>
                   <span className="text-xs text-muted-foreground">{e.verdict}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
@@ -269,7 +269,7 @@ export default function Interview() {
                   <ScoreBar label="Confidence" value={e.scores.confidence} variant="amber" />
                 </div>
                 <button onClick={() => speak(e.idealAnswer)} className="w-full text-left p-2 rounded border border-led-violet/30 bg-led-violet/5 hover:bg-led-violet/10 transition-colors">
-                  <div className="font-mono text-[9px] tracking-widest text-led-violet uppercase mb-1">💣 INTERVIEW_STEALER</div>
+                  <div className="font-mono text-[9px] tracking-widest text-led-violet uppercase mb-1">💣 INTERVIEW STEALER</div>
                   <div className="text-[11px] leading-relaxed">{e.idealAnswer}</div>
                 </button>
               </div>
@@ -278,7 +278,7 @@ export default function Interview() {
         </Panel>
 
         {evals.length === 3 && (
-          <Panel label="SESSION_SUMMARY" status="DONE" statusVariant="green">
+          <Panel label="SESSION SUMMARY" status="DONE" statusVariant="green">
             <div className="p-5 text-sm space-y-2">
               <p>Avg confidence: <span className="font-mono text-led-amber">{avgConf.toFixed(1)}/5</span></p>
               <p className="text-muted-foreground text-xs">Saved to portfolio with hash stamp.</p>

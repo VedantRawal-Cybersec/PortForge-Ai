@@ -12,7 +12,7 @@ export default function Landing() {
         <div className="max-w-[1400px] mx-auto px-6 pt-20 pb-24 relative">
           <div className="flex items-center gap-2 mb-8 animate-fade-in">
             <span className="chip chip-cyan">
-              <span className="led-dot animate-blink" /> SYSTEM_LIVE_v1.0
+              <span className="led-dot animate-blink" /> SYSTEM LIVE v1.0
             </span>
             <span className="chip text-muted-foreground">PROOF-BASED PORTFOLIO AI</span>
           </div>
@@ -34,24 +34,24 @@ export default function Landing() {
               to="/skill-test"
               className="group inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-6 py-3.5 rounded-md hover:bg-led-cyan hover:text-background transition-all duration-300 shadow-[0_0_0_1px_hsl(var(--foreground)),0_8px_24px_-4px_hsl(var(--led-cyan)/0.3)] hover:shadow-[0_0_0_1px_hsl(var(--led-cyan)),0_12px_32px_-4px_hsl(var(--led-cyan)/0.5)]"
             >
-              INITIATE_SCAN
+              INITIATE SCAN
               <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               to="/interview"
               className="inline-flex items-center gap-2 border border-border bg-surface-1 text-foreground font-bold text-sm px-6 py-3.5 rounded-md hover:border-led-cyan/50 hover:bg-surface-2 transition-all"
             >
-              <Mic className="size-4" /> VOICE_INTERVIEW
+              <Mic className="size-4" /> VOICE INTERVIEW
             </Link>
           </div>
 
           {/* Telemetry strip */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-up" style={{ animationDelay: '360ms' }}>
             {[
-              { k: "QUESTIONS_GRADED", v: "12.4K", c: "led-cyan" },
-              { k: "AVG_LATENCY", v: "1.8s", c: "led-green" },
-              { k: "VOICE_SESSIONS", v: "3.2K", c: "led-amber" },
-              { k: "VERIFIED_SKILLS", v: "8.7K", c: "led-violet" },
+              { k: "QUESTIONS GRADED", v: "12.4K", c: "led-cyan" },
+              { k: "AVG LATENCY", v: "1.8s", c: "led-green" },
+              { k: "VOICE SESSIONS", v: "3.2K", c: "led-amber" },
+              { k: "VERIFIED SKILLS", v: "8.7K", c: "led-violet" },
             ].map((s) => (
               <div key={s.k} className="panel p-4">
                 <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2">{s.k}</div>
@@ -69,7 +69,7 @@ export default function Landing() {
             <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// MODULES</div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Five engines. One system.</h2>
           </div>
-          <Link to="/skill-test" className="hidden md:inline font-mono text-xs text-muted-foreground hover:text-led-cyan tracking-widest">VIEW_ALL →</Link>
+          <Link to="/skill-test" className="hidden md:inline font-mono text-xs text-muted-foreground hover:text-led-cyan tracking-widest">VIEW ALL →</Link>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -137,7 +137,7 @@ export default function Landing() {
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Ready to deploy?</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Start with a skill test. Two minutes. Real grading. Real proof.</p>
             <Link to="/skill-test" className="inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-7 py-3.5 rounded-md hover:bg-led-cyan transition-colors">
-              <Zap className="size-4" /> START_FREE_SCAN
+              <Zap className="size-4" /> START FREE SCAN
             </Link>
           </div>
         </div>
@@ -147,12 +147,12 @@ export default function Landing() {
 }
 
 const modules = [
-  { code: "MOD_01", title: "Micro Skill Test", desc: "Input a skill, get one precise question, get structured AI grading on logic, clarity, and depth.", icon: Brain, to: "/skill-test" },
-  { code: "MOD_02", title: "Voice Interview", desc: "Real-time AI interviewer with cognitive load tracking. Voice in, voice out, full transcript.", icon: Mic, to: "/interview" },
-  { code: "MOD_03", title: "Project Workspace", desc: "Build, run, and submit code. Receive structured AI evaluation and project upgrade paths.", icon: Code2, to: "/workspace" },
-  { code: "MOD_04", title: "Job Oracle", desc: "Pick a target role. See required skills, your gaps, and a tailored learning roadmap.", icon: Target, to: "/oracle" },
-  { code: "MOD_05", title: "Live Portfolio", desc: "Verified skills auto-update. Hash-stamped, exportable, real proof recruiters can verify.", icon: Briefcase, to: "/portfolio" },
-  { code: "MOD_06", title: "Learning Engine", desc: "When you fail, you learn. Curated free + paid resources and graded project upgrades.", icon: CheckCircle2, to: "/skill-test" },
+  { code: "MOD 01", title: "Micro Skill Test", desc: "Input a skill, get one precise question, get structured AI grading on logic, clarity, and depth.", icon: Brain, to: "/skill-test" },
+  { code: "MOD 02", title: "Voice Interview", desc: "Real-time AI interviewer with cognitive load tracking. Voice in, voice out, full transcript.", icon: Mic, to: "/interview" },
+  { code: "MOD 03", title: "Project Workspace", desc: "Build, run, and submit code. Receive structured AI evaluation and project upgrade paths.", icon: Code2, to: "/workspace" },
+  { code: "MOD 04", title: "Job Oracle", desc: "Pick a target role. See required skills, your gaps, and a tailored learning roadmap.", icon: Target, to: "/oracle" },
+  { code: "MOD 05", title: "Live Portfolio", desc: "Verified skills auto-update. Hash-stamped, exportable, real proof recruiters can verify.", icon: Briefcase, to: "/portfolio" },
+  { code: "MOD 06", title: "Learning Engine", desc: "When you fail, you learn. Curated free + paid resources and graded project upgrades.", icon: CheckCircle2, to: "/skill-test" },
 ];
 
 const steps = [

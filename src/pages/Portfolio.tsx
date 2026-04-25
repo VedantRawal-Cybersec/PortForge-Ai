@@ -21,7 +21,7 @@ export default function Portfolio() {
     <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-6">
       <header className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-1">// MOD_05</div>
+          <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-1">// MOD 05</div>
           <h1 className="text-4xl font-bold tracking-tight">Live Portfolio</h1>
           <p className="text-muted-foreground mt-1 text-sm">Hash-stamped, verified. Updates after every test.</p>
         </div>
@@ -37,10 +37,10 @@ export default function Portfolio() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat k="TOTAL_ENTRIES" v={entries.length} c="led-cyan" />
-        <Stat k="VERIFIED_SKILLS" v={verifiedSkills.size} c="led-violet" />
-        <Stat k="STRONG_LEVEL" v={strongCount} c="led-green" />
-        <Stat k="THIS_WEEK" v={entries.filter((e) => Date.now() - e.createdAt < 7 * 86400000).length} c="led-amber" />
+        <Stat k="TOTAL ENTRIES" v={entries.length} c="led-cyan" />
+        <Stat k="VERIFIED SKILLS" v={verifiedSkills.size} c="led-violet" />
+        <Stat k="STRONG LEVEL" v={strongCount} c="led-green" />
+        <Stat k="THIS WEEK" v={entries.filter((e) => Date.now() - e.createdAt < 7 * 86400000).length} c="led-amber" />
       </div>
 
       {entries.length === 0 ? (
@@ -49,7 +49,7 @@ export default function Portfolio() {
             <Briefcase className="size-10 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-bold mb-2">No verified skills yet.</h3>
             <p className="text-muted-foreground text-sm mb-6">Run a skill test, voice interview, or submit a project.</p>
-            <Link to="/skill-test" className="inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-5 py-2.5 rounded hover:bg-led-cyan transition-colors">START_FIRST_PROBE</Link>
+            <Link to="/skill-test" className="inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-5 py-2.5 rounded hover:bg-led-cyan transition-colors">START FIRST PROBE</Link>
           </div>
         </Panel>
       ) : (
