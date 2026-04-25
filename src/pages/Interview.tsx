@@ -4,7 +4,7 @@ import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Mic, MicOff, Play, RotateCcw, Volume2 } from "lucide-react";
+import { Loader2, Mic, MicOff, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 
 type IEval = {
   scores: { logic: number; clarity: number; depth: number; confidence: number };
@@ -26,20 +26,70 @@ export default function Interview() {
   const [evals, setEvals] = useState<IEval[]>([]);
   const [loadingQ, setLoadingQ] = useState(false);
   const [loadingE, setLoadingE] = useState(false);
+  const [micLevel, setMicLevel] = useState(0);
+  const [useBrowserTTS, setUseBrowserTTS] = useState(false);
+  const [muted, setMuted] = useState(false);
+
   const recogRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const silenceSinceRef = useRef<number | null>(null);
+  const autoSubmitRef = useRef<number | null>(null);
+
+  // Browser TTS fallback
+  function browserSpeak(text: string): Promise<void> {
+    return new Promise((resolve) => {
+      if (!("speechSynthesis" in window)) { resolve(); return; }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1; u.pitch = 1; u.volume = 1;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => /Google.*English|Samantha|Daniel|Microsoft.*Aria/i.test(v.name)) || voices.find(v => v.lang.startsWith("en"));
+      if (preferred) u.voice = preferred;
+      u.onend = () => resolve();
+      u.onerror = () => resolve();
+      window.speechSynthesis.speak(u);
+    });
+  }
 
   async function speak(text: string) {
+    if (muted) return;
     setSpeaking(true);
     try {
+      if (useBrowserTTS) {
+        await browserSpeak(text);
+        setSpeaking(false);
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("tts", { body: { text } });
-      if (error || !data?.audioContent) { setSpeaking(false); return; }
+      if (error || !data?.audioContent || data?.error) {
+        // Fallback to browser TTS on any failure (401, quota, etc.)
+        if (!useBrowserTTS) {
+          setUseBrowserTTS(true);
+          toast.info("Switched to browser voice (ElevenLabs unavailable)");
+        }
+        await browserSpeak(text);
+        setSpeaking(false);
+        return;
+      }
       const audio = new Audio(`data:audio/mpeg;base64,${data.audioContent}`);
       audioRef.current = audio;
       audio.onended = () => setSpeaking(false);
-      audio.onerror = () => setSpeaking(false);
+      audio.onerror = async () => { await browserSpeak(text); setSpeaking(false); };
       await audio.play();
-    } catch { setSpeaking(false); }
+    } catch {
+      await browserSpeak(text);
+      setSpeaking(false);
+    }
+  }
+
+  function stopSpeaking() {
+    audioRef.current?.pause();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setSpeaking(false);
   }
 
   async function startInterview() {
@@ -57,9 +107,70 @@ export default function Interview() {
     speak(data.question);
   }
 
-  function startListening() {
+  // Mic visualizer + auto-submit on silence
+  function startMicMonitor(stream: MediaStream) {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const src = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+    audioCtxRef.current = ctx;
+    analyserRef.current = analyser;
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    silenceSinceRef.current = null;
+
+    const tick = () => {
+      analyser.getByteFrequencyData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i];
+      const avg = sum / buf.length;
+      const level = Math.min(100, (avg / 128) * 100);
+      setMicLevel(level);
+
+      // Auto-submit after 2.2s of silence (if we have content)
+      if (level < 6) {
+        if (silenceSinceRef.current == null) silenceSinceRef.current = performance.now();
+        else if (performance.now() - silenceSinceRef.current > 2200) {
+          if ((transcriptRef.current + " " + interimRef.current).trim().length > 8 && !autoSubmitRef.current) {
+            autoSubmitRef.current = window.setTimeout(() => { autoSubmitRef.current = null; submitAnswer(); }, 50);
+          }
+        }
+      } else {
+        silenceSinceRef.current = null;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  function stopMicMonitor() {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
+    analyserRef.current = null;
+    setMicLevel(0);
+  }
+
+  // Refs to read latest values inside RAF loop
+  const transcriptRef = useRef("");
+  const interimRef = useRef("");
+  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
+  useEffect(() => { interimRef.current = interim; }, [interim]);
+
+  async function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { toast.error("Speech recognition not supported. Use the text fallback."); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      startMicMonitor(stream);
+    } catch {
+      toast.error("Microphone permission denied");
+      return;
+    }
     const r = new SR();
     r.continuous = true; r.interimResults = true; r.lang = "en-US";
     r.onresult = (e: any) => {
@@ -71,8 +182,8 @@ export default function Interview() {
       if (f) setTranscript((p) => (p + " " + f).trim());
       setInterim(i);
     };
-    r.onerror = () => setListening(false);
-    r.onend = () => setListening(false);
+    r.onerror = () => { setListening(false); stopMicMonitor(); };
+    r.onend = () => { setListening(false); stopMicMonitor(); };
     r.start();
     recogRef.current = r;
     setListening(true);
@@ -81,6 +192,7 @@ export default function Interview() {
   function stopListening() {
     recogRef.current?.stop();
     setListening(false);
+    stopMicMonitor();
   }
 
   async function submitAnswer() {
@@ -99,7 +211,6 @@ export default function Interview() {
     if (qIndex + 1 < 3) {
       setTimeout(() => nextQuestion(qIndex + 1), 1200);
     } else {
-      // Finalize portfolio entry
       const avg = (a: number, b: number, c: number, d: number) => Math.round(((a + b + c + d) / 4) * 10) / 10;
       const all = [...evals, ev];
       const aL = all.reduce((s, x) => s + x.scores.logic, 0) / all.length;
@@ -118,9 +229,19 @@ export default function Interview() {
 
   function retry() { setTranscript(""); setInterim(""); }
   function reset() {
-    audioRef.current?.pause(); stopListening();
+    stopSpeaking(); stopListening();
     setStarted(false); setEvals([]); setQuestion(""); setTranscript(""); setInterim(""); setLoad(20); setQIndex(0);
   }
+
+  useEffect(() => () => { stopSpeaking(); stopListening(); }, []);
+
+  // Preload voices for browser TTS
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+  }, []);
 
   const avgConf = evals.length ? evals.reduce((s, x) => s + x.scores.confidence, 0) / evals.length : 0;
 
@@ -147,8 +268,27 @@ export default function Interview() {
                 END SESSION
               </button>
             )}
+
+            {/* Voice controls */}
+            <div className="pt-3 border-t border-border space-y-2">
+              <button
+                onClick={() => setMuted(m => { if (!m) stopSpeaking(); return !m; })}
+                className="w-full flex items-center justify-between text-xs font-mono tracking-wider px-3 py-2 rounded border border-border bg-surface-2 hover:border-led-cyan/50"
+              >
+                <span className="inline-flex items-center gap-2">
+                  {muted ? <VolumeX className="size-3.5 text-led-alert" /> : <Volume2 className="size-3.5 text-led-cyan" />}
+                  {muted ? "MUTED" : "VOICE ON"}
+                </span>
+                <span className="text-muted-foreground">{useBrowserTTS ? "BROWSER" : "AI"}</span>
+              </button>
+              <label className="flex items-center justify-between text-[11px] text-muted-foreground px-1 cursor-pointer">
+                <span>Use browser voice</span>
+                <input type="checkbox" checked={useBrowserTTS} onChange={(e) => setUseBrowserTTS(e.target.checked)} className="accent-led-cyan" />
+              </label>
+            </div>
+
             <p className="text-[11px] text-muted-foreground leading-relaxed pt-3 border-t border-border">
-              3 questions. Voice or text. Real-time scoring.
+              3 questions. Voice or text. Auto-submits after 2s silence.
             </p>
           </div>
         </Panel>
@@ -192,32 +332,80 @@ export default function Interview() {
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-mono text-[10px] tracking-widest text-led-cyan uppercase">// QUESTION {qIndex + 1}/3</div>
-                    {speaking && (
-                      <span className="chip chip-amber text-[10px]">
-                        <Volume2 className="size-3" /> AI SPEAKING
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {speaking && (
+                        <span className="chip chip-amber text-[10px]">
+                          <Volume2 className="size-3" /> SPEAKING
+                        </span>
+                      )}
+                      {!speaking && question && (
+                        <button onClick={() => speak(question)} disabled={muted} className="chip text-[10px] hover:border-led-cyan/50 disabled:opacity-40">
+                          <Volume2 className="size-3" /> REPLAY
+                        </button>
+                      )}
+                      {speaking && (
+                        <button onClick={stopSpeaking} className="chip text-[10px] hover:border-led-alert/50">
+                          STOP
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {loadingQ ? <Loader2 className="size-5 animate-spin text-led-cyan" /> : (
                     <p className="text-2xl font-bold leading-snug text-balance">{question}</p>
                   )}
                 </div>
 
-                {/* Mic */}
+                {/* Mic + visualizer */}
                 <div className="flex-1 flex flex-col items-center justify-center">
-                  <button
-                    onClick={listening ? stopListening : startListening}
-                    disabled={loadingE || speaking}
-                    className={`size-24 rounded-full flex items-center justify-center transition-all duration-300 disabled:opacity-50 ${
-                      listening
-                        ? "bg-led-alert/20 border-2 border-led-alert glow-cyan animate-pulse"
-                        : "bg-surface-2 border-2 border-border hover:border-led-cyan hover:bg-led-cyan/10"
-                    }`}
-                  >
-                    {listening ? <MicOff className="size-9 text-led-alert" /> : <Mic className="size-9 text-led-cyan" />}
-                  </button>
+                  <div className="relative">
+                    {listening && (
+                      <>
+                        <div
+                          className="absolute inset-0 rounded-full bg-led-cyan/20 transition-transform duration-100"
+                          style={{ transform: `scale(${1 + micLevel / 80})` }}
+                        />
+                        <div
+                          className="absolute inset-0 rounded-full bg-led-cyan/10 transition-transform duration-150"
+                          style={{ transform: `scale(${1 + micLevel / 50})` }}
+                        />
+                      </>
+                    )}
+                    <button
+                      onClick={listening ? stopListening : startListening}
+                      disabled={loadingE || speaking}
+                      className={`relative size-24 rounded-full flex items-center justify-center transition-all duration-300 disabled:opacity-50 ${
+                        listening
+                          ? "bg-led-alert/20 border-2 border-led-alert glow-cyan"
+                          : "bg-surface-2 border-2 border-border hover:border-led-cyan hover:bg-led-cyan/10"
+                      }`}
+                    >
+                      {listening ? <MicOff className="size-9 text-led-alert" /> : <Mic className="size-9 text-led-cyan" />}
+                    </button>
+                  </div>
+
+                  {/* Live mic level bars */}
+                  {listening && (
+                    <div className="flex items-end gap-1 h-8 mt-4">
+                      {Array.from({ length: 16 }).map((_, i) => {
+                        const threshold = (i + 1) * 6;
+                        const active = micLevel > threshold;
+                        return (
+                          <div
+                            key={i}
+                            className="w-1 rounded-full transition-all duration-75"
+                            style={{
+                              height: active ? `${Math.min(32, 8 + (micLevel - threshold))}px` : "4px",
+                              background: active ? "hsl(var(--led-cyan))" : "hsl(var(--border))",
+                              opacity: active ? 1 : 0.4,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mt-3">
-                    {listening ? "Tap to stop" : "Tap to speak"}
+                    {speaking ? "AI is speaking…" : listening ? "Listening · auto-submits on silence" : "Tap to speak"}
                   </span>
                 </div>
 
