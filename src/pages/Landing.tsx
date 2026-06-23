@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import {
+  Activity,
   ArrowRight,
   Brain,
   Briefcase,
@@ -7,7 +8,6 @@ import {
   Code2,
   ExternalLink,
   FileText,
-  Github,
   Linkedin,
   Mic,
   ShieldCheck,
@@ -149,13 +149,13 @@ export default function Landing() {
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
           <div>
             <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// CONNECTED PROOF FEED</div>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-balance">Profiles, projects, and proof in one place.</h2>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-balance">Professional profiles, live projects, and proof.</h2>
             <p className="mt-4 text-muted-foreground max-w-2xl leading-relaxed">
-              A recruiter-ready feed that connects Vedant's public profiles, live cybersecurity projects, and portfolio proof without making visitors search across multiple platforms.
+              A clean recruiter-ready feed for Vedant Rawal's cybersecurity direction, live project evidence, and portfolio proof. The old GitHub profile card has been removed from the public feed so the section stays focused and professional.
             </p>
           </div>
           <Link to="/portfolio" className="inline-flex w-fit items-center gap-2 border border-led-cyan/40 bg-led-cyan/10 text-led-cyan font-bold text-sm px-5 py-3 rounded-md hover:bg-led-cyan hover:text-background transition-all">
-            VIEW FULL PORTFOLIO <ArrowRight className="size-4" />
+            VIEW FULL PROOF PANEL <ArrowRight className="size-4" />
           </Link>
         </div>
 
@@ -243,20 +243,10 @@ const proofFeed = [
     tags: ["LinkedIn", "Cybersecurity", "Profile"],
   },
   {
-    type: "GitHub Profile",
-    title: "Brute Code GitHub Proof",
-    initials: "GH",
-    desc: "Public project base for cybersecurity tools, automation workflows, portfolio experiments, and proof-based learning repositories.",
-    href: "https://github.com/demovedu1345-beep",
-    icon: Github,
-    gradient: "from-led-violet/70 via-purple-500/40 to-surface-1",
-    tags: ["GitHub", "Projects", "Proof"],
-  },
-  {
     type: "Live Project",
     title: "Sentinel AI Web Security Scanner",
     initials: "SA",
-    desc: "Defensive web security scanner-style project for authorized website review, exposure analysis, and remediation-oriented reporting.",
+    desc: "Defensive web security scanner-style project for authorized website review, exposure analysis, security header awareness, and remediation-oriented reporting.",
     href: "https://sentinelweb-scan.lovable.app",
     icon: ShieldCheck,
     gradient: "from-led-green/70 via-emerald-500/35 to-surface-1",
@@ -266,30 +256,40 @@ const proofFeed = [
     type: "Live Project",
     title: "Threat Forge XSS Scanner",
     initials: "TF",
-    desc: "Focused web application security project around XSS risk awareness, input validation issues, and ethical testing workflows.",
+    desc: "Focused web application security learning project around XSS risk awareness, input validation concepts, OWASP awareness, and ethical testing workflows.",
     href: "https://zip-repl--abbygoeated.replit.app",
     icon: Code2,
     gradient: "from-led-amber/70 via-orange-500/35 to-surface-1",
-    tags: ["XSS", "OWASP", "VAPT"],
+    tags: ["XSS", "OWASP", "VAPT Foundations"],
   },
   {
     type: "Live Project",
     title: "IMMUNEFIN AI",
     initials: "IA",
-    desc: "AI + cybersecurity project aligned with cyber defense support, structured analysis, and security decision-support workflows.",
+    desc: "AI-assisted cybersecurity project aligned with cyber defense support, structured analysis, and security decision-support workflows.",
     href: "https://sju-chi.vercel.app",
     icon: Brain,
     gradient: "from-led-cyan/60 via-led-violet/45 to-surface-1",
     tags: ["AI Security", "Defense", "Analysis"],
   },
   {
+    type: "Automation Proof",
+    title: "Daily Cyber Briefing Workflow",
+    initials: "TI",
+    desc: "Threat-intelligence automation concept for collecting trusted updates, filtering priority items, and producing concise defensive briefings.",
+    href: "/portfolio",
+    icon: Activity,
+    gradient: "from-led-violet/65 via-blue-500/30 to-surface-1",
+    tags: ["Threat Intel", "Automation", "CVE Tracking"],
+  },
+  {
     type: "Portfolio Route",
-    title: "Verified Live Portfolio",
+    title: "Verified Proof Panel",
     initials: "PF",
-    desc: "Internal portfolio route for verified skills, project proof, recruiter-friendly evidence, and career-readiness signals.",
+    desc: "Internal portfolio route for project proof, capability mapping, cybersecurity focus areas, and recruiter-readable evidence.",
     href: "/portfolio",
     icon: FileText,
     gradient: "from-foreground/40 via-led-cyan/30 to-surface-1",
-    tags: ["Portfolio", "Resume", "Recruiter Proof"],
+    tags: ["Portfolio", "Evidence", "Career Proof"],
   },
 ];
