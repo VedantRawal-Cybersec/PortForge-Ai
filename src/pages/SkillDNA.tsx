@@ -3,13 +3,15 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BrainCircuit, BarChart3, ShieldCheck } from "lucide-react";
 import { getLearning, tracks } from "@/lib/academy";
 import { getPortfolio } from "@/lib/portfolio";
+import { exercises, getPractice } from "@/lib/practice";
 export default function SkillDNA(){
  const [learning,setLearning]=useState(getLearning);
  const [entries,setEntries]=useState(getPortfolio);
+ const [challenges,setChallenges]=useState(getPractice);
  useEffect(()=>{
-  const sync=()=>{setLearning(getLearning());setEntries(getPortfolio());};
-  window.addEventListener("portforge:progress",sync);window.addEventListener("portfolio:update",sync);
-  return ()=>{window.removeEventListener("portforge:progress",sync);window.removeEventListener("portfolio:update",sync);};
+  const sync=()=>{setLearning(getLearning());setEntries(getPortfolio());setChallenges(getPractice());};
+  window.addEventListener("portforge:progress",sync);window.addEventListener("portfolio:update",sync);window.addEventListener("portforge:practice",sync);
+  return ()=>{window.removeEventListener("portforge:progress",sync);window.removeEventListener("portfolio:update",sync);window.removeEventListener("portforge:practice",sync);};
  },[]);
  const skills=useMemo(()=>entries.filter(x=>x.type==="skill"),[entries]);
  const domains=tracks.map(t=>{
@@ -31,6 +33,14 @@ export default function SkillDNA(){
       <p className="text-xs text-muted-foreground">{d.percent}% of guided lessons completed</p>
       <Link className="text-led-cyan text-sm inline-flex items-center gap-2" to="/learn">Practice this track <ArrowRight className="size-4"/></Link>
     </div>)}
+   </section>
+   <section className="panel p-5 sm:p-8 space-y-5" aria-label="Independent coding practice progress">
+    <div><h2 className="text-2xl font-bold">Independent challenge evidence</h2><p className="text-sm text-muted-foreground mt-2">Actual exercise test cases completed locally. Results are useful feedback, not third-party certification.</p></div>
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{exercises.map(e=>{
+      const attempt=challenges.find(a=>a.exerciseId===e.id);
+      const p=attempt&&attempt.total>0?Math.round(attempt.passed/attempt.total*100):0;
+      return <Link key={e.id} to="/practice" className="rounded-xl bg-surface-2 border border-border p-4 hover:border-led-cyan/50 transition-colors"><div className="flex justify-between gap-2"><h3 className="font-semibold text-sm">{e.title}</h3><span className="text-xs font-mono text-led-cyan">{attempt?.passed||0}/{attempt?.total||e.tests.length}</span></div><p className="text-xs text-muted-foreground mt-2">{e.topic}</p><div className="h-2 mt-4 rounded-full bg-surface-3 overflow-hidden"><div className="h-full bg-led-cyan rounded-full" style={{width:p+"%"}}/></div></Link>;
+    })}</div>
    </section>
    <div className="grid lg:grid-cols-2 gap-5">
     <section className="panel p-6 md:p-8">
