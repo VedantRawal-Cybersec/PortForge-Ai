@@ -1,0 +1,67 @@
+/** Portable browser-local progress. No server upload occurs here. Backups are unencrypted. */
+const DATA_KEYS=[
+ "portforge_profile_v2","portforge_learning_v1","portforge_missions_v1",
+ "aero_workspace","aero_portfolio_v1","portforge_practice_v1",
+ "portforge_project_interviews_v1","portforge_career_plan_v1"
+] as const;
+type Backup={format:"portforge-local-backup";version:1;createdAt:string;items:Record<string,unknown>};
+export const PORTABLE_KEYS=[...DATA_KEYS];
+export function exportLocalBackup():Backup{
+ const items:Record<string,unknown>={};
+ for(const key of DATA_KEYS){
+  const raw=localStorage.getItem(key);
+  if(raw!==null){try{items[key]=JSON.parse(raw);}catch{/* damaged record is skipped */}}
+ }
+ return {format:"portforge-local-backup",version:1,createdAt:new Date().toISOString(),items};
+}
+export function downloadLocalBackup(){
+ const data=JSON.stringify(exportLocalBackup(),null,2);
+ const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));
+ const link=document.createElement("a");link.href=url;link.download="portforge-local-backup.json";
+ document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+}
+function valid(key:string,value:unknown):boolean{
+ if(value===null||typeof value!=="object"||Array.isArray(value)&&!["aero_portfolio_v1","portforge_practice_v1","portforge_project_interviews_v1"].includes(key))return false;
+ if(["aero_portfolio_v1","portforge_practice_v1","portforge_project_interviews_v1"].includes(key))return Array.isArray(value)&&value.length<=60&&value.every(x=>x&&typeof x==="object");
+ const x=value as Record<string,unknown>;
+ switch(key){
+  case "portforge_profile_v2":return typeof x.name==="string"&&x.name.length<=60&&typeof x.goal==="string"&&typeof x.level==="string";
+  case "portforge_learning_v1":return Array.isArray(x.passed)&&x.passed.length<=500&&x.passed.every(v=>typeof v==="string")&&!!x.attempts&&typeof x.attempts==="object";
+  case "portforge_missions_v1":return Object.keys(x).length<=100&&Object.values(x).every(v=>Array.isArray(v)&&v.length<=100);
+  case "aero_workspace":return typeof x.code==="string"&&x.code.length<=30000&&typeof x.langId==="string"&&typeof x.desc==="string";
+  case "portforge_career_plan_v1":return typeof x.role==="string"&&Array.isArray(x.steps)&&x.steps.length<=20&&Array.isArray(x.checked);
+  default:return false;
+ }
+}
+export function restoreLocalBackup(content:string):number{
+ if(content.length>1000000)throw new Error("Backup exceeds the 1 MB safety limit.");
+ let p:Partial<Backup>;
+ try{p=JSON.parse(content);}catch{throw new Error("The selected file is not valid JSON.");}
+ if(!p||p.format!=="portforge-local-backup"||p.version!==1||!p.items||typeof p.items!=="object"||Array.isArray(p.items))throw new Error("Not a supported PortForge local backup.");
+ const entries=Object.entries(p.items).filter(([key])=>DATA_KEYS.includes(key as (typeof DATA_KEYS)[number]));
+ if(entries.length!==Object.keys(p.items).length)throw new Error("Backup contains unsupported data fields.");
+ if(!entries.every(([key,value])=>valid(key,value)))throw new Error("Backup contains an invalid or damaged record.");
+ const originals=Object.fromEntries(DATA_KEYS.map(k=>[k,localStorage.getItem(k)]));
+ try{
+  for(const [key,value] of entries)localStorage.setItem(key,JSON.stringify(value));
+ }catch{
+  for(const k of DATA_KEYS){const old=originals[k];try{if(old===null)localStorage.removeItem(k);else localStorage.setItem(k,old);}catch{}}
+  throw new Error("Browser storage is full or blocked. No new backup was restored.");
+ }
+ window.dispatchEvent(new Event("portforge:profile"));
+ window.dispatchEvent(new Event("portforge:progress"));
+ window.dispatchEvent(new Event("portfolio:update"));
+ window.dispatchEvent(new Event("portforge:practice"));
+ window.dispatchEvent(new Event("portforge:project-interview"));
+ window.dispatchEvent(new Event("portforge:career"));
+ return entries.length;
+}
+export function clearLocalProgress(){
+ for(const key of DATA_KEYS)localStorage.removeItem(key);
+ window.dispatchEvent(new Event("portforge:profile"));
+ window.dispatchEvent(new Event("portforge:progress"));
+ window.dispatchEvent(new Event("portfolio:update"));
+ window.dispatchEvent(new Event("portforge:practice"));
+ window.dispatchEvent(new Event("portforge:project-interview"));
+ window.dispatchEvent(new Event("portforge:career"));
+}
