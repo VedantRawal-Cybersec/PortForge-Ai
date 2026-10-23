@@ -14,7 +14,7 @@ export function runIsolatedJavaScript(source: string, timeoutMs = 2500): Promise
     frame.setAttribute("referrerpolicy","no-referrer");
     frame.style.cssText = "position:absolute;width:1px;height:1px;left:-9999px;opacity:0;pointer-events:none";
     let finished = false;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let timeoutId: number;
     const clean = () => {
       window.clearTimeout(timeoutId);
       window.removeEventListener("message",onMessage);
