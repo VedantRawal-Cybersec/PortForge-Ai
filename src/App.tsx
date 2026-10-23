@@ -19,6 +19,7 @@ const SkillDNA = lazy(() => import("./pages/SkillDNA"));
 const Missions = lazy(() => import("./pages/Missions"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const DataUse = lazy(() => import("./pages/DataUse"));
+const MyData = lazy(() => import("./pages/MyData"));
 const PracticeLab = lazy(() => import("./pages/PracticeLab"));
 const ProjectInterview = lazy(() => import("./pages/ProjectInterview"));
 
@@ -49,6 +50,7 @@ const App = () => (
                 <Route path="/skill-dna" element={<SkillDNA />} />
                 <Route path="/missions" element={<Missions />} />
                 <Route path="/data-use" element={<DataUse />} />
+                <Route path="/my-data" element={<MyData />} />
                 <Route path="/practice" element={<PracticeLab />} />
                 <Route path="/project-interview" element={<ProjectInterview />} />
                 <Route path="*" element={<NotFound />} />
