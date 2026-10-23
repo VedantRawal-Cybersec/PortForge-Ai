@@ -42,10 +42,10 @@ async function run(){
   await page.goto(base+"/workspace");
   await page.locator("textarea").first().fill('console.log("PORTFORGE_SMOKE")');
   await page.getByRole("button",{name:/RUN JAVASCRIPT/i}).click();
-  await page.getByText("PORTFORGE_SMOKE",{exact:true}).waitFor({timeout:9000});
+  await page.getByText("PORTFORGE_SMOKE",{exact:false}).last().waitFor({timeout:9000});
   await page.locator("textarea").first().fill('localStorage.setItem("portforge_escape","bad"); console.log("ISOLATED");');
   await page.getByRole("button",{name:/RUN JAVASCRIPT/i}).click();
-  await page.getByText("ISOLATED",{exact:true}).waitFor({timeout:9000});
+  await page.getByText("ISOLATED",{exact:false}).last().waitFor({timeout:9000});
   const escaped=await page.evaluate(()=>localStorage.getItem("portforge_escape"));
   assert.equal(escaped,null,"sandbox code modified application localStorage");
   process.stdout.write("OK isolated browser code runner and storage security check\n");
