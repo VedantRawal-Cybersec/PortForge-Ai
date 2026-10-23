@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "./components/AppLayout";
 import Index from "./pages/Index.tsx";
+import Dashboard from "./pages/Dashboard";
+import Learn from "./pages/Learn";
 import SkillTest from "./pages/SkillTest";
 import Interview from "./pages/Interview";
 import Workspace from "./pages/Workspace";
@@ -23,6 +25,8 @@ const App = () => (
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/learn" element={<Learn />} />
             <Route path="/skill-test" element={<SkillTest />} />
             <Route path="/interview" element={<Interview />} />
             <Route path="/workspace" element={<Workspace />} />

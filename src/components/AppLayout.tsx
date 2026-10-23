@@ -1,7 +1,9 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { BookOpen, Briefcase, Code2, Mic, Target } from "lucide-react";
+import { BookOpen, Briefcase, Code2, Mic, Target, LayoutDashboard, GraduationCap } from "lucide-react";
 
 const navItems = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/learn", label: "Learn", icon: GraduationCap },
   { to: "/skill-test", label: "Skill test", icon: BookOpen },
   { to: "/interview", label: "Interview", icon: Mic },
   { to: "/workspace", label: "Workspace", icon: Code2 },
@@ -18,18 +20,18 @@ export default function AppLayout() {
           <Link to="/" className="font-bold text-lg tracking-tight whitespace-nowrap" aria-label="PortForge AI home">
             Port<span className="text-led-cyan">Forge</span> AI
           </Link>
-          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1">
+          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-1">
             {navItems.map(({ to, label, icon: Icon }) => (
               <NavLink key={to} to={to} className={({ isActive }) => "rounded-lg px-3 py-2.5 flex items-center gap-2 text-sm transition-colors " + (isActive ? "bg-led-cyan/10 text-led-cyan" : "text-muted-foreground hover:text-foreground hover:bg-surface-2")}>
                 <Icon className="size-4" aria-hidden="true" />{label}
               </NavLink>
             ))}
           </nav>
-          <Link to="/skill-test" className="hidden sm:inline-flex rounded-lg bg-foreground text-background px-4 py-2 text-sm font-bold hover:bg-led-cyan transition-colors">
+          <Link to="/dashboard" className="hidden sm:inline-flex rounded-lg bg-foreground text-background px-4 py-2 text-sm font-bold hover:bg-led-cyan transition-colors">
             Get started
           </Link>
         </div>
-        <nav aria-label="Mobile navigation" className="lg:hidden flex gap-1 px-4 pb-2 overflow-x-auto">
+        <nav aria-label="Mobile navigation" className="xl:hidden flex gap-1 px-4 pb-2 overflow-x-auto">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} className={({ isActive }) => "rounded-lg px-3 py-2.5 flex items-center shrink-0 gap-1.5 text-xs transition-colors " + (isActive ? "bg-led-cyan/10 text-led-cyan" : "text-muted-foreground hover:text-foreground")}>
               <Icon className="size-4" aria-hidden="true"/>{label}

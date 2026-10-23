@@ -11,7 +11,7 @@ export default function Landing() {
         <div className="max-w-[1400px] mx-auto px-6 pt-20 pb-24 relative">
           <div className="flex items-center gap-2 mb-8 animate-fade-in">
             <span className="chip chip-cyan">
-              <span className="led-dot animate-blink" /> SYSTEM LIVE v1.0
+              <span className="led-dot animate-blink" /> YOUR SKILLS. YOUR FUTURE.
             </span>
             <span className="chip text-muted-foreground">PROOF-BASED PORTFOLIO AI</span>
           </div>
@@ -30,10 +30,10 @@ export default function Landing() {
 
           <div className="mt-10 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: '240ms' }}>
             <Link
-              to="/skill-test"
+              to="/dashboard"
               className="group inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-6 py-3.5 rounded-md hover:bg-led-cyan hover:text-background transition-all duration-300 shadow-[0_0_0_1px_hsl(var(--foreground)),0_8px_24px_-4px_hsl(var(--led-cyan)/0.3)] hover:shadow-[0_0_0_1px_hsl(var(--led-cyan)),0_12px_32px_-4px_hsl(var(--led-cyan)/0.5)]"
             >
-              TAKE A SKILL TEST
+              CREATE MY LEARNING PATH
               <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -53,7 +53,7 @@ export default function Landing() {
         <div className="flex items-end justify-between mb-10">
           <div>
             <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// MODULES</div>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Five tools, one learning journey.</h2>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Your toolkit for lasting progress.</h2>
           </div>
           <Link to="/skill-test" className="hidden md:inline font-mono text-xs text-muted-foreground hover:text-led-cyan tracking-widest">VIEW ALL →</Link>
         </div>
@@ -90,7 +90,7 @@ export default function Landing() {
             <Sparkles className="size-6 text-led-cyan mb-6" />
             <p className="text-2xl md:text-4xl font-bold tracking-tight leading-[1.2] text-balance">
               "Portfolios show what you <span className="line-through text-muted-foreground">claim</span>.
-              This shows what you can <span className="text-led-cyan">prove</span>."
+              This shows what you can <span className="text-led-cyan">build and explain</span>."
             </p>
             <p className="mt-6 text-muted-foreground font-mono text-xs tracking-widest uppercase">— Core Principle</p>
           </div>
@@ -161,7 +161,7 @@ export default function Landing() {
           <div className="relative">
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Ready to make progress?</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Start with a skill test. Two minutes. Personalized feedback. A clear next step.</p>
-            <Link to="/skill-test" className="inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-7 py-3.5 rounded-md hover:bg-led-cyan transition-colors">
+            <Link to="/dashboard" className="inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-7 py-3.5 rounded-md hover:bg-led-cyan transition-colors">
               <Zap className="size-4" /> GET STARTED
             </Link>
           </div>
@@ -172,17 +172,18 @@ export default function Landing() {
 }
 
 const modules = [
+  { code: "MOD 00", title: "Learning Academy", desc: "Start from zero with short lessons and quizzes. Follow your progress as you grow.", icon: Sparkles, to: "/learn" },
   { code: "MOD 01", title: "Micro Skill Test", desc: "Input a skill, get one precise question, get structured AI grading on logic, clarity, and depth.", icon: Brain, to: "/skill-test" },
   { code: "MOD 02", title: "Voice Interview", desc: "Real-time AI interviewer with cognitive load tracking. Voice in, voice out, full transcript.", icon: Mic, to: "/interview" },
   { code: "MOD 03", title: "Project Workspace", desc: "Build, run, and submit code. Receive structured AI evaluation and project upgrade paths.", icon: Code2, to: "/workspace" },
   { code: "MOD 04", title: "Job Oracle", desc: "Pick a target role. See required skills, your gaps, and a tailored learning roadmap.", icon: Target, to: "/oracle" },
-  { code: "MOD 05", title: "Live Portfolio", desc: "Verified skills auto-update. Hash-stamped, exportable, real proof recruiters can verify.", icon: Briefcase, to: "/portfolio" },
+  { code: "MOD 05", title: "Live Portfolio", desc: "Keep your assessments, practice sessions and reviewed projects in your own portfolio.", icon: Briefcase, to: "/portfolio" },
 ];
 
 const steps = [
   { title: "PROBE", desc: "Pick any skill. The AI generates one precise, role-relevant question.", icon: Brain },
   { title: "EVALUATE", desc: "Structured grading: logic, clarity, depth — plus level and a one-line verdict.", icon: Zap },
-  { title: "PROVE", desc: "Strong answers verify into your portfolio. Weak answers unlock learning paths.", icon: CheckCircle2 },
+  { title: "GROW", desc: "Collect your work and continue learning from targeted next steps.", icon: CheckCircle2 },
 ];
 
 

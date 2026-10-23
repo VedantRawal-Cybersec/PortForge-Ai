@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Panel } from "@/components/Panel";
 import { clearPortfolio, getPortfolio, type PortfolioEntry } from "@/lib/portfolio";
 import { ArrowRight, BookOpen, Briefcase, Code2, Mic, Trash2 } from "lucide-react";
+import ProfileBuilder from "@/components/ProfileBuilder";
 
 export default function Portfolio() {
   const [entries, setEntries] = useState<PortfolioEntry[]>([]);
@@ -37,6 +38,8 @@ export default function Portfolio() {
       <div className="rounded-lg border border-led-amber/25 bg-led-amber/5 px-4 py-3 text-sm text-muted-foreground" role="note">
         <strong className="text-foreground">Storage notice:</strong> Entries are currently saved only in this browser on this device. They are AI-assisted assessments, not independently verified credentials. Account sync and external verification are not available yet.
       </div>
+
+      <ProfileBuilder />
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="My activity summary">
         {[
