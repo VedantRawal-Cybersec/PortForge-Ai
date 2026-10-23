@@ -6,13 +6,17 @@ PortForge AI is an evolving skill-development and career-preparation platform de
 ## Implemented
 - **Guided dashboard:** choose a goal, experience level, and starting learning track
 - **Learning Academy:** 4 foundational tracks, 12 bite-sized lessons and graded multiple-choice knowledge checks
-- **Skill DNA:** visualize real lesson completion and AI-assessed activity without claiming professional verification
+- **Skill DNA:** visualize real lesson completion, locally tested coding challenges and AI-assessed activity without claiming professional verification
 - **Career Missions:** six guided challenges with locally tracked checklists
+- **Independent Practice Lab:** six JavaScript programming exercises with repeatable sandboxed test cases, saved code and reflection
+- **Project-to-Interview Coach:** rehearse four interview prompts anchored to a project you actually wrote and tested
+- **Career Explorer:** five curated, offline starter roadmaps with saved milestone checklists; optional AI-generated suggestions
 - **Skill Test:** submit answers to an external AI evaluator with structured feedback
 - **Interview Simulator:** voice/text question practice, browser microphone capture and TTS fallback
 - **Project Workspace:** editing for many languages, isolated JavaScript-only execution and AI review (when the configured backend is available)
 - **Job Oracle:** AI-assisted role and skill-gap suggestions
 - **My Portfolio:** browser-local activity evidence, profile editing and JSON backup export
+- **My Data:** unencrypted JSON backup export, validated local restoration and deletion controls (no server synchronization)
 - **UI:** responsive navigation, dark/light theme, reduced motion, lazy routes and error recovery
 - **Trust:** transparent data use notice, no fabricated user counts or personal default projects
 
