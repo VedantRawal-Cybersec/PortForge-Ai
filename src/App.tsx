@@ -18,6 +18,7 @@ const Portfolio = lazy(() => import("./pages/Portfolio"));
 const SkillDNA = lazy(() => import("./pages/SkillDNA"));
 const Missions = lazy(() => import("./pages/Missions"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const DataUse = lazy(() => import("./pages/DataUse"));
 
 const queryClient = new QueryClient({defaultOptions:{queries:{retry:1,refetchOnWindowFocus:false}}});
 const loading = <div className="max-w-5xl mx-auto p-8" aria-live="polite" role="status">
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/skill-dna" element={<SkillDNA />} />
                 <Route path="/missions" element={<Missions />} />
+                <Route path="/data-use" element={<DataUse />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
