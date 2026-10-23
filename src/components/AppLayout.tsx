@@ -1,10 +1,11 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { BookOpen, Briefcase, Code2, Mic, Target, LayoutDashboard, GraduationCap, Moon, Sun } from "lucide-react";
+import { BookOpen, Briefcase, Code2, Mic, Target, LayoutDashboard, GraduationCap, Moon, Sun, FlaskConical } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/learn", label: "Learn", icon: GraduationCap },
+  { to: "/practice", label: "Practice", icon: FlaskConical },
   { to: "/skill-test", label: "Skill test", icon: BookOpen },
   { to: "/interview", label: "Interview", icon: Mic },
   { to: "/workspace", label: "Workspace", icon: Code2 },
