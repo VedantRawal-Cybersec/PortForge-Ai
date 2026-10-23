@@ -91,7 +91,7 @@ export default function SkillTest() {
             </form>
 
             <div className="pt-4 border-t border-border space-y-3">
-              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Honesty Slider</label>
+              <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Self-assessed confidence</label>
               <div className="flex gap-1.5">
                 {(["green","amber","alert"] as const).map((v) => (
                   <button key={v} onClick={() => setHonesty(v)} className={`flex-1 py-2 rounded text-xs font-mono uppercase tracking-wider border transition-all ${
@@ -269,7 +269,7 @@ export default function SkillTest() {
                   <span className={`chip ${evalData.level === "Strong" ? "chip-green" : evalData.level === "Intermediate" ? "chip-amber" : "chip-alert"}`}>{evalData.level}</span>
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-1">Hash Stamp</div>
+                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-1">Local reference (not a certificate)</div>
                   <div className="font-mono text-xs bg-surface-2 border border-border rounded px-2 py-1.5 text-led-cyan">#{hash}</div>
                 </div>
               </>
