@@ -4,6 +4,9 @@ import { Panel } from "@/components/Panel";
 import { clearPortfolio, getPortfolio, type PortfolioEntry } from "@/lib/portfolio";
 import { ArrowRight, BookOpen, Briefcase, Code2, Mic, Trash2 } from "lucide-react";
 import ProfileBuilder from "@/components/ProfileBuilder";
+import { exercises, getPractice } from "@/lib/practice";
+import { getProjectInterviews } from "@/lib/projectJourney";
+import { FlaskConical, MessageSquareText } from "lucide-react";
 
 export default function Portfolio() {
   const [entries, setEntries] = useState<PortfolioEntry[]>([]);
@@ -15,6 +18,9 @@ export default function Portfolio() {
     return () => window.removeEventListener("portfolio:update", refresh);
   }, []);
 
+  const [practice,setPractice]=useState(getPractice);
+  const [stories,setStories]=useState(getProjectInterviews);
+  useEffect(()=>{const p=()=>setPractice(getPractice());const s=()=>setStories(getProjectInterviews());window.addEventListener("portforge:practice",p);window.addEventListener("portforge:project-interview",s);return()=>{window.removeEventListener("portforge:practice",p);window.removeEventListener("portforge:project-interview",s)};},[]);
   const skills = new Set(entries.filter((entry) => entry.type === "skill").map((entry) => entry.skill)).size;
   const projects = entries.filter((entry) => entry.type === "project").length;
   const interviews = entries.filter((entry) => entry.type === "interview").length;
@@ -40,6 +46,20 @@ export default function Portfolio() {
       </div>
 
       <ProfileBuilder />
+      <section className="grid md:grid-cols-2 gap-4" aria-label="Independent project evidence">
+        <div className="panel p-5 sm:p-6 space-y-3">
+          <h2 className="text-xl font-bold flex gap-2 items-center"><FlaskConical className="size-5 text-led-cyan"/> Independent challenge work</h2>
+          <p className="text-sm text-muted-foreground">Results from your own locally saved coding exercises, separate from AI-assessed activity.</p>
+          {practice.length===0?<p className="text-sm text-muted-foreground">No independent challenges saved yet.</p>:<div className="space-y-2">{practice.slice(0,6).map(p=><div key={p.exerciseId} className="flex justify-between gap-3 border border-border rounded-lg p-3 text-sm"><span>{exercises.find(e=>e.id===p.exerciseId)?.title||"Practice task"}</span><span className="text-led-cyan shrink-0">{p.passed}/{p.total} tests</span></div>)}</div>}
+          <Link to="/practice" className="text-led-cyan text-sm inline-flex gap-2 items-center">Open practice lab <ArrowRight className="size-4"/></Link>
+        </div>
+        <div className="panel p-5 sm:p-6 space-y-3">
+          <h2 className="text-xl font-bold flex gap-2 items-center"><MessageSquareText className="size-5 text-led-cyan"/> Project interview stories</h2>
+          <p className="text-sm text-muted-foreground">Structured explanations of projects you attempted. These are self-written practice notes.</p>
+          {stories.length===0?<p className="text-sm text-muted-foreground">No project interviews saved yet.</p>:<div className="space-y-2">{stories.slice(0,6).map(s=><div key={s.exerciseId} className="flex justify-between gap-3 border border-border rounded-lg p-3 text-sm"><span>{exercises.find(e=>e.id===s.exerciseId)?.title||"Project interview"}</span><span className="text-led-cyan shrink-0">{s.answers.filter(a=>a.trim().length>=40).length}/4 answers</span></div>)}</div>}
+          <Link to="/project-interview" className="text-led-cyan text-sm inline-flex gap-2 items-center">Practice my explanation <ArrowRight className="size-4"/></Link>
+        </div>
+      </section>
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="My activity summary">
         {[
