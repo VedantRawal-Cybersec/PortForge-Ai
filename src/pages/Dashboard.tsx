@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2 } from "lucide-react";
+import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy } from "lucide-react";
 import { getProfile, saveProfile, type LearnerProfile } from "@/lib/profile";
 import { getLearning, tracks, totalLessons } from "@/lib/academy";
 import { getPortfolio } from "@/lib/portfolio";
@@ -10,7 +10,9 @@ const actions = [
   {to:"/workspace",title:"Build a project",desc:"Practice code and review your work",icon:Code2},
   {to:"/interview",title:"Practice interviews",desc:"Prepare with spoken or typed answers",icon:Mic},
   {to:"/oracle",title:"Plan a career",desc:"Explore skills and target roles",icon:Target},
-  {to:"/portfolio",title:"My portfolio",desc:"Review my practice and projects",icon:Briefcase}
+  {to:"/portfolio",title:"My portfolio",desc:"Review my practice and projects",icon:Briefcase},
+  {to:"/skill-dna",title:"Skill DNA",desc:"Explore progress across learning tracks",icon:ChartNoAxesCombined},
+  {to:"/missions",title:"Career Missions",desc:"Follow hands-on project challenges",icon:Trophy}
 ];
 export default function Dashboard(){
   const [profile,setProfile]=useState<LearnerProfile>(getProfile);
