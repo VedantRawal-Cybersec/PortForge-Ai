@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy } from "lucide-react";
+import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy, FlaskConical, MessageSquareText } from "lucide-react";
 import { getProfile, saveProfile, type LearnerProfile } from "@/lib/profile";
 import { getLearning, tracks, totalLessons } from "@/lib/academy";
 import { getPortfolio } from "@/lib/portfolio";
 const actions = [
   {to:"/learn",title:"Learn something new",desc:"Short lessons from the basics",icon:BookOpen},
+  {to:"/practice",title:"Independent practice",desc:"Solve challenges and run repeatable tests",icon:FlaskConical},
+  {to:"/project-interview",title:"Project interview",desc:"Explain code you actually wrote",icon:MessageSquareText},
   {to:"/skill-test",title:"Test my skills",desc:"Get feedback on an answer",icon:BrainCircuit},
   {to:"/workspace",title:"Build a project",desc:"Practice code and review your work",icon:Code2},
   {to:"/interview",title:"Practice interviews",desc:"Prepare with spoken or typed answers",icon:Mic},
