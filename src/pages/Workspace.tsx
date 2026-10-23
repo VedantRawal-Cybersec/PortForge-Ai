@@ -360,7 +360,7 @@ export default function Workspace() {
               <div className="space-y-4 animate-fade-up">
                 <div className="flex items-center justify-between">
                   <span className={`chip ${evalData.level === "Strong" ? "chip-green" : evalData.level === "Intermediate" ? "chip-amber" : "chip-alert"}`}>{evalData.level}</span>
-                  <span className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase">VERIFIED</span>
+                  <span className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase">AI REVIEWED</span>
                 </div>
                 <p className="text-sm font-semibold leading-snug">{evalData.verdict}</p>
                 <div className="space-y-2">
