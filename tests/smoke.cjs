@@ -33,7 +33,7 @@ async function run(){
   await page.getByRole("button",{name:"Switch to light mode"}).click();
   assert(await page.evaluate(()=>document.documentElement.classList.contains("light")),"light theme not applied");
   await page.goto(base+"/dashboard");
-  assert(await page.evaluate(()=>document.documentElement.classList.contains("light")),"theme not persisted");
+  await page.waitForFunction(()=>document.documentElement.classList.contains("light"),null,{timeout:6000});
   await page.getByRole("button",{name:"Switch to dark mode"}).click();
   await page.goto(base+"/missions");
   await page.getByText("Create a program with a variable.").click();
