@@ -1,69 +1,37 @@
 # PortForge AI
 
-PortForge AI is a proof-based portfolio and career-readiness website for Vedant Rawal.
+**Learn. Practice. Build. Grow.**
 
-The site presents student-level cybersecurity learning, live project proof, skill evidence, and internship-focused career direction in one clean place.
+PortForge AI is an evolving general-purpose skill development and career-preparation platform for beginners, students, and professionals. The product is not a personal portfolio or a cybersecurity-only website.
 
-## Focus Areas
+## Current modules
 
-- Threat intelligence foundations
-- SOC-style learning and reporting
-- Vulnerability management foundations
-- Web security awareness
-- Security automation workflows
-- AI-assisted cybersecurity analysis
-- CVE tracking and daily cyber briefings
-- MITRE ATT&CK and IOC awareness
+- **Skill Test:** Topic-based questions and AI-generated feedback
+- **Interview:** Voice and text interview practice
+- **Workspace:** Code editing, local JavaScript practice and AI project feedback
+- **Career Paths:** AI-assisted role exploration and skill-gap suggestions
+- **My Portfolio:** Browser-local history of practice activities
 
-## Featured Projects
+## Important product limitations
 
-### Sentinel AI
-A defensive web security review project focused on authorized website checks, exposure awareness, and remediation-oriented reporting.
+This release is a prototype. Portfolio entries are stored locally in the browser, so they are not portable verified credentials. The code workspace executes JavaScript in the page context and **must not be treated as a safe untrusted-code runner**. Non-JavaScript languages are not executed. AI functionality depends on external Supabase Edge Functions and availability of their upstream AI services.
 
-### Threat Forge
-A web application security learning project focused on input validation awareness and responsible testing concepts.
+Commercialization requires user accounts, secure cloud persistence, a sandboxed code runner, server-side evidence verification, abuse prevention, privacy controls, production observability, and complete regression tests. The homepage intentionally avoids unverified usage numbers or testimonials.
 
-### IMMUNEFIN AI
-An AI-assisted cybersecurity project focused on structured analysis, cyber defense support, and decision-support workflows.
+## Stack
 
-### Daily Cybersecurity Briefing Automation
-A workflow concept for collecting trusted security updates, filtering important items, summarizing key points, and producing daily defensive briefings.
+React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Supabase JS, React Router.
 
-## Website Sections
-
-- Home landing page
-- Connected Proof Feed
-- Live Portfolio
-- Skill Test
-- Voice Interview
-- Project Workspace
-- Job Oracle
-
-## Tech Stack
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- shadcn/ui
-- Lucide React
-- React Router
-
-## Run Locally
+## Development
 
 ```bash
-npm install
+npm ci
 npm run dev
-```
-
-## Build
-
-```bash
+npm run test
+npm run lint
 npm run build
 ```
 
-## Author
+## Deployment
 
-Vedant Rawal  
-Cybersecurity Student | Threat Intelligence & SOC Foundations | Web Security | Security Automation  
-LinkedIn: https://www.linkedin.com/in/vedant-rawal-416529363
+Vercel project: [portforge-ai.vercel.app](https://portforge-ai.vercel.app). The `vercel.json` fallback supports client-side routing. Configure client-safe Supabase publishable environment variables in Vercel; never place service role keys in frontend environment variables.
