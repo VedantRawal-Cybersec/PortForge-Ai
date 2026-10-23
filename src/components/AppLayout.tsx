@@ -49,7 +49,7 @@ export default function AppLayout() {
       <footer className="border-t border-border mt-12 py-8">
         <div className="max-w-[1400px] mx-auto px-6 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
           <span className="text-sm text-muted-foreground">© 2026 PortForge AI</span>
-          <span className="text-xs text-muted-foreground">Learn · Practice · Build · Grow</span>
+          <div className="flex flex-wrap gap-4 items-center"><Link to="/data-use" className="text-xs text-led-cyan hover:underline">Data use &amp; AI limitations</Link><span className="text-xs text-muted-foreground">Learn · Practice · Build · Grow</span></div>
         </div>
       </footer>
     </div>
