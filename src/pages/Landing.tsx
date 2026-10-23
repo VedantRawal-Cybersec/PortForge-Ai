@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ArrowRight, Brain, Briefcase, CheckCircle2, Code2, Mic, Sparkles, Target, Zap } from "lucide-react";
 
 export default function Landing() {
