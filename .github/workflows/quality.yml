@@ -23,6 +23,8 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       # TODO: regenerate and commit package-lock.json, then restore npm ci for immutable CI builds.
+      - name: Protect customer-neutral UI
+        run: node tests/no-owner-showcase.cjs
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.app.json
       - name: Unit tests
