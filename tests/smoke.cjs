@@ -19,7 +19,7 @@ async function run(){
   const page=await context.newPage();
   const errors=[];
   page.on("pageerror",e=>errors.push(e.message));
-  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/workspace","/skill-test","/interview","/oracle"];
+  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/workspace","/skill-test","/interview","/oracle"];
   for(const path of paths){
     const resp=await page.goto(base+path,{waitUntil:"domcontentloaded"});
     assert(resp&&resp.ok(),"route "+path+" returned non-2xx");
