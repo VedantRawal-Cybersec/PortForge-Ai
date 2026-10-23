@@ -36,7 +36,6 @@ async function run(){
   assert(await page.evaluate(()=>document.documentElement.classList.contains("light")),"theme not persisted");
   await page.getByRole("button",{name:"Switch to dark mode"}).click();
   await page.goto(base+"/missions");
-  await page.getByText("Create your first functioning program").click();
   await page.getByText("Create a program with a variable.").click();
   assert((await page.locator("#main-content").innerText()).includes("1 / 3 STEPS CHECKED"),"mission progress not saved");
   process.stdout.write("OK theme toggle and mission checklist\n");
