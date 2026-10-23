@@ -1,100 +1,55 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, Brain, Briefcase, Code2, Mic, Target } from "lucide-react";
+import { BookOpen, Briefcase, Code2, Mic, Target, LayoutDashboard, GraduationCap, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const navItems = [
-  { to: "/skill-test", label: "SKILL TEST", icon: Brain },
-  { to: "/interview", label: "INTERVIEW", icon: Mic },
-  { to: "/workspace", label: "WORKSPACE", icon: Code2 },
-  { to: "/oracle", label: "ORACLE", icon: Target },
-  { to: "/portfolio", label: "PORTFOLIO", icon: Briefcase },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/learn", label: "Learn", icon: GraduationCap },
+  { to: "/skill-test", label: "Skill test", icon: BookOpen },
+  { to: "/interview", label: "Interview", icon: Mic },
+  { to: "/workspace", label: "Workspace", icon: Code2 },
+  { to: "/oracle", label: "Career paths", icon: Target },
+  { to: "/portfolio", label: "My portfolio", icon: Briefcase },
 ];
 
 export default function AppLayout() {
-  const loc = useLocation();
-  const [latency] = useState(() => 8 + Math.floor(Math.random() * 12));
-  const [time, setTime] = useState("");
-
-  useEffect(() => {
-    const update = () => {
-      const d = new Date();
-      setTime(`${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`);
-    };
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, []);
-
+  const location = useLocation();
+  const [theme,setTheme] = useState<"dark"|"light">(()=>{try{return localStorage.getItem("portforge_theme")==="light"?"light":"dark";}catch{return "dark";}});
+  useEffect(()=>{document.documentElement.classList.toggle("light",theme==="light");document.documentElement.classList.toggle("dark",theme==="dark");try{localStorage.setItem("portforge_theme",theme);}catch{}},[theme]);
   return (
     <div className="min-h-dvh flex flex-col">
-      {/* Telemetry header */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/70 border-b border-border">
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 h-14 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="led-dot animate-blink" />
-            </div>
-            <span className="font-mono text-xs tracking-[0.25em] font-bold uppercase">
-              Port<span className="text-led-cyan">Forge</span> AI
-            </span>
-            <span className="hidden md:inline font-mono text-[10px] text-muted-foreground tracking-widest">// PROOF-BASED PORTFOLIO AI</span>
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/90 border-b border-border">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 min-h-16 flex items-center justify-between gap-4">
+          <Link to="/" className="font-bold text-lg tracking-tight whitespace-nowrap" aria-label="PortForge AI home">
+            Port<span className="text-led-cyan">Forge</span> AI
           </Link>
-
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-1">
             {navItems.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `font-mono text-[11px] tracking-widest px-3 py-2 rounded transition-all duration-200 flex items-center gap-2 ${
-                    isActive
-                      ? "bg-led-cyan/10 text-led-cyan border border-led-cyan/30 shadow-[inset_0_0_8px_hsl(var(--led-cyan)/0.1)]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-surface-2 border border-transparent"
-                  }`
-                }
-              >
-                <Icon className="size-3.5" />
-                {label}
+              <NavLink key={to} to={to} className={({ isActive }) => "rounded-lg px-3 py-2.5 flex items-center gap-2 text-sm transition-colors " + (isActive ? "bg-led-cyan/10 text-led-cyan" : "text-muted-foreground hover:text-foreground hover:bg-surface-2")}>
+                <Icon className="size-4" aria-hidden="true" />{label}
               </NavLink>
             ))}
           </nav>
-
-          <div className="hidden md:flex items-center gap-4 font-mono text-[10px] tracking-wider text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Activity className="size-3 text-led-green" />
-              <span>{latency}ms</span>
-            </div>
-            <div className="h-3 w-px bg-border" />
-            <span>{time}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" aria-label={theme==="dark"?"Switch to light mode":"Switch to dark mode"} title={theme==="dark"?"Light mode":"Dark mode"} onClick={()=>setTheme(v=>v==="dark"?"light":"dark")} className="inline-flex size-10 items-center justify-center rounded-lg border border-border hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-led-cyan">
+              {theme==="dark"?<Sun className="size-5" aria-hidden="true"/>:<Moon className="size-5" aria-hidden="true"/>}
+            </button>
+            <Link to="/dashboard" className="hidden sm:inline-flex rounded-lg bg-foreground text-background px-4 py-2 text-sm font-bold hover:bg-led-cyan transition-colors">Get started</Link>
           </div>
         </div>
-        {/* Mobile nav */}
-        <nav className="lg:hidden flex items-center gap-1 px-4 pb-2 overflow-x-auto">
+        <nav aria-label="Mobile navigation" className="xl:hidden flex gap-1 px-4 pb-2 overflow-x-auto">
           {navItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `font-mono text-[10px] tracking-widest px-2.5 py-1.5 rounded shrink-0 flex items-center gap-1.5 ${
-                  isActive ? "bg-led-cyan/10 text-led-cyan border border-led-cyan/30" : "text-muted-foreground border border-transparent"
-                }`
-              }
-            >
-              <Icon className="size-3" />
-              {label}
+            <NavLink key={to} to={to} className={({ isActive }) => "rounded-lg px-3 py-2.5 flex items-center shrink-0 gap-1.5 text-xs transition-colors " + (isActive ? "bg-led-cyan/10 text-led-cyan" : "text-muted-foreground hover:text-foreground")}>
+              <Icon className="size-4" aria-hidden="true"/>{label}
             </NavLink>
           ))}
         </nav>
       </header>
-
-      <main key={loc.pathname} className="flex-1 animate-fade-in">
-        <Outlet />
-      </main>
-
-      <footer className="border-t border-border mt-12 py-6">
-        <div className="max-w-[1600px] mx-auto px-6 flex flex-col md:flex-row justify-between gap-3 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-          <span>PortForge AI © 2026 // Proof &gt; Claim</span>
-          <span className="text-led-cyan">SYS NOMINAL</span>
+      <main key={location.pathname} className="flex-1 animate-fade-in" id="main-content"><Outlet /></main>
+      <footer className="border-t border-border mt-12 py-8">
+        <div className="max-w-[1400px] mx-auto px-6 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+          <span className="text-sm text-muted-foreground">© 2026 PortForge AI</span>
+          <div className="flex flex-wrap gap-4 items-center"><Link to="/data-use" className="text-xs text-led-cyan hover:underline">Data use &amp; AI limitations</Link><span className="text-xs text-muted-foreground">Learn · Practice · Build · Grow</span></div>
         </div>
       </footer>
     </div>

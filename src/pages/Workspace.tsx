@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { runIsolatedJavaScript } from "@/lib/sandbox";
 import { Panel, ScoreBar } from "@/components/Panel";
 import { addToPortfolio } from "@/lib/portfolio";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +21,7 @@ const HELLO = (lang: string) => `// ${lang} starter — write your code, then SU
 const LANGUAGES: LangDef[] = [
   // Web
   { id: "javascript", label: "JavaScript", category: "Web", runnable: true, starter:
-`// JavaScript runs natively in the browser. Try it!
+`// JavaScript runs inside an isolated practice sandbox. Try it!
 function fizzbuzz(n) {
   const out = [];
   for (let i = 1; i <= n; i++) {
@@ -162,6 +163,7 @@ export default function Workspace() {
   const [output, setOutput] = useState<string[]>([]);
   const [evalData, setEvalData] = useState<PEval | null>(null);
   const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
 
   // Picker state
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -190,26 +192,36 @@ export default function Workspace() {
     setSearch("");
   }
 
-  function run() {
+  // The execution frame has a unique opaque origin with no network access.
+  async function run() {
+    if (running) return;
     setOutput([]);
-    if (lang.runnable) {
-      const logs: string[] = [];
-      const orig = console.log;
-      console.log = (...a: any[]) => logs.push(a.map((x) => typeof x === "object" ? JSON.stringify(x) : String(x)).join(" "));
-      try {
-        // eslint-disable-next-line no-new-func
-        new Function(code)();
-        setOutput(logs.length ? logs : ["[OK] No output."]);
-      } catch (e) {
-        setOutput([`[ERROR] ${e instanceof Error ? e.message : String(e)}`]);
-      } finally { console.log = orig; }
-    } else {
-      setOutput([
-        `[INFO] ${lang.label} requires a server runtime.`,
-        `[INFO] Submit the code for AI grading — the evaluator reads any language.`,
-      ]);
+    if (!lang.runnable) {
+      setOutput(["[INFO] This language is available for editing and AI review, but cannot be run in this browser preview.", "[INFO] Only JavaScript examples have an isolated local runtime."]);
+      return;
+    }
+    setRunning(true);
+    try {
+      setOutput(await runIsolatedJavaScript(code));
+    } catch (error) {
+      setOutput(["[ERROR] " + (error instanceof Error ? error.message : "Execution failed")]);
+    } finally {
+      setRunning(false);
     }
   }
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("aero_workspace");
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      if (typeof state.langId === "string" && typeof state.code === "string" && typeof state.desc === "string" && state.code.length < 30001) {
+        setLangId(byId(state.langId).id);
+        setCode(state.code);
+        setDesc(state.desc);
+      }
+    } catch { /* malformed local draft: start with a safe example */ }
+  }, []);
 
   function save() {
     localStorage.setItem("aero_workspace", JSON.stringify({ langId, code, desc }));
@@ -305,8 +317,8 @@ export default function Workspace() {
             />
 
             <div className="flex gap-2 flex-wrap">
-              <button onClick={run} className="bg-foreground text-background font-bold text-sm px-4 py-2.5 rounded hover:bg-led-green transition-colors inline-flex items-center gap-2">
-                <Play className="size-4" /> RUN {lang.runnable ? "" : "(simulated)"}
+              <button onClick={run} disabled={running} className="bg-foreground text-background font-bold text-sm px-4 py-2.5 rounded hover:bg-led-green transition-colors inline-flex items-center gap-2">
+                <Play className="size-4" /> {running ? "RUNNING…" : lang.runnable ? "RUN JAVASCRIPT" : "RUNTIME UNAVAILABLE"}
               </button>
               <button onClick={save} className="border border-border bg-surface-2 text-sm px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2">
                 <Save className="size-4" /> SAVE
@@ -348,7 +360,7 @@ export default function Workspace() {
               <div className="space-y-4 animate-fade-up">
                 <div className="flex items-center justify-between">
                   <span className={`chip ${evalData.level === "Strong" ? "chip-green" : evalData.level === "Intermediate" ? "chip-amber" : "chip-alert"}`}>{evalData.level}</span>
-                  <span className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase">VERIFIED</span>
+                  <span className="font-mono text-[10px] text-muted-foreground tracking-widest uppercase">AI REVIEWED</span>
                 </div>
                 <p className="text-sm font-semibold leading-snug">{evalData.verdict}</p>
                 <div className="space-y-2">

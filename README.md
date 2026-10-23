@@ -1,69 +1,43 @@
 # PortForge AI
+**Learn. Practice. Build. Grow.**
 
-PortForge AI is a proof-based portfolio and career-readiness website for Vedant Rawal.
+PortForge AI is an evolving skill-development and career-preparation platform designed for beginners, students, career switchers, and working professionals. It is **not** an individual's portfolio or a cybersecurity-specific product.
 
-The site presents student-level cybersecurity learning, live project proof, skill evidence, and internship-focused career direction in one clean place.
+## Implemented
+- **Guided dashboard:** choose a goal, experience level, and starting learning track
+- **Learning Academy:** 4 foundational tracks, 12 bite-sized lessons and graded multiple-choice knowledge checks
+- **Skill DNA:** visualize real lesson completion and AI-assessed activity without claiming professional verification
+- **Career Missions:** six guided challenges with locally tracked checklists
+- **Skill Test:** submit answers to an external AI evaluator with structured feedback
+- **Interview Simulator:** voice/text question practice, browser microphone capture and TTS fallback
+- **Project Workspace:** editing for many languages, isolated JavaScript-only execution and AI review (when the configured backend is available)
+- **Job Oracle:** AI-assisted role and skill-gap suggestions
+- **My Portfolio:** browser-local activity evidence, profile editing and JSON backup export
+- **UI:** responsive navigation, dark/light theme, reduced motion, lazy routes and error recovery
+- **Trust:** transparent data use notice, no fabricated user counts or personal default projects
 
-## Focus Areas
+## Critical limitations — do not market as a fully commercial-ready service
+- **No cloud user accounts, secure synchronized portfolios, paid subscriptions or independently verified credentials.**
+- App progress, profiles and project drafts are saved locally in each browser. Local data can be lost if site storage is cleared.
+- **JavaScript sandbox is for educational code snippets, not unrestricted production compute.** All other languages are for editing/AI review only, not execution. A hardened server-side runtime is required for full multi-language support.
+- AI services use a Supabase project referenced by this repository. The project is **not accessible from the presently connected management account**; deployed Edge Functions, per-user quotas, secrets, retention and RLS have not been verified.
+- Audio/TTS depends on browsers, microphone permission and optional upstream speech services.
+- AI assessment feedback is advisory and can be incorrect. The locally generated identifiers are not certified evidence.
+- A reviewed, production-appropriate legal privacy policy, TOS and actual service monitoring are still required.
 
-- Threat intelligence foundations
-- SOC-style learning and reporting
-- Vulnerability management foundations
-- Web security awareness
-- Security automation workflows
-- AI-assisted cybersecurity analysis
-- CVE tracking and daily cyber briefings
-- MITRE ATT&CK and IOC awareness
-
-## Featured Projects
-
-### Sentinel AI
-A defensive web security review project focused on authorized website checks, exposure awareness, and remediation-oriented reporting.
-
-### Threat Forge
-A web application security learning project focused on input validation awareness and responsible testing concepts.
-
-### IMMUNEFIN AI
-An AI-assisted cybersecurity project focused on structured analysis, cyber defense support, and decision-support workflows.
-
-### Daily Cybersecurity Briefing Automation
-A workflow concept for collecting trusted security updates, filtering important items, summarizing key points, and producing daily defensive briefings.
-
-## Website Sections
-
-- Home landing page
-- Connected Proof Feed
-- Live Portfolio
-- Skill Test
-- Voice Interview
-- Project Workspace
-- Job Oracle
-
-## Tech Stack
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- shadcn/ui
-- Lucide React
-- React Router
-
-## Run Locally
-
+## Development
 ```bash
 npm install
+npm run test
+npx tsc --noEmit -p tsconfig.app.json
+npm run build
 npm run dev
 ```
 
-## Build
+**Lockfile note:** `package-lock.json` is currently inconsistent with the dependency spec and needs regeneration and review; CI temporarily uses `npm install` rather than `npm ci`.
 
-```bash
-npm run build
-```
+## Deployment
+The Vercel project is [portforge-ai.vercel.app](https://portforge-ai.vercel.app). All React Router paths fall back to `index.html` through `vercel.json`. The production URL may not include these changes until the production deployment is updated.
 
-## Author
-
-Vedant Rawal  
-Cybersecurity Student | Threat Intelligence & SOC Foundations | Web Security | Security Automation  
-LinkedIn: https://www.linkedin.com/in/vedant-rawal-416529363
+## Launch readiness
+See [commercial-transformation-plan.md](docs/commercial-transformation-plan.md) for security, persistence, certification, payments, user support and production release gates.
