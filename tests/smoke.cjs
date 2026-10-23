@@ -19,7 +19,7 @@ async function run(){
   const page=await context.newPage();
   const errors=[];
   page.on("pageerror",e=>errors.push(e.message));
-  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle"];
+  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/my-data","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle"];
   for(const path of paths){
     const resp=await page.goto(base+path,{waitUntil:"domcontentloaded"});
     assert(resp&&resp.ok(),"route "+path+" returned non-2xx");
@@ -79,6 +79,19 @@ async function run(){
   const escaped=await page.evaluate(()=>localStorage.getItem("portforge_escape"));
   assert.equal(escaped,null,"sandbox code modified application localStorage");
   process.stdout.write("OK isolated browser code runner and storage security check\n");
+  await page.goto(base+"/my-data");
+  const downloadPromise=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Download backup"}).click();
+  const download=await downloadPromise;
+  assert(download.suggestedFilename().endsWith(".json"),"missing JSON backup download");
+  const backup={format:"portforge-local-backup",version:1,createdAt:new Date().toISOString(),items:{portforge_profile_v2:{name:"Restored Learner",goal:"explore",level:"new",focus:"digital",headline:"",bio:"",links:[],visibility:"private"}}};
+  await page.locator("#backup-file").setInputFiles({name:"portforge-local-backup.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(backup))});
+  page.once("dialog",dialog=>dialog.accept());
+  await page.getByRole("button",{name:"Restore selected file"}).click();
+  await page.getByText(/Restored 1 browser-local sections/i).waitFor({timeout:7000});
+  await page.goto(base+"/dashboard");
+  await page.getByText("Welcome back, Restored Learner.").waitFor({timeout:7000});
+  process.stdout.write("OK portable backup, restoration and public data settings\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }

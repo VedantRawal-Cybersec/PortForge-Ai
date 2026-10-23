@@ -46,6 +46,7 @@ export default function Portfolio() {
       </div>
 
       <ProfileBuilder />
+      <p className="text-sm text-muted-foreground">Keep a backup of your work. <Link to="/my-data" className="text-led-cyan hover:underline">Export, restore or delete locally saved progress</Link>.</p>
       <section className="grid md:grid-cols-2 gap-4" aria-label="Independent project evidence">
         <div className="panel p-5 sm:p-6 space-y-3">
           <h2 className="text-xl font-bold flex gap-2 items-center"><FlaskConical className="size-5 text-led-cyan"/> Independent challenge work</h2>

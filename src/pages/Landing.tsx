@@ -14,19 +14,18 @@ export default function Landing() {
             <span className="chip chip-cyan">
               <span className="led-dot animate-blink" /> YOUR SKILLS. YOUR FUTURE.
             </span>
-            <span className="chip text-muted-foreground">PROOF-BASED PORTFOLIO AI</span>
+            <span className="chip text-muted-foreground">LEARN • BUILD • GROW</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[0.95] text-balance animate-fade-up">
-            Don't claim skills.<br />
+            Learn it. Build it.<br />
             <span className="bg-gradient-to-r from-led-cyan via-foreground to-led-violet bg-clip-text text-transparent">
-              Prove them.
+              Explain it.
             </span>
           </h1>
 
           <p className="mt-8 text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-fade-up" style={{ animationDelay: '120ms' }}>
-            A career launch system that <span className="text-foreground font-medium">tests, evaluates, and trains</span> you in real time —
-            interview practice, project feedback, and a personal record of your progress.
+            Start from any level. Learn concepts, solve independent challenges, and turn your own projects into stories you can confidently discuss. AI-powered feedback is available where supported.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: '240ms' }}>
@@ -34,14 +33,14 @@ export default function Landing() {
               to="/dashboard"
               className="group inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-6 py-3.5 rounded-md hover:bg-led-cyan hover:text-background transition-all duration-300 shadow-[0_0_0_1px_hsl(var(--foreground)),0_8px_24px_-4px_hsl(var(--led-cyan)/0.3)] hover:shadow-[0_0_0_1px_hsl(var(--led-cyan)),0_12px_32px_-4px_hsl(var(--led-cyan)/0.5)]"
             >
-              CREATE MY LEARNING PATH
+              START MY LEARNING JOURNEY
               <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
-              to="/interview"
+              to="/practice"
               className="inline-flex items-center gap-2 border border-border bg-surface-1 text-foreground font-bold text-sm px-6 py-3.5 rounded-md hover:border-led-cyan/50 hover:bg-surface-2 transition-all"
             >
-              <Mic className="size-4" /> PRACTICE AN INTERVIEW
+              <Code2 className="size-4" /> TRY A PRACTICE CHALLENGE
             </Link>
           </div>
 
@@ -56,7 +55,7 @@ export default function Landing() {
             <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// MODULES</div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Your toolkit for lasting progress.</h2>
           </div>
-          <Link to="/skill-test" className="hidden md:inline font-mono text-xs text-muted-foreground hover:text-led-cyan tracking-widest">VIEW ALL →</Link>
+          <Link to="/dashboard" className="hidden md:inline font-mono text-xs text-muted-foreground hover:text-led-cyan tracking-widest">VIEW ALL →</Link>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -91,7 +90,7 @@ export default function Landing() {
             <Sparkles className="size-6 text-led-cyan mb-6" />
             <p className="text-2xl md:text-4xl font-bold tracking-tight leading-[1.2] text-balance">
               "Portfolios show what you <span className="line-through text-muted-foreground">claim</span>.
-              This shows what you can <span className="text-led-cyan">build and explain</span>."
+              Build something you understand and <span className="text-led-cyan">explain what you learned</span>."
             </p>
             <p className="mt-6 text-muted-foreground font-mono text-xs tracking-widest uppercase">— Core Principle</p>
           </div>
@@ -175,21 +174,23 @@ export default function Landing() {
 const modules = [
   { code: "MOD 00", title: "Learning Academy", desc: "Start from zero with short lessons and quizzes. Follow your progress as you grow.", icon: Sparkles, to: "/learn" },
   { code: "MOD 01", title: "Micro Skill Test", desc: "Input a skill, get one precise question, get structured AI grading on logic, clarity, and depth.", icon: Brain, to: "/skill-test" },
-  { code: "MOD 02", title: "Voice Interview", desc: "Real-time AI interviewer with cognitive load tracking. Voice in, voice out, full transcript.", icon: Mic, to: "/interview" },
-  { code: "MOD 03", title: "Project Workspace", desc: "Build, run, and submit code. Receive structured AI evaluation and project upgrade paths.", icon: Code2, to: "/workspace" },
-  { code: "MOD 04", title: "Job Oracle", desc: "Pick a target role. See required skills, your gaps, and a tailored learning roadmap.", icon: Target, to: "/oracle" },
-  { code: "MOD 05", title: "Live Portfolio", desc: "Keep your assessments, practice sessions and reviewed projects in your own portfolio.", icon: Briefcase, to: "/portfolio" },
+  { code: "MOD 02", title: "Interview Simulator", desc: "Practice answering role-specific questions with voice or text and review AI-assisted feedback.", icon: Mic, to: "/interview" },
+  { code: "MOD 03", title: "Project Workspace", desc: "Edit many languages and run isolated JavaScript examples. Request AI-assisted reviews when available.", icon: Code2, to: "/workspace" },
+  { code: "MOD 04", title: "Career Explorer", desc: "Explore beginner-friendly role roadmaps, save milestones and optionally request AI-based suggestions.", icon: Target, to: "/oracle" },
+  { code: "MOD 05", title: "My Portfolio", desc: "Keep your own assessments, code challenges and project stories locally until cloud sync is available.", icon: Briefcase, to: "/portfolio" },
+  { code: "MOD 06", title: "Independent Practice Lab", desc: "Solve challenges independently, run repeatable JavaScript tests and reflect on your decisions.", icon: Code2, to: "/practice" },
+  { code: "MOD 07", title: "Project Interview Coach", desc: "Explain code you personally wrote: decisions, edge cases, fixes and next improvements.", icon: Mic, to: "/project-interview" },
 ];
 
 const steps = [
-  { title: "PROBE", desc: "Pick any skill. The AI generates one precise, role-relevant question.", icon: Brain },
-  { title: "EVALUATE", desc: "Structured grading: logic, clarity, depth — plus level and a one-line verdict.", icon: Zap },
-  { title: "GROW", desc: "Collect your work and continue learning from targeted next steps.", icon: CheckCircle2 },
+  { title: "LEARN", desc: "Begin with a short explanation, example and a knowledge check.", icon: Brain },
+  { title: "BUILD", desc: "Write a solution yourself, run tests and refine it.", icon: Code2 },
+  { title: "EXPLAIN", desc: "Connect your actual project to an interview story and future learning goals.", icon: CheckCircle2 },
 ];
 
 
 const startingPaths = [
-  { title: "I'm starting from zero", desc: "Not sure where to begin? Try a simple skill assessment and discover what to learn next.", action: "Explore skills", icon: Brain, to: "/skill-test" },
-  { title: "I want to build projects", desc: "Experiment with code, get feedback, and gradually develop real work to show.", action: "Open the workspace", icon: Code2, to: "/workspace" },
+  { title: "I'm starting from zero", desc: "Not sure where to begin? Try a simple skill assessment and discover what to learn next.", action: "Start learning", icon: Brain, to: "/learn" },
+  { title: "I want to build projects", desc: "Experiment with code, get feedback, and gradually develop real work to show.", action: "Try independent practice", icon: Code2, to: "/practice" },
   { title: "I'm preparing for my career", desc: "Explore target roles, identify gaps, and practice answering interview questions.", action: "Explore career paths", icon: Briefcase, to: "/oracle" },
 ];

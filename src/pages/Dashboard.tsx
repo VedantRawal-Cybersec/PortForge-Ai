@@ -4,6 +4,8 @@ import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save
 import { getProfile, saveProfile, type LearnerProfile } from "@/lib/profile";
 import { getLearning, tracks, totalLessons } from "@/lib/academy";
 import { getPortfolio } from "@/lib/portfolio";
+import { getCareerPlan } from "@/lib/careerPlans";
+import { exercises, getPractice } from "@/lib/practice";
 const actions = [
   {to:"/learn",title:"Learn something new",desc:"Short lessons from the basics",icon:BookOpen},
   {to:"/practice",title:"Independent practice",desc:"Solve challenges and run repeatable tests",icon:FlaskConical},
@@ -21,10 +23,12 @@ export default function Dashboard(){
   const [saved,setSaved]=useState(false);
   const [progress,setProgress]=useState(()=>getLearning());
   const [entries,setEntries]=useState(()=>getPortfolio());
+  const [career,setCareer]=useState(getCareerPlan);
+  const [practice,setPractice]=useState(getPractice);
   useEffect(()=>{
-    const sync=()=>{setProgress(getLearning());setEntries(getPortfolio());};
-    window.addEventListener("portforge:progress",sync);window.addEventListener("portfolio:update",sync);
-    return ()=>{window.removeEventListener("portforge:progress",sync);window.removeEventListener("portfolio:update",sync);};
+    const sync=()=>{setProgress(getLearning());setEntries(getPortfolio());setCareer(getCareerPlan());setPractice(getPractice());};
+    window.addEventListener("portforge:progress",sync);window.addEventListener("portfolio:update",sync);window.addEventListener("portforge:career",sync);window.addEventListener("portforge:practice",sync);
+    return ()=>{window.removeEventListener("portforge:progress",sync);window.removeEventListener("portfolio:update",sync);window.removeEventListener("portforge:career",sync);window.removeEventListener("portforge:practice",sync);};
   },[]);
   const completed=useMemo(()=>new Set(progress.passed).size,[progress.passed]);
   const recommended=tracks.find(t=>t.id===profile.focus)||tracks[0];
@@ -68,6 +72,22 @@ export default function Dashboard(){
         <p className="text-xs text-muted-foreground px-7 pb-5 flex items-center gap-2"><CheckCircle2 className="size-4"/> Real activity only. No simulated achievements.</p>
       </section>
     </div>
+    <section className="grid lg:grid-cols-2 gap-5">
+      <div className="panel p-5 sm:p-7">
+        <p className="font-mono text-xs tracking-widest text-led-cyan">INDEPENDENT WORK</p>
+        <h2 className="text-2xl font-bold mt-3">Move from learning to building.</h2>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">Your practice test results are self-tracked evidence, not certified credentials.</p>
+        <div className="text-3xl font-bold mt-5">{practice.filter(x=>x.total>0&&x.total===x.passed).length}/{exercises.length}<span className="text-sm text-muted-foreground font-normal ml-2">challenges passed</span></div>
+        <Link to="/practice" className="inline-flex gap-2 mt-5 items-center text-led-cyan text-sm font-semibold">Continue independent practice <ArrowRight className="size-4"/></Link>
+      </div>
+      <div className="panel p-5 sm:p-7">
+        <p className="font-mono text-xs tracking-widest text-led-cyan">YOUR CAREER DIRECTION</p>
+        <h2 className="text-2xl font-bold mt-3">{career?.role||"Explore a career path"}</h2>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{career?.overview||"Choose a role and build a milestone roadmap at your own pace."}</p>
+        {career&&<p className="text-sm font-semibold mt-4">{career.checked.length}/{career.steps.length} milestones self-tracked</p>}
+        <Link to="/oracle" className="inline-flex gap-2 mt-5 items-center text-led-cyan text-sm font-semibold">{career?"Continue my roadmap":"Explore career paths"} <ArrowRight className="size-4"/></Link>
+      </div>
+    </section>
     <section className="space-y-5">
       <div><h2 className="text-2xl md:text-3xl font-bold">Explore your workspace</h2><p className="text-muted-foreground mt-2">Everything connects to your learning journey.</p></div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{actions.map(({to,title,desc,icon:Icon})=><Link to={to} key={to} className="panel p-5 group hover:border-led-cyan/50 transition-all hover:-translate-y-1"><span className="size-11 bg-led-cyan/10 rounded-xl flex items-center justify-center mb-5"><Icon className="size-5 text-led-cyan"/></span><h3 className="text-lg font-bold">{title}</h3><p className="text-sm text-muted-foreground mt-2">{desc}</p><span className="inline-flex gap-2 items-center text-led-cyan text-sm mt-5">Open <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform"/></span></Link>)}</div>
