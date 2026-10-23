@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { BookOpen, Briefcase, Code2, Mic, Target, LayoutDashboard, GraduationCap } from "lucide-react";
+import { BookOpen, Briefcase, Code2, Mic, Target, LayoutDashboard, GraduationCap, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -13,6 +14,8 @@ const navItems = [
 
 export default function AppLayout() {
   const location = useLocation();
+  const [theme,setTheme] = useState<"dark"|"light">(()=>{try{return localStorage.getItem("portforge_theme")==="light"?"light":"dark";}catch{return "dark";}});
+  useEffect(()=>{document.documentElement.classList.toggle("light",theme==="light");document.documentElement.classList.toggle("dark",theme==="dark");try{localStorage.setItem("portforge_theme",theme);}catch{}},[theme]);
   return (
     <div className="min-h-dvh flex flex-col">
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/90 border-b border-border">
@@ -27,9 +30,12 @@ export default function AppLayout() {
               </NavLink>
             ))}
           </nav>
-          <Link to="/dashboard" className="hidden sm:inline-flex rounded-lg bg-foreground text-background px-4 py-2 text-sm font-bold hover:bg-led-cyan transition-colors">
-            Get started
-          </Link>
+          <div className="flex items-center gap-2">
+            <button type="button" aria-label={theme==="dark"?"Switch to light mode":"Switch to dark mode"} title={theme==="dark"?"Light mode":"Dark mode"} onClick={()=>setTheme(v=>v==="dark"?"light":"dark")} className="inline-flex size-10 items-center justify-center rounded-lg border border-border hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-led-cyan">
+              {theme==="dark"?<Sun className="size-5" aria-hidden="true"/>:<Moon className="size-5" aria-hidden="true"/>}
+            </button>
+            <Link to="/dashboard" className="hidden sm:inline-flex rounded-lg bg-foreground text-background px-4 py-2 text-sm font-bold hover:bg-led-cyan transition-colors">Get started</Link>
+          </div>
         </div>
         <nav aria-label="Mobile navigation" className="xl:hidden flex gap-1 px-4 pb-2 overflow-x-auto">
           {navItems.map(({ to, label, icon: Icon }) => (
