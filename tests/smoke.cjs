@@ -19,7 +19,7 @@ async function run(){
   const page=await context.newPage();
   const errors=[];
   page.on("pageerror",e=>errors.push(e.message));
-  const paths=["/","/dashboard","/learn","/portfolio","/workspace","/skill-test","/interview","/oracle"];
+  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/workspace","/skill-test","/interview","/oracle"];
   for(const path of paths){
     const resp=await page.goto(base+path,{waitUntil:"domcontentloaded"});
     assert(resp&&resp.ok(),"route "+path+" returned non-2xx");
@@ -29,6 +29,17 @@ async function run(){
     if(errors.length)throw Error(path+" browser error: "+errors.join("; "));
     process.stdout.write("OK "+path+" ("+text.length+" chars)\n");
   }
+  await page.goto(base+"/");
+  await page.getByRole("button",{name:"Switch to light mode"}).click();
+  assert(await page.evaluate(()=>document.documentElement.classList.contains("light")),"light theme not applied");
+  await page.goto(base+"/dashboard");
+  assert(await page.evaluate(()=>document.documentElement.classList.contains("light")),"theme not persisted");
+  await page.getByRole("button",{name:"Switch to dark mode"}).click();
+  await page.goto(base+"/missions");
+  await page.getByText("Create your first functioning program").click();
+  await page.getByText("Create a program with a variable.").click();
+  assert((await page.locator("#main-content").innerText()).includes("1 / 3 STEPS CHECKED"),"mission progress not saved");
+  process.stdout.write("OK theme toggle and mission checklist\n");
   await page.goto(base+"/dashboard");
   await page.getByPlaceholder("Your name").fill("Smoke Learner");
   await page.getByRole("button",{name:/save preferences/i}).click();
