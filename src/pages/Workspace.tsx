@@ -318,7 +318,7 @@ export default function Workspace() {
 
             <div className="flex gap-2 flex-wrap">
               <button onClick={run} disabled={running} className="bg-foreground text-background font-bold text-sm px-4 py-2.5 rounded hover:bg-led-green transition-colors inline-flex items-center gap-2">
-                <Play className="size-4" /> RUN {lang.runnable ? "" : "(simulated)"}
+                <Play className="size-4" /> {running ? "RUNNING…" : lang.runnable ? "RUN JAVASCRIPT" : "RUNTIME UNAVAILABLE"}
               </button>
               <button onClick={save} className="border border-border bg-surface-2 text-sm px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2">
                 <Save className="size-4" /> SAVE
