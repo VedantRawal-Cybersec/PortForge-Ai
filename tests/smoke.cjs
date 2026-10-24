@@ -104,6 +104,13 @@ async function run(){
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   assert(!horizontalOverflow, "mobile landing page overflows horizontally");
   await page.goto(base + "/portfolio");
+  await page.getByRole("button", { name: "Create your first project" }).click();
+  await page.getByPlaceholder("e.g. Task tracking dashboard").fill("Portfolio smoke project");
+  await page.getByPlaceholder("Explain the problem, how your project works and why it matters.").fill("I built this real demonstration project to verify personal project editing and export.");
+  await page.getByRole("button", { name: "Save project" }).click();
+  await page.getByRole("heading", { name: "Portfolio smoke project" }).waitFor();
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.getByRole("heading", { name: "Portfolio smoke project" }).waitFor();
   const preview = page.locator('iframe[title="Preview of your locally generated portfolio"]');
   await preview.waitFor({ state: "visible" });
   await page.getByRole("button", { name: "Editorial" }).click();
@@ -111,6 +118,7 @@ async function run(){
   assert.equal(await page.getByRole("button", { name: "Mobile", exact: true }).getAttribute("aria-pressed"), "true");
   assert((await preview.getAttribute("srcdoc")).includes("--bg:#f4efe6"), "portfolio theme should appear in live preview");
   assert.equal(await preview.getAttribute("sandbox"), "", "portfolio iframe must be sandboxed");
+  assert((await preview.getAttribute("srcdoc")).includes("Portfolio smoke project"), "authored projects must appear in the exported preview");
   const portfolioDownloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: /Download portfolio HTML/i }).click();
   const portfolioDownload = await portfolioDownloadPromise;
