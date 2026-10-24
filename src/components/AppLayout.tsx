@@ -1,16 +1,15 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { BookOpen, Briefcase, Code2, Mic, Target, LayoutDashboard, GraduationCap, Moon, Sun, FlaskConical } from "lucide-react";
+import { BookOpen, Briefcase, Code2, Mic, Target, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
+// Keep the original five core tools in primary navigation. Learning,
+// independent practice and account/data tools remain reachable from Dashboard.
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/learn", label: "Learn", icon: GraduationCap },
-  { to: "/practice", label: "Practice", icon: FlaskConical },
-  { to: "/skill-test", label: "Skill test", icon: BookOpen },
+  { to: "/skill-test", label: "Skill Test", icon: BookOpen },
   { to: "/interview", label: "Interview", icon: Mic },
   { to: "/workspace", label: "Workspace", icon: Code2 },
-  { to: "/oracle", label: "Career paths", icon: Target },
-  { to: "/portfolio", label: "My portfolio", icon: Briefcase },
+  { to: "/oracle", label: "Oracle", icon: Target },
+  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
 ];
 
 export default function AppLayout() {
@@ -19,6 +18,7 @@ export default function AppLayout() {
   useEffect(()=>{document.documentElement.classList.toggle("light",theme==="light");document.documentElement.classList.toggle("dark",theme==="dark");try{localStorage.setItem("portforge_theme",theme);}catch{}},[theme]);
   return (
     <div className="min-h-dvh flex flex-col">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-background focus:p-3 focus:text-foreground">Skip to main content</a>
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/90 border-b border-border">
         <div className="max-w-[1400px] mx-auto px-4 lg:px-6 min-h-16 flex items-center justify-between gap-4">
           <Link to="/" className="font-bold text-lg tracking-tight whitespace-nowrap" aria-label="PortForge AI home">

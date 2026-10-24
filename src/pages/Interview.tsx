@@ -36,8 +36,7 @@ export default function Interview() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
-  const silenceSinceRef = useRef<number | null>(null);
-  const autoSubmitRef = useRef<number | null>(null);
+
 
   // Browser TTS fallback
   function browserSpeak(text: string): Promise<void> {
@@ -99,10 +98,14 @@ export default function Interview() {
   }
 
   async function nextQuestion(index: number) {
-    setLoadingQ(true); setQIndex(index); setTranscript(""); setInterim("");
+    stopSpeaking(); stopListening();
+    setLoadingQ(true); setQIndex(index); setQuestion(""); setTranscript(""); setInterim("");
     const { data, error } = await supabase.functions.invoke("ai-evaluate", { body: { mode: "interview_question", skill, index: index + 1 } });
     setLoadingQ(false);
-    if (error || data?.error) { toast.error(data?.error ?? "Question fetch failed"); return; }
+    if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
+      toast.error(data?.error ?? "Question unavailable. End the session and try again.");
+      return;
+    }
     setQuestion(data.question);
     speak(data.question);
   }
@@ -117,7 +120,7 @@ export default function Interview() {
     audioCtxRef.current = ctx;
     analyserRef.current = analyser;
     const buf = new Uint8Array(analyser.frequencyBinCount);
-    silenceSinceRef.current = null;
+
 
     const tick = () => {
       analyser.getByteFrequencyData(buf);
@@ -127,17 +130,7 @@ export default function Interview() {
       const level = Math.min(100, (avg / 128) * 100);
       setMicLevel(level);
 
-      // Auto-submit after 2.2s of silence (if we have content)
-      if (level < 6) {
-        if (silenceSinceRef.current == null) silenceSinceRef.current = performance.now();
-        else if (performance.now() - silenceSinceRef.current > 2200) {
-          if ((transcriptRef.current + " " + interimRef.current).trim().length > 8 && !autoSubmitRef.current) {
-            autoSubmitRef.current = window.setTimeout(() => { autoSubmitRef.current = null; submitAnswer(); }, 50);
-          }
-        }
-      } else {
-        silenceSinceRef.current = null;
-      }
+      // Users explicitly submit their answer. Silence never sends private transcript data.
       rafRef.current = requestAnimationFrame(tick);
     };
     tick();
@@ -154,13 +147,9 @@ export default function Interview() {
     setMicLevel(0);
   }
 
-  // Refs to read latest values inside RAF loop
-  const transcriptRef = useRef("");
-  const interimRef = useRef("");
-  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
-  useEffect(() => { interimRef.current = interim; }, [interim]);
-
   async function startListening() {
+    if (!question || loadingQ || loadingE || evals.length > qIndex) return;
+    stopSpeaking();
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { toast.error("Speech recognition not supported. Use the text fallback."); return; }
     try {
@@ -184,9 +173,14 @@ export default function Interview() {
     };
     r.onerror = () => { setListening(false); stopMicMonitor(); };
     r.onend = () => { setListening(false); stopMicMonitor(); };
-    r.start();
-    recogRef.current = r;
-    setListening(true);
+    try {
+      r.start();
+      recogRef.current = r;
+      setListening(true);
+    } catch {
+      stopMicMonitor();
+      toast.error("Microphone could not start. You can type an answer instead.");
+    }
   }
 
   function stopListening() {
@@ -196,6 +190,7 @@ export default function Interview() {
   }
 
   async function submitAnswer() {
+    if (loadingQ || loadingE || !question || evals.length > qIndex) return;
     const ans = (transcript + " " + interim).trim();
     if (!ans) { toast.error("No answer recorded"); return; }
     stopListening();
@@ -209,7 +204,7 @@ export default function Interview() {
     setEvals((p) => [...p, ev]);
     setLoad((l) => Math.max(0, Math.min(100, l + ev.cognitiveLoadDelta)));
     if (qIndex + 1 < 3) {
-      setTimeout(() => nextQuestion(qIndex + 1), 1200);
+      toast.success("Answer reviewed. Read your feedback, then choose Next question.");
     } else {
       const avg = (a: number, b: number, c: number, d: number) => Math.round(((a + b + c + d) / 4) * 10) / 10;
       const all = [...evals, ev];
@@ -288,7 +283,7 @@ export default function Interview() {
             </div>
 
             <p className="text-[11px] text-muted-foreground leading-relaxed pt-3 border-t border-border">
-              3 questions. Voice or text. Auto-submits after 2s silence.
+              3 questions. Speak or type, edit your answer, then submit when ready. Never auto-submits.
             </p>
           </div>
         </Panel>
@@ -307,7 +302,7 @@ export default function Interview() {
             {started && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">🧠 Cognitive Load</span>
+                  <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">AI-estimated practice intensity</span>
                   <span className="font-mono text-xs tabular-nums">{Math.round(load)}%</span>
                 </div>
                 <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
@@ -372,7 +367,7 @@ export default function Interview() {
                     )}
                     <button
                       onClick={listening ? stopListening : startListening}
-                      disabled={loadingE || speaking}
+                      disabled={loadingE || loadingQ || speaking || !question || evals.length > qIndex}
                       className={`relative size-24 rounded-full flex items-center justify-center transition-all duration-300 disabled:opacity-50 ${
                         listening
                           ? "bg-led-alert/20 border-2 border-led-alert glow-cyan"
@@ -405,7 +400,7 @@ export default function Interview() {
                   )}
 
                   <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mt-3">
-                    {speaking ? "AI is speaking…" : listening ? "Listening · auto-submits on silence" : "Tap to speak"}
+                    {speaking ? "AI is speaking…" : listening ? "Listening · tap again to stop" : "Tap to speak, or type below"}
                   </span>
                 </div>
 
@@ -416,23 +411,37 @@ export default function Interview() {
                     {transcript || <span className="text-muted-foreground">{listening ? "Listening…" : "—"}</span>}
                     {interim && <span className="text-led-cyan/70"> {interim}</span>}
                   </div>
-                  {!listening && (transcript || interim) && (
-                    <textarea
-                      value={transcript}
-                      onChange={(e) => setTranscript(e.target.value)}
-                      rows={3}
-                      placeholder="Edit transcript or type fallback…"
-                      className="w-full mt-2 bg-background border border-border rounded p-3 text-sm focus:outline-none focus:border-led-cyan/50"
-                    />
-                  )}
-                  <div className="flex gap-2 mt-3">
-                    <button onClick={submitAnswer} disabled={loadingE || (!transcript.trim() && !interim.trim())} className="flex-1 bg-foreground text-background font-bold text-sm py-2.5 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                  <label htmlFor="interview-text-answer" className="block text-xs text-muted-foreground mt-3 mb-2">
+                    Type your answer or correct the transcript before submitting
+                  </label>
+                  <textarea
+                    id="interview-text-answer"
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    disabled={listening || loadingE || loadingQ || evals.length > qIndex}
+                    rows={4}
+                    maxLength={8000}
+                    placeholder="You can complete the whole interview without a microphone. Type your answer here."
+                    className="w-full bg-background border border-border rounded p-3 text-sm focus:outline-none focus:border-led-cyan/50 disabled:opacity-65"
+                  />
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    <button onClick={submitAnswer} disabled={loadingE || loadingQ || evals.length > qIndex || (!transcript.trim() && !interim.trim())} className="flex-1 bg-foreground text-background font-bold text-sm py-2.5 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
                       {loadingE ? <Loader2 className="size-4 animate-spin" /> : <>SUBMIT ANSWER</>}
                     </button>
-                    <button onClick={retry} disabled={loadingE} className="border border-border bg-surface-2 px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2 text-sm">
+                    <button onClick={retry} disabled={loadingE || evals.length > qIndex} className="border border-border bg-surface-2 px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2 text-sm">
                       <RotateCcw className="size-4" /> RETRY
                     </button>
                   </div>
+                  {evals.length > qIndex && qIndex < 2 && (
+                    <button type="button" onClick={() => { stopSpeaking(); void nextQuestion(qIndex + 1); }}
+                      disabled={loadingQ}
+                      className="mt-4 w-full rounded-lg bg-led-cyan px-4 py-3 text-sm font-bold text-background hover:opacity-90">
+                      NEXT QUESTION ({qIndex + 2}/3)
+                    </button>
+                  )}
+                  {evals.length === 3 && (
+                    <p className="text-xs mt-3 text-led-green" role="status">Session complete. Your AI-assisted practice results were saved locally where storage permits.</p>
+                  )}
                 </div>
               </>
             )}
@@ -470,7 +479,7 @@ export default function Interview() {
           <Panel label="SESSION SUMMARY" status="DONE" statusVariant="green">
             <div className="p-5 text-sm space-y-2">
               <p>Avg confidence: <span className="font-mono text-led-amber">{avgConf.toFixed(1)}/5</span></p>
-              <p className="text-muted-foreground text-xs">Saved to portfolio with hash stamp.</p>
+              <p className="text-muted-foreground text-xs">Stored on this device as AI-assisted practice, not a verified credential.</p>
             </div>
           </Panel>
         )}

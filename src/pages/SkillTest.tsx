@@ -30,30 +30,66 @@ export default function SkillTest() {
 
   async function startTest(e: React.FormEvent) {
     e.preventDefault();
-    if (!skill.trim()) return;
-    setLoading(true); setStage("question");
-    const { data, error } = await supabase.functions.invoke("ai-evaluate", { body: { mode: "question", skill } });
-    setLoading(false);
-    if (error || data?.error) { toast.error(data?.error ?? "Failed to fetch question"); setStage("input"); return; }
-    setQuestion(data.question);
-    setStage("answering");
+    if (!skill.trim() || loading) return;
+    setLoading(true);
+    setStage("question");
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-evaluate", {
+        body: { mode: "question", skill: skill.trim().slice(0, 100) },
+      });
+      if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
+        throw new Error(data?.error || "A valid question was not returned. Try again.");
+      }
+      setQuestion(data.question);
+      setAnswer("");
+      setStage("answering");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Question service unavailable");
+      setStage("input");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function submitAnswer() {
-    if (!answer.trim()) return;
-    setStage("evaluating"); setLoading(true);
-    const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-      body: { mode: "evaluate", skill, question, answer },
-    });
-    setLoading(false);
-    if (error || data?.error) { toast.error(data?.error ?? "Eval failed"); setStage("answering"); return; }
-    setEvalData(data);
-    const entry = addToPortfolio({
-      type: "skill", title: skill, skill,
-      level: data.level, scores: data.scores, verdict: data.verdict,
-    });
-    setHash(entry.hash);
-    setStage("result");
+    if (!answer.trim() || loading) return;
+    setStage("evaluating");
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-evaluate", {
+        body: { mode: "evaluate", skill, question, answer: answer.trim().slice(0, 8000) },
+      });
+      if (error || data?.error) throw new Error(data?.error || "The evaluation service is unavailable.");
+      if (!data?.scores || !["logic", "clarity", "depth"].every(key =>
+        typeof data.scores[key] === "number" && Number.isFinite(data.scores[key]) &&
+        data.scores[key] >= 0 && data.scores[key] <= 5
+      ) || !["Beginner", "Intermediate", "Strong"].includes(data.level) ||
+        typeof data.verdict !== "string" || typeof data.idealAnswer !== "string" ||
+        !Array.isArray(data.resources) || !Array.isArray(data.projects)) {
+        throw new Error("The AI response was incomplete. Your answer is preserved; please retry.");
+      }
+      const clean: Eval = {
+        ...data,
+        resources: data.resources.filter((r: {url?: unknown}) =>
+          typeof r.url === "string" && /^https:\/\/[^\s]+$/i.test(r.url)
+        ).slice(0, 6),
+        projects: data.projects.slice(0, 3),
+      };
+      setEvalData(clean);
+      try {
+        const entry = addToPortfolio({
+          type: "skill", title: skill, skill,
+          level: clean.level, scores: clean.scores, verdict: clean.verdict,
+        });
+        setHash(entry.hash);
+      } catch { toast.info("Evaluation finished, but this device could not save its portfolio entry."); }
+      setStage("result");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Evaluation failed");
+      setStage("answering");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function reset() {
@@ -80,6 +116,15 @@ export default function SkillTest() {
                 placeholder="e.g. Python, React hooks, SQL joins…"
                 className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30 transition-all disabled:opacity-50"
               />
+              <div role="group" aria-label="Try a suggested skill" className="flex flex-wrap gap-2">
+                {["Python", "JavaScript", "SQL", "Communication"].map(example => (
+                  <button key={example} type="button" disabled={stage !== "input"}
+                    onClick={() => setSkill(example)}
+                    className="rounded-full border border-border bg-surface-2 px-3 py-1.5 text-xs hover:border-led-cyan/60 disabled:opacity-50">
+                    {example}
+                  </button>
+                ))}
+              </div>
               <button
                 type="submit"
                 disabled={stage !== "input" || !skill.trim() || loading}
@@ -99,7 +144,7 @@ export default function SkillTest() {
                   }`}>{v === "green" ? "🟢 OWN" : v === "amber" ? "🟡 LEARN" : "🔴 GUESS"}</button>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">Self-rate before you answer. Logged with your evaluation.</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">For personal reflection only. This choice does not change your AI score.</p>
             </div>
 
             {stage === "result" && (
@@ -148,11 +193,17 @@ export default function SkillTest() {
                   <textarea
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
+                    onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); void submitAnswer(); } }}
+                    maxLength={8000}
                     disabled={stage === "evaluating"}
                     rows={8}
                     placeholder="Type your answer. Be specific. Show reasoning."
                     className="w-full bg-background border border-border rounded p-4 text-sm font-mono leading-relaxed focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30"
                   />
+                  <div className="flex flex-wrap justify-between gap-2 mt-2 text-xs text-muted-foreground">
+                    <span>Explain your reasoning, include an example, and mention trade-offs.</span>
+                    <span className="tabular-nums">{answer.length}/8000 · Ctrl/⌘ + Enter</span>
+                  </div>
                   <button
                     onClick={submitAnswer}
                     disabled={stage === "evaluating" || !answer.trim()}
@@ -252,7 +303,7 @@ export default function SkillTest() {
 
       {/* RIGHT — Live readout */}
       <aside className="lg:col-span-3 space-y-4">
-        <Panel label="LIVE READOUT" status="SYNCED" statusVariant="green">
+        <Panel label="LIVE READOUT" status="LOCAL" statusVariant="cyan">
           <div className="p-5 space-y-4">
             <div>
               <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-1">Skill</div>
@@ -281,15 +332,15 @@ export default function SkillTest() {
           <div className="p-5 space-y-3 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Skill Decay</span>
-              <span>🔥 fresh</span>
+              <span className="text-muted-foreground">Practice regularly</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Peer rank (sim)</span>
-              <span className="font-mono text-led-cyan">Top 38%</span>
+              <span className="text-muted-foreground">Peer rank</span>
+              <span className="text-muted-foreground">Not ranked</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Blind Spot</span>
-              <span className="text-led-amber">{skill ? "related skills →" : "—"}</span>
+              <span className="text-led-amber">{evalData ? "See feedback above" : "Take a test first"}</span>
             </div>
           </div>
         </Panel>
