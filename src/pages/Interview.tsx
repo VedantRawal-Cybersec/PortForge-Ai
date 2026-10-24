@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Panel, ScoreBar } from "@/components/Panel";
+import { ModuleIntro } from "@/components/ModuleIntro";
 import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { supabase } from "@/integrations/supabase/client";
@@ -241,7 +242,10 @@ export default function Interview() {
   const avgConf = evals.length ? evals.reduce((s, x) => s + x.scores.confidence, 0) / evals.length : 0;
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-10 grid lg:grid-cols-12 gap-6">
+    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-7 sm:py-10 grid lg:grid-cols-12 gap-5 sm:gap-6">
+      <ModuleIntro eyebrow="02 / PRACTISE" title="Walk into interviews prepared."
+        description="Get better at expressing your ideas. Practise three guided questions by speaking or typing, and review each response before moving forward."
+        highlights={["Voice or text", "Your own pace", "Concrete feedback"]} icon={<Mic size={16}/>} />
       {/* LEFT */}
       <aside className="lg:col-span-3">
         <Panel label="INTERVIEW SETUP" status="MOD 02" statusVariant="cyan">
