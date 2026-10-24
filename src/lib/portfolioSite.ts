@@ -68,7 +68,7 @@ export function buildPortfolioSite(
         <p>${safeText(e.verdict)}</p>
         <div class="footnote">Recorded ${new Date(Number.isFinite(e.createdAt) ? e.createdAt : 0).toLocaleDateString("en-US", { year: "numeric", month: "short" })}. Feedback is advisory.</div>
       </article>`).join("\n")
-    : authoredProjects.length ? "" : '<div class="empty">No projects added yet. Add one to your Portfolio Studio.</div>';
+    : authoredProjects.length ? "" : '<div class="empty">No saved project reviews yet. Add your own projects in Portfolio Studio.</div>';
   const skillsHtml = skills.length
     ? skills.map(s => `<span class="tag">${safeText(s)}</span>`).join("\n")
     : '<span class="muted">Skills will appear here as you add your work.</span>';
@@ -106,6 +106,6 @@ main,header,footer{max-width:1080px;margin:auto;padding:0 30px}header{padding-to
 <section class="section" id="about"><div class="eyebrow">Introduction</div><h2>About me</h2><p class="lead">${bio}</p><div class="links">${linksHtml}</div></section>
 <section class="section"><div class="eyebrow">Personal practice</div><h2>Learning activities</h2><ul class="evidence">${evidenceHtml}</ul></section>
 </main>
-<footer>Portfolio compiled from locally saved user information. Projects may be user-authored or AI-reviewed; neither constitutes an independently verified qualification. Edit the source records to update this export.</footer>
+<footer>Portfolio compiled from locally saved user information. Projects may be user-authored or AI-reviewed. They are not independently verified credentials. Edit the source records to update this export.</footer>
 </body></html>`;
 }
