@@ -526,3 +526,37 @@ html.light .pf-home p { color: inherit; }
   .pf-showcase,.pf-tool-card,.pf-primary-action,.pf-secondary-action { transform:none!important;transition:none!important; }
   .pf-showcase-stage h2 { animation:none; }
 }
+
+
+/* Five-tool product shell */
+.pf-site-header {
+  border-bottom-color: hsl(var(--led-cyan) / .13);
+  box-shadow: 0 12px 45px -36px hsl(var(--led-cyan) / .28);
+}
+.pf-wordmark { display:inline-flex;align-items:center;gap:11px;letter-spacing:-.045em; }
+.pf-mark {
+  display:grid;place-items:center;width:34px;height:34px;
+  color:#082019;background:linear-gradient(135deg,#b3f9ee,#54d2c3);
+  border:1px solid rgba(255,255,255,.42);border-radius:10px;
+  box-shadow:0 7px 22px -11px #50dfca;
+}
+.pf-ai-mark {font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;margin-left:5px;color:hsl(var(--muted-foreground))}
+.pf-desktop-nav { padding:4px;border-radius:15px;background:hsl(var(--surface-2) / .5);border:1px solid hsl(var(--border) / .6); }
+.pf-nav-link { font-size:12px;white-space:nowrap; }
+.pf-nav-active { box-shadow:inset 0 0 0 1px hsl(var(--led-cyan) / .12); }
+.pf-header-cta { box-shadow:0 9px 25px -18px hsl(var(--led-cyan) / .6); }
+.pf-header-cta:hover svg {transform:translate(2px,-2px);}
+.pf-header-cta svg {transition:transform 180ms ease;}
+.pf-mobile-nav {scrollbar-width:none;scroll-snap-type:x proximity;}
+.pf-mobile-nav::-webkit-scrollbar {display:none;}
+.pf-mobile-link {scroll-snap-align:start;border:1px solid transparent;min-height:44px;}
+.pf-mobile-link.pf-nav-active {border-color:hsl(var(--led-cyan) / .3);}
+.pf-footer {background:linear-gradient(180deg,transparent,hsl(var(--surface-1) / .55));}
+@media(max-width:1080px){
+  .pf-site-header .pf-header-cta {display:none;}
+}
+@media(max-width:570px){
+  .pf-site-header .pf-wordmark {font-size:17px;}
+  .pf-site-header .pf-mark {width:32px;height:32px;}
+  .pf-site-header .pf-mobile-link {padding:11px 13px;}
+}
