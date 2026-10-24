@@ -14,6 +14,7 @@ export default function Portfolio() {
   const [entries, setEntries] = useState<PortfolioEntry[]>([]);
   const [profile, setProfile] = useState(getProfile);
   const [theme, setTheme] = useState<PortfolioTheme>("minimal");
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [filter, setFilter] = useState<"all" | PortfolioEntry["type"]>("all");
   const [query, setQuery] = useState("");
 
@@ -62,10 +63,10 @@ export default function Portfolio() {
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 space-y-8">
-      <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+      <header className="pf-module-intro flex flex-col md:flex-row md:items-end md:justify-between gap-5">
         <div className="max-w-2xl">
           <p className="text-xs uppercase tracking-widest text-led-cyan font-mono mb-2">YOUR WORK. YOUR PROGRESS.</p>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">My Portfolio</h1>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Your work, beautifully presented.</h1>
           <p className="text-muted-foreground mt-3 leading-relaxed">Track assessments, interview practice, and projects in one personal space. Your portfolio grows from the work you do here.</p>
         </div>
         {entries.length > 0 && (
@@ -101,10 +102,37 @@ export default function Portfolio() {
             </button>
           ))}
         </div>
+        <div className="rounded-2xl border border-border bg-background/70 overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-border bg-surface-2/60">
+            <div>
+              <p className="text-sm font-bold">Live portfolio preview</p>
+              <p className="text-[11px] text-muted-foreground">Updates when you save your profile or change style</p>
+            </div>
+            <div className="flex rounded-lg border border-border overflow-hidden" role="group" aria-label="Preview device size">
+              <button type="button" aria-pressed={previewDevice === "desktop"} onClick={() => setPreviewDevice("desktop")}
+                className={"px-3 py-2 text-xs font-bold " + (previewDevice === "desktop" ? "bg-led-cyan text-background" : "bg-surface-2 text-muted-foreground")}>
+                Desktop
+              </button>
+              <button type="button" aria-pressed={previewDevice === "mobile"} onClick={() => setPreviewDevice("mobile")}
+                className={"px-3 py-2 text-xs font-bold " + (previewDevice === "mobile" ? "bg-led-cyan text-background" : "bg-surface-2 text-muted-foreground")}>
+                Mobile
+              </button>
+            </div>
+          </div>
+          <div className="bg-surface-3/50 p-3 sm:p-5 min-h-[360px] overflow-x-auto flex justify-center">
+            <iframe title="Preview of your locally generated portfolio"
+              sandbox=""
+              referrerPolicy="no-referrer"
+              srcDoc={buildPortfolioSite(profile, entries, theme)}
+              style={{width: previewDevice === "mobile" ? "360px" : "100%", height: "490px", maxWidth: previewDevice === "mobile" ? "360px" : "100%"}}
+              className="border border-border rounded-xl bg-white shadow-xl transition-[width] duration-300"
+            />
+          </div>
+        </div>
         <div className="flex flex-wrap gap-3">
           <button type="button" onClick={() => exportSite(true)}
             className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-3 text-sm font-bold hover:border-led-cyan/50">
-            <Eye className="size-4"/> Preview portfolio
+            <Eye className="size-4"/> Open in new tab
           </button>
           <button type="button" onClick={() => exportSite(false)}
             className="inline-flex items-center gap-2 rounded-lg bg-foreground text-background px-5 py-3 text-sm font-bold hover:bg-led-cyan">
