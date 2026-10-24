@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 const SUGGESTIONS = Array.from(new Set([
   // ===== Programming Languages =====
@@ -210,9 +210,11 @@ interface Props {
   placeholder?: string;
   className?: string;
   onSubmit?: () => void;
+  label?: string;
 }
 
-export function SkillAutocomplete({ value, onChange, disabled, placeholder, className = "", onSubmit }: Props) {
+export function SkillAutocomplete({ value, onChange, disabled, placeholder, className = "", onSubmit, label = "Choose a skill" }: Props) {
+  const listId = useId();
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -251,13 +253,14 @@ export function SkillAutocomplete({ value, onChange, disabled, placeholder, clas
     if (open && matches.length) {
       if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx((i) => (i + 1) % matches.length); return; }
       if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx((i) => (i - 1 + matches.length) % matches.length); return; }
-      if (e.key === "Tab" || (e.key === "Enter" && matches[activeIdx])) {
+      if (e.key === "Enter" && matches[activeIdx]) {
         e.preventDefault();
         pick(matches[activeIdx]);
         return;
       }
       if (e.key === "Escape") { setOpen(false); return; }
     }
+    if (e.key === "Tab") setOpen(false);
     if (e.key === "Enter" && onSubmit) { onSubmit(); }
   }
 
@@ -265,6 +268,13 @@ export function SkillAutocomplete({ value, onChange, disabled, placeholder, clas
     <div ref={wrapRef} className="relative">
       <input
         value={value}
+        aria-label={label}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={open && matches.length > 0 && !disabled}
+        aria-controls={listId}
+        aria-activedescendant={open && matches.length ? listId + "-item-" + activeIdx : undefined}
+        maxLength={120}
         onChange={(e) => { onChange(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKey}
@@ -274,12 +284,16 @@ export function SkillAutocomplete({ value, onChange, disabled, placeholder, clas
         className={className}
       />
       {open && matches.length > 0 && !disabled && (
-        <div className="absolute z-50 left-0 right-0 mt-1 panel max-h-64 overflow-auto animate-fade-in">
+        <div id={listId} role="listbox" aria-label="Suggested topics" className="absolute z-50 left-0 right-0 mt-1 panel max-h-64 overflow-auto animate-fade-in">
           {matches.map((s, i) => (
             <button
               key={s}
+              id={listId + "-item-" + i}
+              role="option"
+              aria-selected={i === activeIdx}
               type="button"
-              onMouseDown={(e) => { e.preventDefault(); pick(s); }}
+              onClick={() => pick(s)}
+              onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setActiveIdx(i)}
               className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between transition-colors ${
                 i === activeIdx ? "bg-led-cyan/10 text-led-cyan" : "hover:bg-surface-2"

@@ -2,7 +2,8 @@
 const DATA_KEYS=[
  "portforge_profile_v2","portforge_learning_v1","portforge_missions_v1",
  "aero_workspace","aero_portfolio_v1","portforge_practice_v1",
- "portforge_project_interviews_v1","portforge_career_plan_v1"
+ "portforge_project_interviews_v1","portforge_career_plan_v1",
+ "portforge_showcase_projects_v1","portforge_workspace_language_drafts_v1"
 ] as const;
 type Backup={format:"portforge-local-backup";version:1;createdAt:string;items:Record<string,unknown>};
 export const PORTABLE_KEYS=[...DATA_KEYS];
@@ -21,8 +22,17 @@ export function downloadLocalBackup(){
  document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
 }
 function valid(key:string,value:unknown):boolean{
- if(value===null||typeof value!=="object"||Array.isArray(value)&&!["aero_portfolio_v1","portforge_practice_v1","portforge_project_interviews_v1"].includes(key))return false;
- if(["aero_portfolio_v1","portforge_practice_v1","portforge_project_interviews_v1"].includes(key))return Array.isArray(value)&&value.length<=60&&value.every(x=>x&&typeof x==="object");
+ if(value===null||typeof value!=="object"||Array.isArray(value)&&!["aero_portfolio_v1","portforge_practice_v1","portforge_project_interviews_v1","portforge_showcase_projects_v1"].includes(key))return false;
+ if(["aero_portfolio_v1","portforge_practice_v1","portforge_project_interviews_v1","portforge_showcase_projects_v1"].includes(key)){
+  if(!Array.isArray(value)||value.length>60||!value.every(x=>x&&typeof x==="object"&&!Array.isArray(x)))return false;
+  if(key==="portforge_showcase_projects_v1")return value.length<=24&&value.every(p=>
+    typeof p.id==="string"&&p.id.length<=80&&typeof p.title==="string"&&p.title.length<=100&&
+    typeof p.summary==="string"&&p.summary.length<=1200&&
+    ["technologies","role","outcome","projectUrl"].every(field=>p[field]===undefined||typeof p[field]==="string")&&
+    (!p.projectUrl||(/^https:\/\//.test(p.projectUrl)&&p.projectUrl.length<=600))
+  );
+  return true;
+}
  const x=value as Record<string,unknown>;
  switch(key){
   case "portforge_profile_v2":return typeof x.name==="string"&&x.name.length<=60&&typeof x.goal==="string"&&typeof x.level==="string";
@@ -30,6 +40,14 @@ function valid(key:string,value:unknown):boolean{
   case "portforge_missions_v1":return Object.keys(x).length<=100&&Object.values(x).every(v=>Array.isArray(v)&&v.length<=100);
   case "aero_workspace":return typeof x.code==="string"&&x.code.length<=30000&&typeof x.langId==="string"&&typeof x.desc==="string";
   case "portforge_career_plan_v1":return typeof x.role==="string"&&Array.isArray(x.steps)&&x.steps.length<=20&&Array.isArray(x.checked);
+  case "portforge_workspace_language_drafts_v1":
+    return Object.keys(x).length<=80&&Object.values(x).every(entry=>
+      !!entry&&typeof entry==="object"&&!Array.isArray(entry)&&
+      typeof (entry as Record<string,unknown>).code==="string"&&
+      ((entry as Record<string,unknown>).code as string).length<=30000&&
+      typeof (entry as Record<string,unknown>).desc==="string"&&
+      ((entry as Record<string,unknown>).desc as string).length<=180
+    );
   default:return false;
  }
 }
@@ -54,6 +72,7 @@ export function restoreLocalBackup(content:string):number{
  window.dispatchEvent(new Event("portforge:practice"));
  window.dispatchEvent(new Event("portforge:project-interview"));
  window.dispatchEvent(new Event("portforge:career"));
+ window.dispatchEvent(new Event("portforge:showcase-projects"));
  return entries.length;
 }
 export function clearLocalProgress(){
@@ -64,4 +83,5 @@ export function clearLocalProgress(){
  window.dispatchEvent(new Event("portforge:practice"));
  window.dispatchEvent(new Event("portforge:project-interview"));
  window.dispatchEvent(new Event("portforge:career"));
+ window.dispatchEvent(new Event("portforge:showcase-projects"));
 }

@@ -1,196 +1,171 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Brain, Briefcase, CheckCircle2, Code2, Mic, Sparkles, Target, Zap } from "lucide-react";
+import {
+  ArrowRight, AudioLines, BadgeCheck, BookOpen, BriefcaseBusiness,
+  ChevronRight, Code2, Compass, FileCode2, Layers3, Mic2,
+  MousePointer2, ShieldCheck, Sparkles, WandSparkles,
+} from "lucide-react";
+
+const tools = [
+  {
+    id: "01", title: "Skill Test", route: "/skill-test", icon: BadgeCheck,
+    eyebrow: "Discover what you know", color: "cyan",
+    desc: "Answer a focused question. Understand what is strong, what needs work, and what to practise next.",
+    heading: "Understand your strengths.",
+    detail: "Choose any topic, write your own answer and receive structured, clearly labelled AI feedback.",
+    metrics: ["Clear evaluation rubric", "Specific improvement steps", "Save your progress"],
+  },
+  {
+    id: "02", title: "Interview", route: "/interview", icon: Mic2,
+    eyebrow: "Build your confidence", color: "violet",
+    desc: "Practise real interview questions at your pace with voice or typing — without pressure.",
+    heading: "Get comfortable explaining your work.",
+    detail: "Listen to a question, respond by voice or text, and decide when you are ready to continue.",
+    metrics: ["Voice and text", "Review each response", "Helpful follow-ups"],
+  },
+  {
+    id: "03", title: "Workspace", route: "/workspace", icon: FileCode2,
+    eyebrow: "Make something real", color: "cyan",
+    desc: "Write code, run isolated JavaScript examples, improve your approach and save your drafts.",
+    heading: "Make progress, not just plans.",
+    detail: "Create a practice project in your chosen language and review the quality of your solution.",
+    metrics: ["Draft autosave", "JavaScript sandbox", "Advisory AI reviews"],
+  },
+  {
+    id: "04", title: "Oracle", route: "/oracle", icon: Compass,
+    eyebrow: "Find your direction", color: "amber",
+    desc: "Choose a career path, break it into achievable steps, and track the milestones you finish.",
+    heading: "Know exactly what to learn next.",
+    detail: "Start with a curated roadmap or request an AI-assisted plan for your target career.",
+    metrics: ["Actionable milestones", "Track real progress", "Export your roadmap"],
+  },
+  {
+    id: "05", title: "Portfolio", route: "/portfolio", icon: BriefcaseBusiness,
+    eyebrow: "Show your journey", color: "green",
+    desc: "Bring your work, assessments and projects together in a carefully presented personal portfolio.",
+    heading: "Turn your effort into a story.",
+    detail: "Choose a visual theme, preview your personal portfolio and download a standalone HTML website.",
+    metrics: ["Beautiful layouts", "Local HTML export", "Your data, your control"],
+  },
+] as const;
 
 export default function Landing() {
+  const [active, setActive] = useState(0);
+  const selected = tools[active];
+
   return (
-    <div className="relative">
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
-
-        <div className="max-w-[1400px] mx-auto px-6 pt-20 pb-24 relative">
-          <div className="flex items-center gap-2 mb-8 animate-fade-in">
-            <span className="chip chip-cyan">
-              <span className="led-dot animate-blink" /> YOUR SKILLS. YOUR FUTURE.
-            </span>
-            <span className="chip text-muted-foreground">LEARN • BUILD • GROW</span>
-          </div>
-
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[0.95] text-balance animate-fade-up">
-            Learn it. Build it.<br />
-            <span className="bg-gradient-to-r from-led-cyan via-foreground to-led-violet bg-clip-text text-transparent">
-              Explain it.
-            </span>
-          </h1>
-
-          <p className="mt-8 text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-fade-up" style={{ animationDelay: '120ms' }}>
-            Start from any level. Learn concepts, solve independent challenges, and turn your own projects into stories you can confidently discuss. AI-powered feedback is available where supported.
-          </p>
-
-          <div className="mt-10 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: '240ms' }}>
-            <Link
-              to="/dashboard"
-              className="group inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-6 py-3.5 rounded-md hover:bg-led-cyan hover:text-background transition-all duration-300 shadow-[0_0_0_1px_hsl(var(--foreground)),0_8px_24px_-4px_hsl(var(--led-cyan)/0.3)] hover:shadow-[0_0_0_1px_hsl(var(--led-cyan)),0_12px_32px_-4px_hsl(var(--led-cyan)/0.5)]"
-            >
-              START MY LEARNING JOURNEY
-              <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              to="/practice"
-              className="inline-flex items-center gap-2 border border-border bg-surface-1 text-foreground font-bold text-sm px-6 py-3.5 rounded-md hover:border-led-cyan/50 hover:bg-surface-2 transition-all"
-            >
-              <Code2 className="size-4" /> TRY A PRACTICE CHALLENGE
-            </Link>
-          </div>
-
-
-        </div>
-      </section>
-
-      {/* Modules */}
-      <section className="max-w-[1400px] mx-auto px-6 py-20">
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// MODULES</div>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Your toolkit for lasting progress.</h2>
-          </div>
-          <Link to="/dashboard" className="hidden md:inline font-mono text-xs text-muted-foreground hover:text-led-cyan tracking-widest">VIEW ALL →</Link>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {modules.map((m, i) => (
-            <Link
-              key={m.title}
-              to={m.to}
-              className="panel p-6 group hover:border-led-cyan/40 transition-all duration-500 hover:-translate-y-1 animate-fade-up"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <div className="flex items-start justify-between mb-6">
-                <div className="size-10 rounded-md bg-surface-2 border border-border flex items-center justify-center group-hover:bg-led-cyan/10 group-hover:border-led-cyan/40 transition-colors">
-                  <m.icon className="size-5 text-foreground group-hover:text-led-cyan transition-colors" />
-                </div>
-                <span className="font-mono text-[10px] text-muted-foreground tracking-widest">{m.code}</span>
-              </div>
-              <h3 className="text-xl font-bold tracking-tight mb-2">{m.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{m.desc}</p>
-              <div className="flex items-center gap-2 text-led-cyan font-mono text-[11px] tracking-widest">
-                LAUNCH <ArrowRight className="size-3 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Principle */}
-      <section className="max-w-[1400px] mx-auto px-6 py-20">
-        <div className="panel p-10 md:p-16 relative overflow-hidden">
-          <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
-          <div className="relative max-w-3xl">
-            <Sparkles className="size-6 text-led-cyan mb-6" />
-            <p className="text-2xl md:text-4xl font-bold tracking-tight leading-[1.2] text-balance">
-              "Portfolios show what you <span className="line-through text-muted-foreground">claim</span>.
-              Build something you understand and <span className="text-led-cyan">explain what you learned</span>."
+    <div className="pf-home">
+      <section className="pf-hero">
+        <div className="pf-hero-light" aria-hidden="true"/>
+        <div className="pf-hero-grid" aria-hidden="true"/>
+        <div className="pf-shell pf-hero-layout">
+          <div className="pf-hero-copy">
+            <p className="pf-eyebrow"><span className="pf-signal" aria-hidden="true"/> YOUR WORK. YOUR POTENTIAL. <span className="pf-eyebrow-line"/></p>
+            <h1>Don't just learn.<span>Show what you can do<span className="pf-period">.</span></span></h1>
+            <p className="pf-hero-description">
+              A more useful way to grow your skills, practise interviews, build real projects
+              and turn what you've learned into a portfolio worth sharing.
             </p>
-            <p className="mt-6 text-muted-foreground font-mono text-xs tracking-widest uppercase">— Core Principle</p>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="max-w-[1400px] mx-auto px-6 py-20">
-        <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// FLOW</div>
-        <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-12">From practice to progress.</h2>
-        <div className="grid md:grid-cols-3 gap-4">
-          {steps.map((s, i) => (
-            <div key={s.title} className="panel p-6 relative">
-              <div className="font-mono text-5xl font-bold text-led-cyan/20 absolute top-4 right-5">0{i+1}</div>
-              <div className="size-8 rounded bg-led-cyan/10 border border-led-cyan/30 flex items-center justify-center mb-4">
-                <s.icon className="size-4 text-led-cyan" />
-              </div>
-              <h3 className="font-bold text-lg mb-2">{s.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+            <div className="pf-hero-actions">
+              <Link className="pf-primary-action" to="/dashboard">Start building your future <ArrowRight size={18}/></Link>
+              <Link className="pf-secondary-action" to="/portfolio">Explore Portfolio Studio <ChevronRight size={17}/></Link>
             </div>
-          ))}
+            <div className="pf-hero-reassurance">
+              <span><ShieldCheck size={16}/> Start free, no account required for local practice</span>
+              <span><MousePointer2 size={15}/> Your first step, your pace</span>
+            </div>
+          </div>
+
+          <div className="pf-showcase" aria-label="Interactive preview of PortForge tools">
+            <div className="pf-showcase-header"><span className="pf-window-dots" aria-hidden="true"><i/><i/><i/></span><span>PORTFORGE / YOUR WORKSPACE</span><span className="pf-preview-status">INTERACTIVE PREVIEW</span></div>
+            <div className="pf-showcase-body">
+              <div className="pf-preview-tabs" role="tablist" aria-label="Preview a core tool">
+                {tools.map((tool, i) => {
+                  const Icon = tool.icon;
+                  return <button key={tool.id} type="button" role="tab" aria-selected={active === i} tabIndex={active === i ? 0 : -1}
+                    className={active === i ? "pf-preview-tab pf-preview-tab-active" : "pf-preview-tab"} onClick={() => setActive(i)}>
+                    <Icon size={15}/><span>{tool.title}</span>
+                  </button>;
+                })}
+              </div>
+              <div className="pf-showcase-stage" role="tabpanel">
+                <div className="pf-stage-topline"><span>WORKSPACE / {selected.id}</span><span><span className="pf-stage-star">✦</span> YOUR NEXT STEP</span></div>
+                <div className="pf-stage-icon"><selected.icon size={31}/></div>
+                <span className="pf-stage-kicker">{selected.eyebrow}</span>
+                <h2 key={selected.id}>{selected.heading}</h2>
+                <p>{selected.detail}</p>
+                <div className="pf-stage-highlights">
+                  {selected.metrics.map(item => <span key={item}><BadgeCheck size={14}/>{item}</span>)}
+                </div>
+                <Link to={selected.route} className="pf-stage-cta">Open {selected.title}<ArrowRight size={16}/></Link>
+              </div>
+            </div>
+            <div className="pf-showcase-footer"><span>01 — 05 / YOUR CORE TOOLS</span><span>DEMO CONTENT • NOT YOUR PERSONAL RESULTS</span></div>
+            <div className="pf-orbit pf-orbit-one" aria-hidden="true"/>
+            <div className="pf-orbit pf-orbit-two" aria-hidden="true"/>
+          </div>
+        </div>
+        <div className="pf-shell pf-hero-bottom"><span>LEARN WITH PURPOSE</span><span>BUILD WITH CLARITY</span><span>PROGRESS WITH PROOF</span><span className="pf-line-scroll">EXPLORE THE PLATFORM <span aria-hidden="true">↓</span></span></div>
+      </section>
+
+      <section className="pf-tools-section pf-shell" aria-labelledby="pf-tools-title">
+        <div className="pf-section-heading">
+          <div><p className="pf-eyebrow"><span className="pf-signal" aria-hidden="true"/> ONE CONNECTED WORKSPACE</p>
+            <h2 id="pf-tools-title">Five tools.<br/><em>One bigger ambition.</em></h2>
+          </div>
+          <p>Everything is designed around one outcome: knowing what you can do,
+            improving what you cannot yet do, and making your progress visible.</p>
+        </div>
+        <div className="pf-tool-grid">
+          {tools.map((tool, index) => {
+            const Icon = tool.icon;
+            return (
+              <Link to={tool.route} key={tool.id} className={"pf-tool-card pf-accent-" + tool.color}>
+                <div className="pf-tool-card-top"><span className="pf-tool-icon"><Icon size={23}/></span><span className="pf-tool-index">{tool.id} / 05</span></div>
+                <span className="pf-tool-eyebrow">{tool.eyebrow}</span>
+                <h3>{tool.title}</h3>
+                <p>{tool.desc}</p>
+                <span className="pf-tool-link">Explore tool <ArrowRight size={16}/></span>
+                <span className="pf-tool-glow" aria-hidden="true"/>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
-      {/* Universal starting points — no personal portfolio content */}
-      <section className="max-w-[1400px] mx-auto px-6 py-20" aria-labelledby="getting-started-heading">
-        <div className="mb-10 max-w-3xl">
-          <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// YOUR STARTING POINT</div>
-          <h2 id="getting-started-heading" className="text-4xl md:text-5xl font-bold tracking-tight text-balance">Start where you are. Build what comes next.</h2>
-          <p className="mt-4 text-muted-foreground leading-relaxed">
-            You do not need a degree, a polished resume, or previous experience to begin. Choose a goal and explore the tools at your own pace.
-          </p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {startingPaths.map((path) => (
-            <Link key={path.title} to={path.to} className="panel group p-6 hover:border-led-cyan/40 hover:-translate-y-1 transition-all duration-300">
-              <span className="inline-flex size-11 items-center justify-center rounded-xl bg-led-cyan/10 border border-led-cyan/20 mb-5">
-                <path.icon className="size-5 text-led-cyan" aria-hidden="true" />
-              </span>
-              <h3 className="font-bold text-xl mb-2">{path.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-5">{path.desc}</p>
-              <span className="inline-flex items-center gap-2 text-led-cyan text-sm font-semibold">{path.action}<ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" /></span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Honest, product-centered portfolio overview */}
-      <section className="max-w-[1400px] mx-auto px-6 py-20">
-        <div className="panel p-8 md:p-12 grid md:grid-cols-[1.4fr_1fr] items-center gap-8">
+      <section className="pf-shell pf-process-section">
+        <div className="pf-process-card">
           <div>
-            <div className="font-mono text-[11px] tracking-widest text-led-cyan uppercase mb-2">// YOUR WORK, YOUR STORY</div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Turn practice into a portfolio.</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Keep track of your skill assessments, interviews, and project reviews. Build a body of work you can explain and develop over time.
-            </p>
+            <p className="pf-eyebrow"><span className="pf-signal" aria-hidden="true"/> BUILT FOR THE WAY YOU GROW</p>
+            <h2>Progress should feel <em>possible.</em></h2>
+            <p>Start without prior experience. Build confidence with one useful action at a time.
+              No complicated setup, inflated scores or invented achievements.</p>
+            <Link to="/dashboard" className="pf-inline-action">Choose your starting point <ArrowRight size={17}/></Link>
           </div>
-          <Link to="/portfolio" className="inline-flex justify-center items-center gap-2 rounded-lg bg-foreground text-background py-3.5 px-5 font-semibold hover:bg-led-cyan transition-colors">
-            Explore my portfolio <ArrowRight className="size-4" aria-hidden="true" />
-          </Link>
+          <div className="pf-process-steps">
+            <div><span><BookOpen size={21}/></span><strong>01. Discover</strong><p>Find your skills and the next thing to learn.</p></div>
+            <div><span><Code2 size={21}/></span><strong>02. Practice</strong><p>Build, solve problems and learn to explain your decisions.</p></div>
+            <div><span><Layers3 size={21}/></span><strong>03. Present</strong><p>Organise your work and create a portfolio in your own style.</p></div>
+          </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="max-w-[1400px] mx-auto px-6 py-20">
-        <div className="panel p-10 md:p-14 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-glow opacity-50" />
-          <div className="relative">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Ready to make progress?</h2>
-            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">Start with a skill test. Two minutes. Personalized feedback. A clear next step.</p>
-            <Link to="/dashboard" className="inline-flex items-center gap-2 bg-foreground text-background font-bold text-sm px-7 py-3.5 rounded-md hover:bg-led-cyan transition-colors">
-              <Zap className="size-4" /> GET STARTED
-            </Link>
-          </div>
+      <section className="pf-shell pf-trust-section" aria-label="Responsible and transparent learning">
+        <div><ShieldCheck size={23}/><strong>Your work stays yours</strong><p>Practice and portfolio records are saved in your browser for now. Export backups to keep them safe.</p></div>
+        <div><AudioLines size={23}/><strong>Learn your way</strong><p>Speak or type interview answers; review feedback at your own pace.</p></div>
+        <div><WandSparkles size={23}/><strong>AI with clear boundaries</strong><p>AI feedback is advisory. We do not claim self-assessed activities are certified credentials.</p></div>
+      </section>
+
+      <section className="pf-shell pf-final-section">
+        <div className="pf-final-panel">
+          <div className="pf-final-glow" aria-hidden="true"/>
+          <p className="pf-eyebrow"><span className="pf-signal" aria-hidden="true"/> THE NEXT CHAPTER STARTS HERE</p>
+          <h2>Make something you're <em>proud to show.</em></h2>
+          <p>Start with one skill, one project, or one conversation. PortForge helps you turn the next step into real progress.</p>
+          <div className="pf-hero-actions"><Link to="/dashboard" className="pf-primary-action">Open your workspace <ArrowRight size={18}/></Link>
+            <Link to="/skill-test" className="pf-secondary-action">Try a skill test <ChevronRight size={17}/></Link></div>
         </div>
       </section>
     </div>
   );
 }
-
-const modules = [
-  { code: "MOD 00", title: "Learning Academy", desc: "Start from zero with short lessons and quizzes. Follow your progress as you grow.", icon: Sparkles, to: "/learn" },
-  { code: "MOD 01", title: "Micro Skill Test", desc: "Input a skill, get one precise question, get structured AI grading on logic, clarity, and depth.", icon: Brain, to: "/skill-test" },
-  { code: "MOD 02", title: "Interview Simulator", desc: "Practice answering role-specific questions with voice or text and review AI-assisted feedback.", icon: Mic, to: "/interview" },
-  { code: "MOD 03", title: "Project Workspace", desc: "Edit many languages and run isolated JavaScript examples. Request AI-assisted reviews when available.", icon: Code2, to: "/workspace" },
-  { code: "MOD 04", title: "Career Explorer", desc: "Explore beginner-friendly role roadmaps, save milestones and optionally request AI-based suggestions.", icon: Target, to: "/oracle" },
-  { code: "MOD 05", title: "My Portfolio", desc: "Keep your own assessments, code challenges and project stories locally until cloud sync is available.", icon: Briefcase, to: "/portfolio" },
-  { code: "MOD 06", title: "Independent Practice Lab", desc: "Solve challenges independently, run repeatable JavaScript tests and reflect on your decisions.", icon: Code2, to: "/practice" },
-  { code: "MOD 07", title: "Project Interview Coach", desc: "Explain code you personally wrote: decisions, edge cases, fixes and next improvements.", icon: Mic, to: "/project-interview" },
-];
-
-const steps = [
-  { title: "LEARN", desc: "Begin with a short explanation, example and a knowledge check.", icon: Brain },
-  { title: "BUILD", desc: "Write a solution yourself, run tests and refine it.", icon: Code2 },
-  { title: "EXPLAIN", desc: "Connect your actual project to an interview story and future learning goals.", icon: CheckCircle2 },
-];
-
-
-const startingPaths = [
-  { title: "I'm starting from zero", desc: "Not sure where to begin? Try a simple skill assessment and discover what to learn next.", action: "Start learning", icon: Brain, to: "/learn" },
-  { title: "I want to build projects", desc: "Experiment with code, get feedback, and gradually develop real work to show.", action: "Try independent practice", icon: Code2, to: "/practice" },
-  { title: "I'm preparing for my career", desc: "Explore target roles, identify gaps, and practice answering interview questions.", action: "Explore career paths", icon: Briefcase, to: "/oracle" },
-];

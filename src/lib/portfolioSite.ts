@@ -1,5 +1,6 @@
 import type { LearnerProfile } from "./profile";
 import type { PortfolioEntry } from "./portfolio";
+import type { ShowcaseProject } from "./showcaseProjects";
 
 export type PortfolioTheme = "minimal" | "editorial" | "night";
 
@@ -33,6 +34,7 @@ export function buildPortfolioSite(
   profile: LearnerProfile,
   entries: PortfolioEntry[],
   theme: PortfolioTheme,
+  authoredProjects: ShowcaseProject[] = [],
 ): string {
   const selected = portfolioThemes.some(item => item.id === theme) ? theme : "minimal";
   const name = escapePortfolioHtml(profile.name.trim() || "My Portfolio");
@@ -40,9 +42,25 @@ export function buildPortfolioSite(
   const bio = escapePortfolioHtml(profile.bio.trim() || "A collection of projects and learning experiences.");
   const projects = entries.filter(e => e.type === "project").slice(0, 24);
   const practice = entries.filter(e => e.type !== "project").slice(0, 24);
-  const skills = [...new Set(entries.filter(e => e.type === "skill").map(e => e.skill.trim()).filter(Boolean))].slice(0, 24);
+  const skills = [...new Set([
+    ...entries.filter(e => e.type === "skill").map(e => e.skill.trim()),
+    ...authoredProjects.flatMap(project => project.technologies.split(",").map(s => s.trim())),
+  ].filter(Boolean))].slice(0, 30);
   const links = profile.links.map(externalLink).filter((url): url is string => !!url).slice(0, 8);
   const safeText = (text: unknown) => escapePortfolioHtml(text);
+  const authoredHtml = authoredProjects.slice(0,24).map(project => {
+    const external = externalLink(project.projectUrl);
+    return '<article class="project">' +
+      '<div class="eyebrow">Self-reported project</div>' +
+      '<h3>' + safeText(project.title) + '</h3>' +
+      '<p>' + safeText(project.summary) + '</p>' +
+      (project.role ? '<p><strong>My role:</strong> ' + safeText(project.role) + '</p>' : '') +
+      (project.outcome ? '<p><strong>What I achieved:</strong> ' + safeText(project.outcome) + '</p>' : '') +
+      (project.technologies ? '<div class="footnote">Tools: ' + safeText(project.technologies) + '</div>' : '') +
+      (external ? '<div class="footnote"><a href="' + safeText(external) +
+        '" target="_blank" rel="noopener noreferrer">View project ↗</a></div>' : '') +
+      '</article>';
+  }).join("\n");
   const projectHtml = projects.length
     ? projects.map(e => `<article class="project">
         <div class="eyebrow">AI-reviewed practice · ${safeText(e.skill)}</div>
@@ -50,7 +68,7 @@ export function buildPortfolioSite(
         <p>${safeText(e.verdict)}</p>
         <div class="footnote">Recorded ${new Date(Number.isFinite(e.createdAt) ? e.createdAt : 0).toLocaleDateString("en-US", { year: "numeric", month: "short" })}. Feedback is advisory.</div>
       </article>`).join("\n")
-    : '<div class="empty">No saved project reviews yet. Add projects as you build them.</div>';
+    : authoredProjects.length ? "" : '<div class="empty">No saved project reviews yet. Add your own projects in Portfolio Studio.</div>';
   const skillsHtml = skills.length
     ? skills.map(s => `<span class="tag">${safeText(s)}</span>`).join("\n")
     : '<span class="muted">Skills will appear here as you add your work.</span>';
@@ -83,11 +101,11 @@ main,header,footer{max-width:1080px;margin:auto;padding:0 30px}header{padding-to
 <header><strong>${name}</strong><nav aria-label="Sections"><a href="#work">Projects</a><a href="#skills">Skills</a><a href="#about">About</a></nav></header>
 <main>
 <section class="hero" id="top"><div class="eyebrow">Personal portfolio</div><h1>${name}</h1><p class="lead">${headline}</p></section>
-<section class="section" id="work"><div class="eyebrow">Selected work</div><h2>Projects & experience</h2><div class="projects">${projectHtml}</div></section>
+<section class="section" id="work"><div class="eyebrow">Selected work</div><h2>Projects & experience</h2><div class="projects">${authoredHtml}${projectHtml}</div></section>
 <section class="section" id="skills"><div class="eyebrow">Learning record</div><h2>Skills explored</h2><div class="tags">${skillsHtml}</div></section>
 <section class="section" id="about"><div class="eyebrow">Introduction</div><h2>About me</h2><p class="lead">${bio}</p><div class="links">${linksHtml}</div></section>
 <section class="section"><div class="eyebrow">Personal practice</div><h2>Learning activities</h2><ul class="evidence">${evidenceHtml}</ul></section>
 </main>
-<footer>Portfolio compiled from locally saved user information and AI-assisted practice. Entries are self-reported or AI-reviewed; they are not independently verified credentials. Edit the source records to update this export.</footer>
+<footer>Portfolio compiled from locally saved user information. Projects may be user-authored or AI-reviewed. They are not independently verified credentials. Edit the source records to update this export.</footer>
 </body></html>`;
 }
