@@ -155,6 +155,23 @@ int main(){ std::cout << "Hello, world\\n"; }
 
 const byId = (id: string) => LANGUAGES.find(l => l.id === id) || LANGUAGES[0];
 
+// Per-language drafts prevent accidentally losing work when switching editors.
+// Browser-local only: users should still export backups before clearing storage.
+const DRAFTS_KEY = "portforge_workspace_language_drafts_v1";
+type WorkspaceDraft = { code: string; desc: string };
+function readDrafts(): Record<string, WorkspaceDraft> {
+  try {
+    const value = JSON.parse(localStorage.getItem(DRAFTS_KEY) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+function storeDraft(id: string, code: string, desc: string) {
+  if (code.length > 30000) return;
+  const drafts = readDrafts();
+  drafts[id] = { code, desc };
+  localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+}
+
 export default function Workspace() {
   const [langId, setLangId] = useState<string>("javascript");
   const lang = byId(langId);
@@ -184,9 +201,15 @@ export default function Workspace() {
   }, [filtered]);
 
   function selectLang(id: string) {
+    if (id === langId) { setPickerOpen(false); return; }
+    try { storeDraft(langId, code, desc); }
+    catch { toast.error("Could not save the current language draft on this device."); }
     const l = byId(id);
+    const saved = readDrafts()[id];
     setLangId(id);
-    setCode(l.starter);
+    setCode(typeof saved?.code === "string" && saved.code.length <= 30000 ? saved.code : l.starter);
+    setDesc(typeof saved?.desc === "string" ? saved.desc : l.label + " practice project");
+    setEvalData(null);
     setOutput([]);
     setPickerOpen(false);
     setSearch("");
@@ -223,9 +246,24 @@ export default function Workspace() {
     } catch { /* malformed local draft: start with a safe example */ }
   }, []);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        storeDraft(langId, code, desc);
+        localStorage.setItem("aero_workspace", JSON.stringify({ langId, code, desc }));
+      } catch { /* Private mode or full storage: manual Save reports the error. */ }
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [langId, code, desc]);
+
   function save() {
-    localStorage.setItem("aero_workspace", JSON.stringify({ langId, code, desc }));
-    toast.success("Saved locally");
+    try {
+      storeDraft(langId, code, desc);
+      localStorage.setItem("aero_workspace", JSON.stringify({ langId, code, desc }));
+      toast.success("Saved on this device");
+    } catch {
+      toast.error("Your browser could not save the project. Copy the code to a safe location.");
+    }
   }
 
   async function submit() {
@@ -235,8 +273,23 @@ export default function Workspace() {
       body: { mode: "project_evaluate", code, description: desc, language: lang.label },
     });
     setLoading(false);
-    if (error || data?.error) { toast.error(data?.error ?? "Eval failed"); return; }
-    setEvalData(data);
+    if (error || data?.error) { toast.error(data?.error ?? "AI review is unavailable"); return; }
+    if (!data?.scores || !["logic", "quality", "structure", "creativity"].every(k =>
+      typeof data.scores[k] === "number" && Number.isFinite(data.scores[k]) &&
+      data.scores[k] >= 0 && data.scores[k] <= 5
+    ) || !["Beginner", "Intermediate", "Strong"].includes(data.level) ||
+      typeof data.verdict !== "string" || !Array.isArray(data.resources) ||
+      !Array.isArray(data.upgrades)) {
+      toast.error("The AI review was incomplete. Your draft has been preserved.");
+      return;
+    }
+    setEvalData({
+      ...data,
+      resources: data.resources.filter((r: {url?:unknown}) =>
+        typeof r.url === "string" && /^https:\/\/[^\s]+$/i.test(r.url)
+      ).slice(0, 5),
+      upgrades: data.upgrades.slice(0, 3),
+    });
     addToPortfolio({
       type: "project", title: desc || "Untitled Project", skill: lang.label,
       level: data.level, scores: data.scores, verdict: data.verdict,
@@ -252,7 +305,7 @@ export default function Workspace() {
           <div className="p-5 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <input
-                value={desc} onChange={(e) => setDesc(e.target.value)}
+                value={desc} maxLength={180} aria-label="Project name or description" onChange={(e) => { setDesc(e.target.value); setEvalData(null); }}
                 placeholder="Project description (e.g. A todo CRUD app)"
                 className="flex-1 min-w-[200px] bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-led-cyan/50"
               />
@@ -311,11 +364,23 @@ export default function Workspace() {
             </div>
 
             <textarea
-              value={code} onChange={(e) => setCode(e.target.value)}
+              value={code} onChange={(e) => { setCode(e.target.value); setEvalData(null); }}
+              aria-label={lang.label + " source code editor"}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+                  e.preventDefault(); save();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && lang.runnable) {
+                  e.preventDefault(); void run();
+                }
+              }}
               spellCheck={false}
               className="w-full h-[420px] bg-background border border-border rounded p-4 text-sm font-mono leading-relaxed focus:outline-none focus:border-led-cyan/50 resize-none"
             />
 
+            <p className="text-xs text-muted-foreground" role="note">
+              Autosaved on this device · Ctrl/⌘+S to save · {lang.runnable ? "Ctrl/⌘+Enter to run JavaScript" : "Editing and AI review only — no runtime for " + lang.label} · {code.length.toLocaleString()} characters
+            </p>
             <div className="flex gap-2 flex-wrap">
               <button onClick={run} disabled={running} className="bg-foreground text-background font-bold text-sm px-4 py-2.5 rounded hover:bg-led-green transition-colors inline-flex items-center gap-2">
                 <Play className="size-4" /> {running ? "RUNNING…" : lang.runnable ? "RUN JAVASCRIPT" : "RUNTIME UNAVAILABLE"}
@@ -353,7 +418,7 @@ export default function Workspace() {
             {!evalData && (
               <p className="text-sm text-muted-foreground py-8 text-center">
                 <Terminal className="size-8 mx-auto mb-3 text-led-cyan" />
-                Submit code in any of {LANGUAGES.length}+ languages for structured AI grading.
+                Request advisory AI feedback for {lang.label}. Only JavaScript can run in the isolated browser sandbox; other languages are not execution-tested.
               </p>
             )}
             {evalData && (
