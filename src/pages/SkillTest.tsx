@@ -114,6 +114,7 @@ export default function SkillTest() {
             <form onSubmit={startTest} className="space-y-3">
               <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Target Skill</label>
               <SkillAutocomplete
+                label="Target skill or topic"
                 value={skill}
                 onChange={setSkill}
                 disabled={stage !== "input"}
