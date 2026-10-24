@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 type Props = {
   eyebrow: string;
