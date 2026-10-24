@@ -6,12 +6,20 @@ import { ArrowRight, BookOpen, Briefcase, Code2, Mic, Trash2, Download, Eye, Sea
 import { getProfile } from "@/lib/profile";
 import { buildPortfolioSite, portfolioThemes, type PortfolioTheme } from "@/lib/portfolioSite";
 import ProfileBuilder from "@/components/ProfileBuilder";
+import ShowcaseEditor from "@/components/ShowcaseEditor";
+import { getShowcaseProjects } from "@/lib/showcaseProjects";
 import { exercises, getPractice } from "@/lib/practice";
 import { getProjectInterviews } from "@/lib/projectJourney";
 import { FlaskConical, MessageSquareText } from "lucide-react";
 
 export default function Portfolio() {
   const [entries, setEntries] = useState<PortfolioEntry[]>([]);
+  const [authoredProjects, setAuthoredProjects] = useState(getShowcaseProjects);
+  useEffect(() => {
+    const reload = () => setAuthoredProjects(getShowcaseProjects());
+    window.addEventListener("portforge:showcase-projects", reload);
+    return () => window.removeEventListener("portforge:showcase-projects", reload);
+  }, []);
   const [profile, setProfile] = useState(getProfile);
   const [theme, setTheme] = useState<PortfolioTheme>("minimal");
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
@@ -25,7 +33,7 @@ export default function Portfolio() {
   }, []);
 
   function exportSite(preview: boolean) {
-    const html = buildPortfolioSite(profile, entries, theme);
+    const html = buildPortfolioSite(profile, entries, theme, authoredProjects);
     const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
     if (preview) {
       const link = document.createElement("a");
@@ -82,6 +90,7 @@ export default function Portfolio() {
       </div>
 
       <ProfileBuilder />
+      <ShowcaseEditor />
       <section className="panel p-5 md:p-7 space-y-5" aria-labelledby="portfolio-studio-title">
         <div>
           <p className="font-mono text-xs tracking-widest text-led-cyan">PORTFOLIO STUDIO · LOCAL EXPORT</p>
@@ -123,7 +132,7 @@ export default function Portfolio() {
             <iframe title="Preview of your locally generated portfolio"
               sandbox=""
               referrerPolicy="no-referrer"
-              srcDoc={buildPortfolioSite(profile, entries, theme)}
+              srcDoc={buildPortfolioSite(profile, entries, theme, authoredProjects)}
               style={{width: previewDevice === "mobile" ? "360px" : "100%", height: "490px", maxWidth: previewDevice === "mobile" ? "360px" : "100%"}}
               className="border border-border rounded-xl bg-white shadow-xl transition-[width] duration-300"
             />
