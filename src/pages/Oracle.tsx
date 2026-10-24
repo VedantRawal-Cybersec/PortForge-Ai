@@ -32,6 +32,30 @@ export default function Oracle(){
   }catch(e){setMessage(e instanceof Error?e.message:"Unable to load AI roadmap. You can use the curated options.");}
   finally{setLoading(false);}
  }
+ function downloadPlan(){
+  if(!plan)return;
+  const lines=[
+    "# "+plan.role,
+    "",
+    plan.overview,
+    "",
+    "## Skills to develop",
+    ...plan.skills.map(s=>"- "+s),
+    "",
+    "## Milestones",
+    ...plan.steps.map((s,i)=>(plan.checked.includes(i)?"- [x] ":"- [ ] ")+s.title+" — "+s.description),
+    "",
+    "PortForge AI learning plan. Self-tracked, not a certified qualification."
+  ];
+  const blob=new Blob([lines.join("\n")],{type:"text/markdown;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const anchor=document.createElement("a");
+  anchor.href=url;anchor.download="portforge-career-roadmap.md";anchor.click();
+  window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }
+ const completed=plan?.checked.filter(i=>i>=0&&i<plan.steps.length).length||0;
+ const progress=plan?.steps.length?Math.round(100*completed/plan.steps.length):0;
+ const nextStep=plan?.steps.findIndex((_,i)=>!plan.checked.includes(i))??-1;
  function check(index:number){
   if(!plan)return;
   const checked=plan.checked.includes(index)?plan.checked.filter(n=>n!==index):[...plan.checked,index];
@@ -56,11 +80,28 @@ export default function Oracle(){
    </aside>
    <section className="panel p-5 sm:p-8 space-y-6" aria-live="polite">
     {!plan?<div className="py-16 text-center"><BookOpen className="size-10 mx-auto text-led-cyan mb-4"/><h2 className="text-2xl font-bold">Your career journey starts here.</h2><p className="text-muted-foreground mt-3">Choose a starting role to build a saved learning roadmap.</p></div>:<>
-     <div className="flex items-center justify-between gap-3 flex-wrap"><span className="chip chip-cyan">{plan.source==="ai"?"AI-generated suggestion":"Curated starter path"}</span><span className="text-xs text-muted-foreground">{plan.checked.length}/{plan.steps.length} self-tracked milestones</span></div>
+     <div className="flex items-center justify-between gap-3 flex-wrap"><span className="chip chip-cyan">{plan.source==="ai"?"AI-generated suggestion":"Curated starter path"}</span><span className="text-xs text-muted-foreground">{completed}/{plan.steps.length} self-tracked milestones</span></div>
      <div><h2 className="text-3xl font-bold">{plan.role}</h2><p className="text-muted-foreground mt-3 leading-relaxed">{plan.overview}</p></div>
+     <div className="rounded-xl border border-led-cyan/25 bg-led-cyan/5 p-4 sm:p-5 space-y-3">
+       <div className="flex justify-between gap-3 items-center">
+         <span className="font-semibold text-sm">Your roadmap progress</span>
+         <span className="text-sm font-mono text-led-cyan">{progress}%</span>
+       </div>
+       <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-label="Roadmap completed" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+         <div className="h-full rounded-full bg-led-cyan transition-all duration-300" style={{width:progress+"%"}}/>
+       </div>
+       {nextStep>=0?<div>
+         <p className="text-xs uppercase tracking-wide text-muted-foreground">Your next milestone</p>
+         <p className="text-base font-bold mt-1">{plan.steps[nextStep].title}</p>
+         <p className="text-sm text-muted-foreground mt-1">{plan.steps[nextStep].description}</p>
+       </div>:<p className="text-sm text-led-green">You have checked all milestones. Consider creating a new project to demonstrate these skills.</p>}
+       <button type="button" onClick={downloadPlan} className="rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold hover:border-led-cyan/60">
+         Download my roadmap (.md)
+       </button>
+     </div>
      <div><h3 className="font-bold mb-3">Skills to explore</h3><div className="flex flex-wrap gap-2">{plan.skills.map((s,i)=><span className="chip" key={i}>{s}</span>)}</div></div>
      <div><h3 className="text-xl font-bold mb-4">Your action plan</h3><div className="space-y-3">{plan.steps.map((s,i)=><label key={i} className="flex items-start gap-4 p-4 border border-border rounded-xl bg-surface-2 cursor-pointer"><input type="checkbox" className="mt-1 accent-cyan-500" checked={plan.checked.includes(i)} onChange={()=>check(i)} aria-label={"Completed "+s.title}/><span className="flex-1"><strong className="block">{s.title}</strong><span className="text-sm text-muted-foreground leading-relaxed mt-2 block">{s.description}</span></span>{plan.checked.includes(i)&&<CheckCircle2 className="size-5 text-led-green shrink-0"/>}</label>)}</div></div>
-     <div className="p-4 border border-led-cyan/30 bg-led-cyan/5 rounded-lg flex flex-wrap gap-3 justify-between items-center"><div><strong className="text-sm">Continue with practical work</strong><p className="text-xs text-muted-foreground mt-1">Connect learning, practice and project explanation.</p></div><Link to="/practice" className="inline-flex gap-2 items-center bg-foreground text-background rounded-lg px-4 py-3 text-sm font-semibold">Practice a skill <ArrowRight className="size-4"/></Link></div>
+     <div className="p-4 border border-led-cyan/30 bg-led-cyan/5 rounded-lg flex flex-wrap gap-3 justify-between items-center"><div><strong className="text-sm">Continue with practical work</strong><p className="text-xs text-muted-foreground mt-1">Turn this roadmap into a project you can explain and show.</p></div><Link to="/workspace" className="inline-flex gap-2 items-center bg-foreground text-background rounded-lg px-4 py-3 text-sm font-semibold">Open workspace <ArrowRight className="size-4"/></Link></div>
     </>}
     {message&&<p role="status" className="text-xs text-muted-foreground flex items-center gap-2"><Save className="size-4"/>{message}</p>}
    </section>
