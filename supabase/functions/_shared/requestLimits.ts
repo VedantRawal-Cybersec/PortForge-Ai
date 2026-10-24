@@ -50,7 +50,7 @@ export function validateAIInput(raw: unknown): AIInput {
   }
   const result: AIInput = {
     mode: mode as AIMode,
-    skill: stringField(body, "skill", 120, true),
+    skill: stringField(body, "skill", 120, mode !== "project_evaluate"),
     question: "",
     answer: "",
     code: "",
