@@ -92,6 +92,30 @@ async function run(){
   await page.goto(base+"/dashboard");
   await page.getByText("Welcome back, Restored Learner.").waitFor({timeout:7000});
   process.stdout.write("OK portable backup, restoration and public data settings\n");
+  // Commercial UI regression: five-tool navigation, interactive hero and safe portfolio preview.
+  await page.goto(base + "/");
+  const tabs = page.getByRole("tab");
+  assert.equal(await tabs.count(), 5, "homepage must display exactly five core-tool preview tabs");
+  await page.getByRole("tab", { name: "Portfolio" }).click();
+  await page.getByRole("heading", { name: "Turn your effort into a story." }).waitFor();
+  assert.equal(await page.getByRole("tab", { name: "Portfolio" }).getAttribute("aria-selected"), "true");
+  const primaryLinks = page.locator('nav[aria-label="Mobile navigation"] a');
+  assert.equal(await primaryLinks.count(), 5, "mobile primary navigation should retain five tools");
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
+  assert(!horizontalOverflow, "mobile landing page overflows horizontally");
+  await page.goto(base + "/portfolio");
+  const preview = page.locator('iframe[title="Preview of your locally generated portfolio"]');
+  await preview.waitFor({ state: "visible" });
+  await page.getByRole("button", { name: "Editorial" }).click();
+  await page.getByRole("button", { name: "Mobile", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Mobile", exact: true }).getAttribute("aria-pressed"), "true");
+  assert((await preview.getAttribute("srcdoc")).includes("--bg:#f4efe6"), "portfolio theme should appear in live preview");
+  assert.equal(await preview.getAttribute("sandbox"), "", "portfolio iframe must be sandboxed");
+  const portfolioDownloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Download portfolio HTML/i }).click();
+  const portfolioDownload = await portfolioDownloadPromise;
+  assert(portfolioDownload.suggestedFilename().endsWith(".html"), "portfolio export must download HTML");
+  process.stdout.write("OK premium homepage, five-tool navigation, mobile layout and portfolio studio preview/export\\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
