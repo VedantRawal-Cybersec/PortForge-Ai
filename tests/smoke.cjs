@@ -134,6 +134,7 @@ async function run(){
   assert((await resumePreview.getAttribute("srcdoc")).includes("style-editorial"),"resume theme must change printable HTML");
   await page.getByRole("tab",{name:"Content"}).click();
   await page.getByPlaceholder("name@example.com").fill("test@example.com");
+  await page.getByRole("button",{name:"Save draft"}).click();
   const resumeDownload=page.waitForEvent("download");
   await page.getByRole("button",{name:"Download plain text"}).click();
   const textResume=await resumeDownload;
