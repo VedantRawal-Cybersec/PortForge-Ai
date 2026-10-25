@@ -17,6 +17,8 @@ describe("cost-bearing AI API input limits", () => {
     expect(validateAIInput({mode:"question",skill:"SQL",difficulty:"advanced"}).difficulty).toBe("advanced");
     expect(validateAIInput({mode:"interview_question",skill:"React",difficulty:"intermediate",index:2}).index).toBe(2);
     expect(() => validateAIInput({mode:"question",skill:"SQL",difficulty:"expert"})).toThrow(InvalidInput);
+    expect(validateAIInput({mode:"interview_question",skill:"React",projectContext:"My sample project"}).projectContext).toBe("My sample project");
+    expect(() => validateAIInput({mode:"interview_evaluate",skill:"React",question:"Q",answer:"A",projectContext:"x".repeat(901)})).toThrow(InvalidInput);
   });
   it("rejects unknown modes, oversized inputs and malformed question sequence", () => {
     expect(() => validateAIInput({ mode: "admin", skill: "Python" })).toThrow(InvalidInput);
