@@ -28,7 +28,8 @@ function valid(key:string,value:unknown):boolean{
   if(key==="portforge_showcase_projects_v1")return value.length<=24&&value.every(p=>
     typeof p.id==="string"&&p.id.length<=80&&typeof p.title==="string"&&p.title.length<=100&&
     typeof p.summary==="string"&&p.summary.length<=1200&&
-    ["technologies","role","outcome","projectUrl"].every(field=>p[field]===undefined||typeof p[field]==="string")&&
+    ["technologies","role","outcome","projectUrl","challenge","approach","validation"].every(field=>p[field]===undefined||typeof p[field]==="string")&&
+    (!p.challenge||p.challenge.length<=800)&&(!p.approach||p.approach.length<=1000)&&(!p.validation||p.validation.length<=800)&&
     (!p.projectUrl||(/^https:\/\//.test(p.projectUrl)&&p.projectUrl.length<=600))
   );
   return true;
