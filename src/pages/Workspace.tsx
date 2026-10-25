@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { runIsolatedJavaScript } from "@/lib/sandbox";
+import { Link } from "react-router-dom";
+import { workspaceRecipes, findWorkspaceRecipe } from "@/lib/workspaceRecipes";
 import { Panel, ScoreBar } from "@/components/Panel";
 import { ModuleIntro } from "@/components/ModuleIntro";
 import { addToPortfolio } from "@/lib/portfolio";
@@ -178,6 +180,9 @@ export default function Workspace() {
   const lang = byId(langId);
   const [code, setCode] = useState(lang.starter);
   const [desc, setDesc] = useState("FizzBuzz implementation");
+  const [recipeId,setRecipeId]=useState("");
+  const [requirements,setRequirements]=useState<string[]>([]);
+  const recipe=findWorkspaceRecipe(recipeId);
   const [output, setOutput] = useState<string[]>([]);
   const [evalData, setEvalData] = useState<PEval | null>(null);
   const [loading, setLoading] = useState(false);
@@ -201,6 +206,21 @@ export default function Workspace() {
     return g;
   }, [filtered]);
 
+  function loadRecipe(id:string){
+    const selected=findWorkspaceRecipe(id);
+    if(!selected)return;
+    if(code.trim() && code!==lang.starter &&
+      !window.confirm("Replace your current editor with this project starter? The current draft will be stored for this language."))return;
+    try{storeDraft(langId,code,desc);}catch{toast.info("Current draft could not be saved in this browser.");}
+    setLangId(selected.language);
+    setCode(selected.starter);
+    setDesc(selected.title);
+    setRecipeId(selected.id);
+    setRequirements([]);
+    setEvalData(null);
+    setOutput([]);
+    toast.info("Starter loaded. Follow the project brief and check only requirements you have actually verified.");
+  }
   function selectLang(id: string) {
     if (id === langId) { setPickerOpen(false); return; }
     try { storeDraft(langId, code, desc); }
@@ -212,6 +232,7 @@ export default function Workspace() {
     setDesc(typeof saved?.desc === "string" ? saved.desc : l.label + " practice project");
     setEvalData(null);
     setOutput([]);
+    setRecipeId("");setRequirements([]);
     setPickerOpen(false);
     setSearch("");
   }
@@ -303,6 +324,40 @@ export default function Workspace() {
       <ModuleIntro eyebrow="03 / BUILD" title="Give your ideas somewhere to grow."
         description="Write real code, keep drafts organised and improve through clear feedback. JavaScript examples run in a restricted sandbox; other languages support editing and review."
         highlights={["Autosaved drafts", "Safe JavaScript practice", "Project feedback"]} icon={<Terminal size={16}/>} />
+      <section className="lg:col-span-12 panel p-4 sm:p-6 space-y-4" aria-labelledby="workspace-guide-title">
+        <div className="flex flex-wrap justify-between gap-3 items-start">
+          <div>
+            <h2 id="workspace-guide-title" className="text-xl sm:text-2xl font-bold">Build a real project, one step at a time.</h2>
+            <p className="text-sm text-muted-foreground mt-2">Choose a guided task with starter code and a checklist. JavaScript can run in this isolated browser sandbox; Python and SQL are editing-only until secure external runners are available.</p>
+          </div>
+          <span className="chip chip-cyan">7 guided project briefs</span>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {workspaceRecipes.map(item=><button type="button" key={item.id} onClick={()=>loadRecipe(item.id)}
+            aria-pressed={recipeId===item.id}
+            className={"text-left border rounded-xl p-4 space-y-2 "+(recipeId===item.id?"border-led-cyan bg-led-cyan/10":"border-border bg-surface-2/30 hover:border-led-cyan/40")}>
+            <p className="text-[10px] font-mono uppercase text-led-cyan">{item.language} · {item.difficulty}</p>
+            <h3 className="font-bold text-sm">{item.title}</h3>
+            <p className="text-xs text-muted-foreground">{item.description}</p>
+          </button>)}
+        </div>
+        {recipe&&<div className="rounded-xl border border-led-cyan/30 bg-led-cyan/5 p-4 space-y-3">
+          <div className="flex flex-wrap justify-between items-center gap-3">
+            <div><h3 className="font-bold">{recipe.title} · project requirements</h3>
+              <p className="text-sm text-muted-foreground mt-1">{recipe.brief}</p></div>
+            <Link to="/portfolio" className="rounded-lg border border-border px-3 py-2 text-xs font-bold">Document your real outcome in Portfolio</Link>
+          </div>
+          <p className="text-xs text-muted-foreground">{requirements.length}/{recipe.acceptance.length} requirements manually checked. These boxes do not mean automated tests passed.</p>
+          <div className="grid md:grid-cols-3 gap-3">
+            {recipe.acceptance.map((criterion,index)=><label key={criterion} className="text-xs flex gap-2 items-start border border-border/70 rounded-lg bg-background/40 p-3">
+              <input type="checkbox" aria-label={"Requirement "+(index+1)+": "+criterion} checked={requirements.includes(criterion)}
+                onChange={e=>setRequirements(prev=>e.target.checked?[...prev,criterion]:prev.filter(x=>x!==criterion))}
+                className="mt-0.5 accent-led-cyan"/>
+              <span>{criterion}</span>
+            </label>)}
+          </div>
+        </div>}
+      </section>
       {/* CENTER — Editor */}
       <section className="lg:col-span-8 space-y-4">
         <Panel label="WORKSPACE" status={`MOD 03 // ${lang.label.toUpperCase()}`} statusVariant="cyan">
