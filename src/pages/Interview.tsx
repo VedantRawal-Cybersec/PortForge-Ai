@@ -29,6 +29,10 @@ export default function Interview() {
     ? [selectedProject.title, selectedProject.summary, selectedProject.technologies, selectedProject.role, selectedProject.challenge]
       .filter(Boolean).join(" | ").slice(0, 900)
     : "";
+  // Legacy hosted functions ignore new optional fields; include safe role/level
+  // context in the validated skill field until the revised backend is deployed.
+  const interviewTopic=[skill.trim(), difficulty+" level", selectedProject?.title ? "project: "+selectedProject.title : ""]
+    .filter(Boolean).join(" · ").slice(0,120);
   const [started, setStarted] = useState(false);
   const [qIndex, setQIndex] = useState(0);
   const [question, setQuestion] = useState("");
@@ -147,7 +151,7 @@ export default function Interview() {
     }
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "interview_question", skill, difficulty, index: index + 1, projectContext },
+        body: { mode: "interview_question", skill: interviewTopic, difficulty, index: index + 1, projectContext },
       });
       if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
         throw new Error("AI interview question unavailable.");
@@ -258,7 +262,7 @@ export default function Interview() {
     let ev: IEval;
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "interview_evaluate", skill, difficulty, question, answer: ans.slice(0, 8000), projectContext },
+        body: { mode: "interview_evaluate", skill: interviewTopic, difficulty, question, answer: ans.slice(0, 8000), projectContext },
       });
       if (error || data?.error || !data?.scores ||
         !["logic", "clarity", "depth", "confidence"].every(key =>
@@ -367,7 +371,7 @@ export default function Interview() {
                   {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  If selected, your saved project description is used for tailored AI questions. Only choose a project you want to discuss.
+                  If selected, your project title is included in the interview topic. More context may be used when the AI backend supports it. Choose only a project you want to discuss.
                 </p>
               </div>
             )}
