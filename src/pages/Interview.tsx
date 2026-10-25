@@ -104,6 +104,21 @@ export default function Interview() {
     await nextQuestion(0);
   }
 
+  function startOfflineInterview() {
+    if (!skill.trim()) { toast.error("Choose a role or skill first."); return; }
+    stopSpeaking(); stopListening();
+    setStarted(true);
+    setOfflineMode(true);
+    setUseBrowserTTS(true);
+    setEvals([]);
+    setOfflineReviews([]);
+    setQuestion(offlineInterviewPrompt(skill, 0).question);
+    setQIndex(0);
+    setTranscript("");
+    setInterim("");
+    setLoad(20);
+  }
+
   async function nextQuestion(index: number) {
     stopSpeaking(); stopListening();
     setLoadingQ(true); setQIndex(index); setQuestion(""); setTranscript(""); setInterim("");
@@ -304,9 +319,15 @@ export default function Interview() {
               />
             </div>
             {!started ? (
-              <button onClick={startInterview} disabled={!skill.trim()} className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
-                <Play className="size-4" /> START INTERVIEW
-              </button>
+              <div className="space-y-2">
+                <button onClick={startInterview} disabled={!skill.trim()} className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                  <Play className="size-4" /> START INTERVIEW
+                </button>
+                <button type="button" onClick={startOfflineInterview} disabled={!skill.trim()}
+                  className="w-full border border-border rounded-lg bg-surface-2 px-3 py-3 text-xs font-semibold hover:border-led-cyan/50 disabled:opacity-50">
+                  START GUIDED PRACTICE · NO AI
+                </button>
+              </div>
             ) : (
               <button onClick={reset} className="w-full border border-border bg-surface-2 text-sm py-2.5 rounded hover:border-led-alert/50 transition-colors font-mono tracking-wider text-xs">
                 END SESSION
