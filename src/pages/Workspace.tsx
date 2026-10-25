@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { runIsolatedJavaScript } from "@/lib/sandbox";
+import { Link } from "react-router-dom";
+import { workspaceRecipes, findWorkspaceRecipe } from "@/lib/workspaceRecipes";
 import { Panel, ScoreBar } from "@/components/Panel";
 import { ModuleIntro } from "@/components/ModuleIntro";
 import AIAccountNotice from "@/components/AIAccountNotice";
@@ -181,6 +183,9 @@ export default function Workspace() {
   const [code, setCode] = useState(lang.starter);
   const [desc, setDesc] = useState("FizzBuzz implementation");
   const [difficulty, setDifficulty] = useState<PracticeLevel>("beginner");
+  const [recipeId, setRecipeId] = useState("");
+  const [recipeChecks, setRecipeChecks] = useState<string[]>([]);
+  const chosenRecipe=findWorkspaceRecipe(recipeId);
   const [output, setOutput] = useState<string[]>([]);
   const [evalData, setEvalData] = useState<PEval | null>(null);
   const [loading, setLoading] = useState(false);
@@ -204,6 +209,22 @@ export default function Workspace() {
     return g;
   }, [filtered]);
 
+  function loadRecipe(id:string){
+    const recipe=findWorkspaceRecipe(id);
+    if(!recipe)return;
+    if(code.trim() && code!==byId(langId).starter &&
+      !window.confirm("Load this guided project template? The current editor will be replaced. Your existing draft is saved separately for its language."))return;
+    try{storeDraft(langId,code,desc);}catch{toast.info("Your existing draft could not be saved in this browser.");}
+    setLangId(recipe.language);
+    setCode(recipe.starter);
+    setDesc(recipe.title);
+    setDifficulty(recipe.difficulty);
+    setRecipeId(recipe.id);
+    setRecipeChecks([]);
+    setEvalData(null);
+    setOutput([]);
+    toast.info("Project brief loaded. Complete the TODOs and verify the acceptance criteria before documenting your work.");
+  }
   function selectLang(id: string) {
     if (id === langId) { setPickerOpen(false); return; }
     try { storeDraft(langId, code, desc); }
@@ -215,6 +236,8 @@ export default function Workspace() {
     setDesc(typeof saved?.desc === "string" ? saved.desc : l.label + " practice project");
     setEvalData(null);
     setOutput([]);
+    setRecipeId("");
+    setRecipeChecks([]);
     setPickerOpen(false);
     setSearch("");
   }
@@ -330,6 +353,44 @@ export default function Workspace() {
         description="Write real code, keep drafts organised and improve through clear feedback. JavaScript examples run in a restricted sandbox; other languages support editing and review."
         highlights={["Autosaved drafts", "Safe JavaScript practice", "Project feedback"]} icon={<Terminal size={16}/>} />
       <div className="lg:col-span-12"><AIAccountNotice /></div>
+      <section className="lg:col-span-12 panel p-4 sm:p-6 space-y-4" aria-labelledby="workspace-project-briefs">
+        <div className="flex flex-wrap justify-between gap-3 items-start">
+          <div>
+            <h2 id="workspace-project-briefs" className="text-xl sm:text-2xl font-bold">Build something real, one project at a time.</h2>
+            <p className="text-sm text-muted-foreground mt-2">Start with a clear problem, editable starter code, and observable acceptance criteria. JavaScript runs in a restricted browser sandbox; Python and SQL are editor-only.</p>
+          </div>
+          <span className="chip chip-cyan text-xs">7 guided project briefs</span>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {workspaceRecipes.map(recipe=><button type="button" key={recipe.id}
+            onClick={()=>loadRecipe(recipe.id)}
+            aria-pressed={recipeId===recipe.id}
+            className={"text-left rounded-xl border p-4 space-y-2 "+(recipeId===recipe.id?"border-led-cyan bg-led-cyan/10":"border-border bg-surface-2/30 hover:border-led-cyan/40")}>
+            <div className="flex flex-wrap gap-2 text-[10px] font-mono uppercase text-led-cyan"><span>{recipe.language}</span><span>· {recipe.difficulty}</span></div>
+            <h3 className="font-bold text-sm">{recipe.title}</h3>
+            <p className="text-xs text-muted-foreground">{recipe.description}</p>
+          </button>)}
+        </div>
+        {chosenRecipe&&<div className="rounded-xl border border-led-cyan/30 bg-led-cyan/5 p-4 space-y-3">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <div><h3 className="font-bold">{chosenRecipe.title} — project requirements</h3>
+              <p className="text-sm text-muted-foreground mt-1">{chosenRecipe.brief}</p></div>
+            <Link to="/portfolio" className="rounded-lg border border-border px-3 py-2 text-xs font-bold">
+              Document your genuine outcome in Portfolio
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground">{recipeChecks.length}/{chosenRecipe.acceptance.length} requirements self-checked. These boxes are not automated test results.</p>
+          <div className="grid md:grid-cols-3 gap-3">
+            {chosenRecipe.acceptance.map((criterion,i)=><label key={criterion} className="text-xs flex gap-2 items-start p-3 rounded-lg border border-border/70 bg-background/40">
+              <input type="checkbox" aria-label={"Requirement "+(i+1)+": "+criterion}
+                checked={recipeChecks.includes(criterion)}
+                onChange={e=>setRecipeChecks(prev=>e.target.checked?[...prev,criterion]:prev.filter(x=>x!==criterion))}
+                className="mt-0.5 accent-led-cyan"/>
+              <span>{criterion}</span>
+            </label>)}
+          </div>
+        </div>}
+      </section>
       {/* CENTER — Editor */}
       <section className="lg:col-span-8 space-y-4">
         <Panel label="WORKSPACE" status={`MOD 03 // ${lang.label.toUpperCase()}`} statusVariant="cyan">
