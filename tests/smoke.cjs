@@ -155,6 +155,7 @@ async function run(){
   process.stdout.write("OK no-network guided skill review and three-question interview\\n");
   await page.goto(base + "/oracle");
   await page.getByLabel("Your current experience").selectOption("advanced");
+  page.once("dialog", dialog => dialog.accept());
   await page.getByRole("button",{name:/Use this learning path/i}).click();
   assert((await page.locator("#main-content").innerText()).includes("Core Web Vitals"),"advanced Oracle roadmap must have measurable role-specific deliverable");
   await page.goto(base + "/workspace");
