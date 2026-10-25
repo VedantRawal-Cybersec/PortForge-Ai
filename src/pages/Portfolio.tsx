@@ -7,6 +7,7 @@ import { getProfile } from "@/lib/profile";
 import { buildPortfolioSite, portfolioThemes, type PortfolioTheme } from "@/lib/portfolioSite";
 import ProfileBuilder from "@/components/ProfileBuilder";
 import ShowcaseEditor from "@/components/ShowcaseEditor";
+import PublishPortfolio from "@/components/PublishPortfolio";
 import { getShowcaseProjects } from "@/lib/showcaseProjects";
 import { exercises, getPractice } from "@/lib/practice";
 import { getProjectInterviews } from "@/lib/projectJourney";
@@ -86,11 +87,12 @@ export default function Portfolio() {
       </header>
 
       <div className="rounded-lg border border-led-amber/25 bg-led-amber/5 px-4 py-3 text-sm text-muted-foreground" role="note">
-        <strong className="text-foreground">Storage notice:</strong> Entries are currently saved only in this browser on this device. They are AI-assisted assessments, not independently verified credentials. Account sync and external verification are not available yet.
+        <strong className="text-foreground">Storage notice:</strong> Entries are currently saved only in this browser on this device. They are AI-assisted assessments, not independently verified credentials. Private backups and public publishing require a signed-in account and configured backend. External verification is not provided.
       </div>
 
       <ProfileBuilder />
       <ShowcaseEditor />
+      <PublishPortfolio profile={profile} projects={authoredProjects} theme={theme}/>
       <section className="panel p-5 md:p-7 space-y-5" aria-labelledby="portfolio-studio-title">
         <div>
           <p className="font-mono text-xs tracking-widest text-led-cyan">PORTFOLIO STUDIO · LOCAL EXPORT</p>
