@@ -15,6 +15,8 @@ const Interview = lazy(() => import("./pages/Interview"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const Oracle = lazy(() => import("./pages/Oracle"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
+const Account = lazy(() => import("./pages/Account"));
+const PublicPortfolio = lazy(() => import("./pages/PublicPortfolio"));
 const SkillDNA = lazy(() => import("./pages/SkillDNA"));
 const Missions = lazy(() => import("./pages/Missions"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -47,10 +49,12 @@ const App = () => (
                 <Route path="/workspace" element={<Workspace />} />
                 <Route path="/oracle" element={<Oracle />} />
                 <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/account" element={<Account />} />
                 <Route path="/skill-dna" element={<SkillDNA />} />
                 <Route path="/missions" element={<Missions />} />
                 <Route path="/data-use" element={<DataUse />} />
                 <Route path="/my-data" element={<MyData />} />
+                <Route path="/p/:slug" element={<PublicPortfolio />} />
                 <Route path="/practice" element={<PracticeLab />} />
                 <Route path="/project-interview" element={<ProjectInterview />} />
                 <Route path="*" element={<NotFound />} />
