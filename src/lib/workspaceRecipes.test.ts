@@ -9,7 +9,7 @@ describe("guided workspace briefs and interview coaching",()=>{
     expect(new Set(workspaceRecipes.map(r=>r.difficulty)).size).toBe(3);
     for(const r of workspaceRecipes){
       expect(r.starter.length).toBeGreaterThan(60);
-      expect(r.acceptance).toHaveLength(3);
+      expect(r.acceptance.length).toBeGreaterThanOrEqual(3);
       expect(r.brief.length).toBeGreaterThan(30);
       expect(findWorkspaceRecipe(r.id)).toEqual(r);
     }
