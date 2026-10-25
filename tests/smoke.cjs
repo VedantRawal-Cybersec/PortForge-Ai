@@ -124,6 +124,25 @@ async function run(){
   await page.getByRole("button", { name: /Download portfolio HTML/i }).click();
   const portfolioDownload = await portfolioDownloadPromise;
   assert(portfolioDownload.suggestedFilename().endsWith(".html"), "portfolio export must download HTML");
+  // Résumé studio: import saved projects, switch an actual template, and export readable files.
+  await page.getByRole("button",{name:"Bring in my projects"}).click();
+  const resumePreview=page.locator('iframe[title="Live preview of editable resume"]');
+  await resumePreview.waitFor();
+  assert((await resumePreview.getAttribute("srcdoc")).includes("Portfolio smoke project"),"resume should import genuine saved project");
+  await page.getByRole("tab",{name:"Templates"}).click();
+  await page.getByRole("button",{name:/Editorial Serif/i}).click();
+  assert((await resumePreview.getAttribute("srcdoc")).includes("style-editorial"),"resume theme must change printable HTML");
+  await page.getByRole("tab",{name:"Content"}).click();
+  await page.getByPlaceholder("name@example.com").fill("test@example.com");
+  const resumeDownload=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Download plain text"}).click();
+  const textResume=await resumeDownload;
+  assert(textResume.suggestedFilename().endsWith(".txt"),"resume must export plain text");
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.getByRole("tab",{name:"Content"}).click();
+  await page.getByPlaceholder("name@example.com").waitFor();
+  assert.equal(await page.getByPlaceholder("name@example.com").inputValue(),"test@example.com","resume draft persists locally");
+  process.stdout.write("OK resume templates, imported projects, A4 preview, text export and persistence\\n");
   process.stdout.write("OK premium homepage, five-tool navigation, mobile layout and portfolio studio preview/export\\n");
   // Complete both tools with their explicit, no-network offline choices.
   await page.goto(base + "/skill-test");
@@ -136,6 +155,18 @@ async function run(){
     .fill("An inner join returns matching records, but a left join also preserves rows in the left table.");
   await page.getByRole("button", { name: /REVIEW MY ANSWER/i }).click();
   await page.getByRole("heading", { name: "Self-review checklist" }).waitFor();
+  await page.getByRole("checkbox",{name:/Self-review /}).first().check();
+  for(let i=1;i<3;i++){
+    await page.getByRole("button",{name:/Continue to question/i}).click();
+    await page.getByPlaceholder("Type your answer. Be specific. Show reasoning.")
+      .fill("I would inspect the sample and verify correctness using a small reproducible test.");
+    await page.getByRole("button",{name:/REVIEW MY ANSWER/i}).click();
+    await page.getByRole("heading",{name:"Self-review checklist"}).waitFor();
+  }
+  await page.getByText(/Three-question guided session completed/).waitFor();
+  const practiceNotes=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Download practice notes"}).click();
+  assert((await practiceNotes).suggestedFilename().endsWith(".txt"),"guided practice must export session report");
   assert((await page.locator("#main-content").innerText()).includes("NOT AI-GRADED"), "offline skill practice must be clearly ungraded");
   await page.goto(base + "/interview");
   await page.getByRole("combobox", { name: "Interview role or skill" }).fill("JavaScript");
@@ -152,6 +183,9 @@ async function run(){
     if (i < 2) await page.getByRole("button", { name: /NEXT QUESTION/i }).click();
   }
   await page.getByText(/3 answers were guided offline and not automatically graded/).waitFor();
+  const interviewNotes=page.waitForEvent("download");
+  await page.getByRole("button",{name:/Download interview notes/i}).click();
+  assert((await interviewNotes).suggestedFilename().endsWith(".txt"),"interview must export answer and feedback notes");
 
   process.stdout.write("OK no-network guided skill review and three-question interview\\n");
   await page.goto(base + "/oracle");
@@ -161,6 +195,9 @@ async function run(){
   assert((await page.locator("#main-content").innerText()).includes("Core Web Vitals"),"advanced Oracle roadmap must have measurable role-specific deliverable");
   await page.goto(base + "/workspace");
   await page.getByLabel("Review difficulty").selectOption("intermediate");
+  await page.getByRole("button",{name:/Analyse product transactions/i}).click();
+  assert((await page.locator("#main-content").innerText()).includes("Group records by category"),"workspace recipe should present acceptance criteria");
+  assert((await page.getByLabel("JavaScript source code editor").inputValue()).includes("totalsByCategory"),"project template should load editable starter code");
   const codeExport = page.waitForEvent("download");
   await page.getByRole("button",{name:/EXPORT CODE/i}).click();
   const savedSource = await codeExport;
