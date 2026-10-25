@@ -24,6 +24,13 @@ describe("offline coaching when the AI service is unavailable", () => {
     const questions = [0, 1, 2].map(i => offlineInterviewPrompt("JavaScript", i).question);
     expect(new Set(questions).size).toBe(3);
   });
+  it("uses a user's explicitly selected project and maintains seniority boundaries", () => {
+    const title = "Accessible dashboard";
+    const qs = [0, 1, 2].map(i => offlineInterviewPrompt("React", i, "intermediate", title).question);
+    expect(new Set(qs).size).toBe(3);
+    expect(qs.every(q => q.includes(title))).toBe(true);
+    expect(qs[1]).toMatch(/bug or challenge/);
+  });
   it("never embeds uncontrolled long user text in generated prompts", () => {
     const p = offlineSkillPrompt("Custom " + "x".repeat(50000));
     expect(p.question.length).toBeLessThan(350);
