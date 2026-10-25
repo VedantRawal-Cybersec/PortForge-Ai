@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import AIAccountNotice from "@/components/AIAccountNotice";
 import { Loader2, Target, BookOpen, ArrowRight, CheckCircle2, Save, BriefcaseBusiness } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -67,6 +68,7 @@ export default function Oracle(){
  }
  return <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-10 space-y-8">
   <header className="max-w-3xl space-y-3"><span className="chip chip-cyan"><BriefcaseBusiness className="size-4"/> CAREER EXPLORER</span><h1 className="text-4xl md:text-5xl font-bold tracking-tight">Turn a role into a practical plan.</h1><p className="text-muted-foreground text-lg leading-relaxed">Start with a researched-skill example pathway, adapt it to your interests, and track milestones. These are learning suggestions, not real-time job vacancies or verified salary forecasts.</p></header>
+  <AIAccountNotice />
   <div className="grid lg:grid-cols-[minmax(280px,0.7fr)_minmax(0,1.35fr)] gap-5">
    <aside className="space-y-5">
     <section className="panel p-5 sm:p-6 space-y-3">
