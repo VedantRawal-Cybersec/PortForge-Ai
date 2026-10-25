@@ -5,6 +5,7 @@ import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { offlineInterviewPrompt } from "@/lib/offlineCoach";
 import { practiceLevels, levelGuidance, type PracticeLevel } from "@/lib/practiceLevels";
+import { getShowcaseProjects } from "@/lib/showcaseProjects";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Mic, MicOff, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
@@ -20,6 +21,13 @@ declare global { interface Window { webkitSpeechRecognition: any; SpeechRecognit
 export default function Interview() {
   const [skill, setSkill] = useState("");
   const [difficulty, setDifficulty] = useState<PracticeLevel>("beginner");
+  const [projects] = useState(getShowcaseProjects);
+  const [projectId, setProjectId] = useState("");
+  const selectedProject = projects.find(p => p.id === projectId);
+  const projectContext = selectedProject
+    ? [selectedProject.title, selectedProject.summary, selectedProject.technologies, selectedProject.role, selectedProject.challenge]
+      .filter(Boolean).join(" | ").slice(0, 900)
+    : "";
   const [started, setStarted] = useState(false);
   const [qIndex, setQIndex] = useState(0);
   const [question, setQuestion] = useState("");
@@ -114,7 +122,7 @@ export default function Interview() {
     setUseBrowserTTS(true);
     setEvals([]);
     setOfflineReviews([]);
-    setQuestion(offlineInterviewPrompt(skill, 0, difficulty).question);
+    setQuestion(offlineInterviewPrompt(skill, 0, difficulty, selectedProject?.title).question);
     setQIndex(0);
     setTranscript("");
     setInterim("");
@@ -125,13 +133,13 @@ export default function Interview() {
     stopSpeaking(); stopListening();
     setLoadingQ(true); setQIndex(index); setQuestion(""); setTranscript(""); setInterim("");
     if (offlineMode) {
-      setQuestion(offlineInterviewPrompt(skill, index, difficulty).question);
+      setQuestion(offlineInterviewPrompt(skill, index, difficulty, selectedProject?.title).question);
       setLoadingQ(false);
       return;
     }
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "interview_question", skill, difficulty, index: index + 1 },
+        body: { mode: "interview_question", skill, difficulty, index: index + 1, projectContext },
       });
       if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
         throw new Error("AI interview question unavailable.");
@@ -141,7 +149,7 @@ export default function Interview() {
     } catch {
       setOfflineMode(true);
       setUseBrowserTTS(true);
-      setQuestion(offlineInterviewPrompt(skill, index, difficulty).question);
+      setQuestion(offlineInterviewPrompt(skill, index, difficulty, selectedProject?.title).question);
       toast.info("AI unavailable. Switched to three guided offline questions without automatic scoring.");
     } finally {
       setLoadingQ(false);
@@ -241,7 +249,7 @@ export default function Interview() {
     let ev: IEval;
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "interview_evaluate", skill, difficulty, question, answer: ans.slice(0, 8000) },
+        body: { mode: "interview_evaluate", skill, difficulty, question, answer: ans.slice(0, 8000), projectContext },
       });
       if (error || data?.error || !data?.scores ||
         !["logic", "clarity", "depth", "confidence"].every(key =>
@@ -330,6 +338,21 @@ export default function Interview() {
               </select>
               <p className="text-xs text-muted-foreground">{levelGuidance[difficulty].description}</p>
             </div>
+            {projects.length > 0 && (
+              <div className="space-y-2">
+                <label htmlFor="interview-project" className="block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Interview about your actual project (optional)
+                </label>
+                <select id="interview-project" value={projectId} disabled={started} onChange={e=>setProjectId(e.target.value)}
+                  className="w-full min-h-11 rounded-lg border border-border bg-background px-3 py-2.5 text-sm">
+                  <option value="">General role interview</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  If selected, your saved project description is used for tailored AI questions. Only choose a project you want to discuss.
+                </p>
+              </div>
+            )}
             {!started ? (
               <div className="space-y-2">
                 <button onClick={startInterview} disabled={!skill.trim()} className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
@@ -561,7 +584,7 @@ export default function Interview() {
                 <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words">{review.answer}</p>
                 <p className="font-semibold text-xs">Self-review your answer for:</p>
                 <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-                  {offlineInterviewPrompt(skill, review.index, difficulty).checklist.map(item => <li key={item}>{item}</li>)}
+                  {offlineInterviewPrompt(skill, review.index, difficulty, selectedProject?.title).checklist.map(item => <li key={item}>{item}</li>)}
                 </ul>
               </div>
             ))}
