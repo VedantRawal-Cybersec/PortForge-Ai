@@ -12,6 +12,12 @@ describe("cost-bearing AI API input limits", () => {
     expect(validateAIInput({ mode: "project_evaluate", code: "console.log(1)", description: "Print a number", language: "JavaScript" }).language).toBe("JavaScript");
     expect(validateAIInput({ mode: "oracle", skill: "Cloud Engineer", answer: "Python" }).mode).toBe("oracle");
   });
+  it("preserves explicit difficulty and defaults earlier client requests to beginner", () => {
+    expect(validateAIInput({mode:"question",skill:"SQL"}).difficulty).toBe("beginner");
+    expect(validateAIInput({mode:"question",skill:"SQL",difficulty:"advanced"}).difficulty).toBe("advanced");
+    expect(validateAIInput({mode:"interview_question",skill:"React",difficulty:"intermediate",index:2}).index).toBe(2);
+    expect(() => validateAIInput({mode:"question",skill:"SQL",difficulty:"expert"})).toThrow(InvalidInput);
+  });
   it("rejects unknown modes, oversized inputs and malformed question sequence", () => {
     expect(() => validateAIInput({ mode: "admin", skill: "Python" })).toThrow(InvalidInput);
     expect(() => validateAIInput({ mode: "question", skill: "X".repeat(121) })).toThrow(InvalidInput);
