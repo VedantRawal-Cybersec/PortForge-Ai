@@ -19,7 +19,7 @@ async function run(){
   const page=await context.newPage();
   const errors=[];
   page.on("pageerror",e=>errors.push(e.message));
-  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/my-data","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle"];
+  const paths=["/","/dashboard","/learn","/portfolio","/account","/skill-dna","/missions","/data-use","/my-data","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle"];
   for(const path of paths){
     const resp=await page.goto(base+path,{waitUntil:"domcontentloaded"});
     assert(resp&&resp.ok(),"route "+path+" returned non-2xx");
@@ -181,6 +181,29 @@ async function run(){
   await page.getByRole("button",{name:/START GUIDED PRACTICE/i}).click();
   assert((await page.locator("#main-content").innerText()).includes('About your project "Portfolio smoke project"'),"guided interview must use explicitly chosen portfolio case study");
   process.stdout.write("OK difficulty calibration across five tools and structured case studies\\n");
+  // Guest access remains functional while publishing requires explicit sign-in.
+  await page.goto(base + "/account");
+  await page.getByRole("heading",{name:"Your work stays yours."}).waitFor();
+  await page.getByLabel("Email address").waitFor();
+  await page.goto(base + "/portfolio");
+  await page.getByRole("heading",{name:"Your portfolio on the web"}).waitFor();
+  await page.getByText("Sign in to publish a page.").waitFor();
+  // Public case study: simulate a published, owner-approved document without a live database.
+  await page.route("**/rest/v1/portforge_publications**", route => {
+    return route.fulfill({status:200, contentType:"application/json",body:JSON.stringify({
+      slug:"sample-projects",theme:"editorial",published:true,updated_at:"2026-10-25T00:00:00Z",
+      document:{name:"Sample Learner",headline:"Developer",bio:"I build accessible tools.",
+        focus:"frontend",projects:[{title:"Keyboard-first application",summary:"I built and tested an accessible application.",
+          challenge:"Keyboard navigation",approach:"Semantic HTML",validation:"Observed focus order in browser",
+          technologies:"HTML, JavaScript",role:"Built interface",outcome:"Clear focus states",
+          projectUrl:"https://example.com/project"}]},
+    })});
+  });
+  await page.goto(base + "/p/sample-projects");
+  await page.getByRole("heading",{name:"Keyboard-first application"}).waitFor({timeout:10000});
+  assert((await page.locator("#main-content").innerText()).includes("Observed focus order in browser"),"public portfolio must show approved testing evidence");
+  await page.unroute("**/rest/v1/portforge_publications**");
+  process.stdout.write("OK account entry and simulated public portfolio case-study page\\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
