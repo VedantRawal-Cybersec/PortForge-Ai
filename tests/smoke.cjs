@@ -3,6 +3,9 @@ const { chromium } = require("playwright");
 const { spawn } = require("node:child_process");
 const assert = require("node:assert/strict");
 const base = "http://127.0.0.1:4173";
+// Prevent a stalled browser-close operation from holding CI indefinitely after a failure.
+const watchdog=setTimeout(()=>{process.stderr.write("Browser smoke exceeded its safety deadline\n");process.exit(124);},90000);
+watchdog.unref();
 const delay = ms => new Promise(resolve => setTimeout(resolve,ms));
 const server = spawn(process.execPath,["node_modules/vite/bin/vite.js","preview","--host","127.0.0.1","--port","4173","--strictPort"],{stdio:["ignore","pipe","pipe"]});
 server.stderr.on("data",d=>process.stderr.write(String(d)));
@@ -209,10 +212,13 @@ async function run(){
   assert((await page.locator("#main-content").innerText()).includes('About your project "Portfolio smoke project"'),"interview must use user-selected case study");
   process.stdout.write("OK level-aware Oracle and portfolio-grounded interview coaching\n");
   // New academy catalog: browse, deep-link, complete and restore a real lesson.
+  process.stdout.write("START expanded academy browser journey\n");
   await page.goto(base + "/learn");
   await page.getByRole("searchbox",{name:"Search learning tracks"}).fill("Rust");
+  process.stdout.write("Academy filter typed; selecting Rust\n");
   await page.getByRole("heading",{name:"Rust",exact:true}).click();
   assert(page.url().includes("track=rust"),"the selected academy track needs a shareable deep link");
+  process.stdout.write("Rust path loaded; checking its answer\n");
   await page.getByRole("button",{name:/Use data without taking ownership/}).click();
   await page.getByText("Correct — lesson completed.").waitFor();
   await page.reload({waitUntil:"domcontentloaded"});
@@ -222,6 +228,7 @@ async function run(){
   await page.getByLabel("Filter learning tracks by category").selectOption("Mobile & Games");
   await page.getByRole("heading",{name:"Flutter",exact:true}).waitFor({timeout:7000});
   await page.goto(base + "/oracle");
+  process.stdout.write("Academy completion persisted; testing Oracle handoff\n");
   await page.getByRole("searchbox",{name:"Find your career or skill path"}).fill("Rust");
   await page.getByLabel("Choose a curated beginner-friendly path").selectOption("rust");
 
