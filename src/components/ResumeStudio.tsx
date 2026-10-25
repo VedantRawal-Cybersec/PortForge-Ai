@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Circle, Download, ExternalLink, FileText, Plus, Printer, Sparkles, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Download, ExternalLink, FileText, Plus, Printer, Save, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { LearnerProfile } from "@/lib/profile";
 import type { ShowcaseProject } from "@/lib/showcaseProjects";
@@ -52,9 +52,9 @@ export default function ResumeStudio({profile,projects}:Props){
   }
   function openPrint(){
     const url=URL.createObjectURL(new Blob([html],{type:"text/html;charset=utf-8"}));
-    const tab=window.open(url,"_blank","noopener,noreferrer");
-    if(!tab){toast.error("Your browser blocked the printable tab. Download the HTML resume instead.");}
-    else toast.info("In the printable tab, use Ctrl/⌘ + P and select Save as PDF.");
+    const tab=window.open(url,"_blank");
+    if(!tab){toast.error("Your browser blocked the printable tab. Download HTML and open it locally to print.");}
+    else {tab.opener=null;toast.info("In the printable tab, use Ctrl/⌘ + P and select Save as PDF.");}
     window.setTimeout(()=>URL.revokeObjectURL(url),120000);
   }
   const inp=(label:string,key:keyof ResumeData,placeholder:string,kind:"input"|"textarea"="input")=>{
@@ -110,9 +110,15 @@ export default function ResumeStudio({profile,projects}:Props){
         <h2 id="resume-studio-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight">Design a résumé you're ready to send.</h2>
         <p className="text-sm text-muted-foreground">Four professional layouts with real content editing, print styling and job-specific guidance. Import your existing work; nothing is invented or published.</p>
       </div>
+      <div className="flex gap-2 flex-wrap">
+        <button type="button" onClick={()=>{try{saveResume(resume);toast.success("Résumé draft saved on this device.");}catch{toast.error("Your browser blocked saving. Export a copy of your résumé.");}}}
+          className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 font-semibold text-sm">
+          <Save size={16}/> Save draft
+        </button>
       <button type="button" onClick={importWork} className="inline-flex items-center gap-2 rounded-xl bg-led-cyan text-background px-4 py-3 font-semibold text-sm">
         <Sparkles size={16}/> Bring in my projects
       </button>
+      </div>
     </div>
     <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.07fr)] gap-6">
       <div className="space-y-5 min-w-0">
