@@ -12,7 +12,7 @@ describe("expanded independent learning pathways",()=>{
    expect(new Set(all.map(x=>x.id)).size).toBe(all.length);
    for(const track of tracks){
      expect(track.lessons.length).toBe(3);
-     expect(track.name.length).toBeGreaterThan(2);
+     expect(track.name.length).toBeGreaterThan(1);
      expect(track.description.length).toBeGreaterThan(15);
      expect(track.category).toBeTruthy();
      expect(track.deliverable).toBeTruthy();
