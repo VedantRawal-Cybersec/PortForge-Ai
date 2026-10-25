@@ -315,8 +315,8 @@ export default function Interview() {
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-7 sm:py-10 grid lg:grid-cols-12 gap-5 sm:gap-6">
       <ModuleIntro eyebrow="02 / PRACTISE" title="Walk into interviews prepared."
         description="Get better at expressing your ideas. Practise three guided questions by speaking or typing, and review each response before moving forward."
-        highlights={["Voice or text", "Your own pace", "Concrete feedback"]} icon={<Mic size={16}/>
-      <div className="lg:col-span-12"><AIAccountNotice /></div>} />
+        highlights={["Voice or text", "Your own pace", "Concrete feedback"]} icon={<Mic size={16}/>} />
+      <div className="lg:col-span-12"><AIAccountNotice /></div>
       {/* LEFT */}
       <aside className="lg:col-span-3">
         <Panel label="INTERVIEW SETUP" status="MOD 02" statusVariant="cyan">
