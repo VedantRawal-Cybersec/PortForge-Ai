@@ -328,8 +328,8 @@ export default function Workspace() {
     <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-7 sm:py-10 grid lg:grid-cols-12 gap-5 sm:gap-6">
       <ModuleIntro eyebrow="03 / BUILD" title="Give your ideas somewhere to grow."
         description="Write real code, keep drafts organised and improve through clear feedback. JavaScript examples run in a restricted sandbox; other languages support editing and review."
-        highlights={["Autosaved drafts", "Safe JavaScript practice", "Project feedback"]} icon={<Terminal size={16}/>
-      <div className="lg:col-span-12"><AIAccountNotice /></div>} />
+        highlights={["Autosaved drafts", "Safe JavaScript practice", "Project feedback"]} icon={<Terminal size={16}/>} />
+      <div className="lg:col-span-12"><AIAccountNotice /></div>
       {/* CENTER — Editor */}
       <section className="lg:col-span-8 space-y-4">
         <Panel label="WORKSPACE" status={`MOD 03 // ${lang.label.toUpperCase()}`} statusVariant="cyan">
