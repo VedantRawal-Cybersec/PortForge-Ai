@@ -17,6 +17,8 @@ async function run(){
   browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
   const context=await browser.newContext({viewport:{width:390,height:844}});
   const page=await context.newPage();
+  // Test runner makes one intentional user choice for confirmation dialogs; never register competing one-shot handlers.
+  page.on("dialog", dialog => { void dialog.accept().catch(error=>process.stderr.write("Dialog handling: "+String(error)+"\n")); });
   const errors=[];
   page.on("pageerror",e=>errors.push(e.message));
   const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/my-data","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle"];
@@ -86,7 +88,6 @@ async function run(){
   assert(download.suggestedFilename().endsWith(".json"),"missing JSON backup download");
   const backup={format:"portforge-local-backup",version:1,createdAt:new Date().toISOString(),items:{portforge_profile_v2:{name:"Restored Learner",goal:"explore",level:"new",focus:"digital",headline:"",bio:"",links:[],visibility:"private"}}};
   await page.locator("#backup-file").setInputFiles({name:"portforge-local-backup.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(backup))});
-  page.once("dialog",dialog=>dialog.accept());
   await page.getByRole("button",{name:"Restore selected file"}).click();
   await page.getByText(/Restored 1 browser-local sections/i).waitFor({timeout:7000});
   await page.goto(base+"/dashboard");
@@ -187,7 +188,6 @@ async function run(){
   await page.getByText("Knowledge checks and your next action").waitFor();
   process.stdout.write("OK locally assessed six-question adaptive practice, Oracle evidence and dashboard\n");
   await page.goto(base + "/workspace");
-  page.once("dialog", dialog => dialog.accept());
   await page.getByRole("button",{name:/Analyse product transactions/i}).click();
   await page.getByText("Group records by category").waitFor();
   assert((await page.getByLabel("JavaScript source code editor").inputValue()).includes("totalsByCategory"),"guided project should populate code editor");
