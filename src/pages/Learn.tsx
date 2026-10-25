@@ -8,11 +8,6 @@ export default function Learn() {
   const [params,setParams]=useSearchParams();
   const requestedTrack=params.get("track");
   const [activeTrack,setActiveTrack]=useState(()=>tracks.some(t=>t.id===requestedTrack)?requestedTrack!:tracks[0].id);
-  useEffect(()=>{
-    if(requestedTrack&&tracks.some(t=>t.id===requestedTrack)){
-      setActiveTrack(requestedTrack);setIndex(0);setSelected(null);setShowHint(false);
-    }
-  },[requestedTrack]);
   const [search,setSearch]=useState("");
   const [category,setCategory]=useState("All tracks");
   const [pageSize,setPageSize]=useState(12);
@@ -24,6 +19,12 @@ export default function Learn() {
   const [index,setIndex]=useState(0);
   const [selected,setSelected]=useState<number|null>(null);
   const [showHint,setShowHint]=useState(false);
+  useEffect(()=>{
+    if(requestedTrack&&tracks.some(t=>t.id===requestedTrack)){
+      setActiveTrack(requestedTrack);setIndex(0);setSelected(null);setShowHint(false);
+    }
+  },[requestedTrack]);
+
   const track=tracks.find(t=>t.id===activeTrack)||tracks[0];
   const lesson=track.lessons[Math.min(index,track.lessons.length-1)];
   const passed=record.passed.includes(lesson.id);
