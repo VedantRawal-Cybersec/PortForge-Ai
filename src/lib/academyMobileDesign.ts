@@ -667,7 +667,7 @@ const items:TrackSpec[]=[
     "♿",
     "Create interfaces usable with keyboards, assistive technology and adaptable text.",
     "Audit and repair a form using screen-reader and keyboard workflows.",
-    "accessibility",
+    "",
     [
       [
         "Semantics and names",
