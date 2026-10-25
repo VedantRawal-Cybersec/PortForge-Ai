@@ -17,11 +17,12 @@ describe("commercial AI and data security invariants",()=>{
   });
   it("declares row-level policies and refuses direct customer quota access",()=>{
     const migration=file("supabase/migrations/20261025123000_portforge_secure_launch.sql");
-    for(const relation of ["portforge_documents","portforge_publications","portforge_ai_usage"]){
+    for(const relation of ["portforge_documents","portforge_publications","portforge_ai_usage","portforge_ai_global_usage"]){
       expect(migration).toContain("alter table public."+relation+" enable row level security");
     }
     expect(migration).toContain("revoke all on function public.portforge_reserve_ai_quota");
-    expect(migration).toContain("grant execute on function public.portforge_reserve_ai_quota(uuid,text,integer) to service_role");
+    expect(migration).toContain("grant execute on function public.portforge_reserve_ai_quota(uuid,text,integer,integer) to service_role");
     expect(migration).toContain("public.portforge_ai_usage.calls < p_limit");
+    expect(migration).toContain("public.portforge_ai_global_usage.credits + excluded.credits <= p_global_credits");
   });
 });
