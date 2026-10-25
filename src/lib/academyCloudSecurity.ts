@@ -623,7 +623,7 @@ const items:TrackSpec[]=[
     "🔐",
     "Prevent application flaws through design, review and defensive tests.",
     "Review a deliberately vulnerable local app and verify secure fixes.",
-    "api-security",
+    "best-practices/api-security",
     [
       [
         "Input boundaries",
