@@ -7,6 +7,8 @@ import { usePortForgeAuth } from "@/lib/usePortForgeAuth";
 export default function Account() {
   const { user, ready } = usePortForgeAuth();
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   async function sendLink(event: FormEvent<HTMLFormElement>) {
@@ -19,9 +21,23 @@ export default function Account() {
         options: { emailRedirectTo: window.location.origin + "/account" },
       });
       if (error) throw error;
-      setMessage("Check your email for a sign-in link or code. If you do not receive it, verify the address and try again.");
+      setSent(true);
+      setMessage("Check your email for a sign-in link or code. If you receive a code, enter it below.");
     } catch {
       setMessage("Sign-in could not be started. Confirm that email authentication and the site redirect are enabled in your Supabase project.");
+    } finally { setBusy(false); }
+  }
+  async function verifyCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || !/^[0-9]{6,8}$/.test(otp.trim())) return;
+    setBusy(true); setMessage("");
+    try {
+      const {error}=await supabase.auth.verifyOtp({email:email.trim(),token:otp.trim(),type:"email"});
+      if(error)throw error;
+      setMessage("Email verified. Your PortForge account is now signed in.");
+      setOtp("");
+    } catch {
+      setMessage("That code could not be verified. Check it and ensure it has not expired.");
     } finally { setBusy(false); }
   }
   async function signOut() {
@@ -58,6 +74,15 @@ export default function Account() {
               <Mail size={16}/>{busy?"Sending…":"Send sign-in link"}
             </button>
           </form>
+          {sent && <form onSubmit={verifyCode} className="rounded-xl border border-border p-4 space-y-3">
+            <label htmlFor="account-code" className="block text-sm font-semibold">Received a numeric verification code?</label>
+            <input id="account-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}"
+              maxLength={8} value={otp} onChange={e=>setOtp(e.target.value.replace(/[^0-9]/g,""))}
+              className="w-full rounded-xl border border-border bg-background p-3 font-mono tracking-widest"
+              placeholder="6-digit code" />
+            <button type="submit" disabled={busy||!/^[0-9]{6,8}$/.test(otp)}
+              className="rounded-xl bg-foreground text-background px-5 py-3 text-sm font-bold disabled:opacity-40">Verify code and sign in</button>
+          </form>}
           <p className="text-xs text-muted-foreground">Sign-in requires the PortForge Supabase email provider and redirect URLs to be configured. We do not request your password.</p>
           <p className="text-sm text-muted-foreground">Prefer not to sign in? <Link to="/skill-test" className="text-led-cyan underline">Use guided offline practice</Link>.</p>
         </>}
