@@ -12,6 +12,7 @@ export const AI_MODES = [
 export type AIMode = typeof AI_MODES[number];
 export type AIInput = {
   mode: AIMode;
+  difficulty: "beginner" | "intermediate" | "advanced";
   skill: string;
   question: string;
   answer: string;
@@ -50,6 +51,9 @@ export function validateAIInput(raw: unknown): AIInput {
   }
   const result: AIInput = {
     mode: mode as AIMode,
+    difficulty: body.difficulty === undefined ? "beginner" :
+      ["beginner", "intermediate", "advanced"].includes(String(body.difficulty))
+        ? body.difficulty as AIInput["difficulty"] : (() => { throw new InvalidInput("Invalid difficulty."); })(),
     skill: stringField(body, "skill", 120, mode !== "project_evaluate"),
     question: "",
     answer: "",
