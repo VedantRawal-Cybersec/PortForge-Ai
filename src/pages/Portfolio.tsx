@@ -7,6 +7,7 @@ import { getProfile } from "@/lib/profile";
 import { buildPortfolioSite, portfolioThemes, type PortfolioTheme } from "@/lib/portfolioSite";
 import ProfileBuilder from "@/components/ProfileBuilder";
 import ShowcaseEditor from "@/components/ShowcaseEditor";
+import ResumeStudio from "@/components/ResumeStudio";
 import { getShowcaseProjects } from "@/lib/showcaseProjects";
 import { exercises, getPractice } from "@/lib/practice";
 import { getProjectInterviews } from "@/lib/projectJourney";
@@ -91,6 +92,7 @@ export default function Portfolio() {
 
       <ProfileBuilder />
       <ShowcaseEditor />
+      <ResumeStudio profile={profile} projects={authoredProjects}/>
       <section className="panel p-5 md:p-7 space-y-5" aria-labelledby="portfolio-studio-title">
         <div>
           <p className="font-mono text-xs tracking-widest text-led-cyan">PORTFOLIO STUDIO · LOCAL EXPORT</p>
