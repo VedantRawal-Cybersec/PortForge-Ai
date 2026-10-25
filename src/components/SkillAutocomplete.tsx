@@ -284,7 +284,7 @@ export function SkillAutocomplete({ value, onChange, disabled, placeholder, clas
         className={className}
       />
       {open && matches.length > 0 && !disabled && (
-        <div id={listId} role="listbox" aria-label="Suggested topics" className="absolute z-50 left-0 right-0 mt-1 panel max-h-64 overflow-auto animate-fade-in">
+        <div id={listId} role="listbox" aria-label="Suggested topics" className="relative mt-2 panel max-h-48 overflow-auto animate-fade-in">
           {matches.map((s, i) => (
             <button
               key={s}
@@ -300,7 +300,7 @@ export function SkillAutocomplete({ value, onChange, disabled, placeholder, clas
               }`}
             >
               <span className="font-medium">{highlight(s, value)}</span>
-              {i === activeIdx && <span className="font-mono text-[9px] text-muted-foreground tracking-widest">↵ TAB</span>}
+              {i === activeIdx && <span className="font-mono text-[9px] text-muted-foreground tracking-widest">↵ ENTER</span>}
             </button>
           ))}
         </div>
