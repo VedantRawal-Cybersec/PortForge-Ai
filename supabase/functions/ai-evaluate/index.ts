@@ -1,19 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { InvalidInput, MAX_REQUEST_BYTES, readBoundedJSON, validateAIInput, type AIInput } from "../_shared/requestLimits.ts";
+import { requireBudget, corsFor, originAllowed } from "../_shared/authQuota.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MAX_PROVIDER_RESPONSE_BYTES = 128 * 1024;
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed." }, 405);
+  if (!originAllowed(req)) return json({error:"Origin not allowed."},403,req);
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsFor(req) });
+  if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, req);
   try {
     const input = validateAIInput(await readBoundedJSON(req, MAX_REQUEST_BYTES));
+    const gate = await requireBudget(req, input.mode);
+    if (!gate.ok) return json({error:gate.message},gate.status,req);
     const key = Deno.env.get("LOVABLE_API_KEY");
     if (!key) return json({ error: "AI service is not configured." }, 503);
     const r = await fetch(GATEWAY_URL, {
@@ -56,10 +55,10 @@ serve(async (req: Request) => {
   }
 });
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, req?: Request) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: { ...(req ? corsFor(req) : {"Access-Control-Allow-Origin": "https://portforge-ai.vercel.app", "Vary":"Origin"}), "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 }
 
