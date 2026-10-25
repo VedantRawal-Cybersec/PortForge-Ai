@@ -45,6 +45,14 @@ create policy "Owner updates publication" on public.portforge_publications
 create policy "Owner deletes publication" on public.portforge_publications
   for delete to authenticated using (user_id = (select auth.uid()));
 
+-- Global daily budget limits mitigate aggregate cost from many accounts.
+-- A request-credit ceiling is NOT a guaranteed hard monetary cap at the AI provider.
+create table if not exists public.portforge_ai_global_usage (
+  usage_day date primary key,
+  credits integer not null default 0 check (credits >= 0)
+);
+alter table public.portforge_ai_global_usage enable row level security;
+revoke all on public.portforge_ai_global_usage from public, anon, authenticated;
 -- Private quota counters: never expose direct table access to browser clients.
 create table if not exists public.portforge_ai_usage (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -58,7 +66,7 @@ revoke all on public.portforge_ai_usage from anon, authenticated;
 revoke all on public.portforge_ai_usage from public;
 -- Uses atomic database updates even with concurrent Edge Function requests.
 create or replace function public.portforge_reserve_ai_quota(
-  p_user_id uuid, p_mode text, p_limit integer
+  p_user_id uuid, p_mode text, p_limit integer, p_global_credits integer
 ) returns boolean
 language plpgsql
 security definer
@@ -66,20 +74,42 @@ set search_path = ''
 as $$
 declare
   v_calls integer;
+  v_global integer;
+  v_cost integer;
+  v_day date := (now() at time zone 'utc')::date;
 begin
   if p_user_id is null or p_mode not in ('question','evaluate','interview_question','interview_evaluate','project_evaluate','oracle','tts')
-     or p_limit < 1 or p_limit > 100 then
+     or p_limit < 1 or p_limit > 100 or p_global_credits < 1 or p_global_credits > 100000 then
     return false;
   end if;
+  v_cost := case p_mode
+    when 'project_evaluate' then 3
+    when 'interview_evaluate' then 2
+    when 'evaluate' then 2
+    when 'oracle' then 2
+    when 'tts' then 2
+    else 1 end;
+  -- Transactionally reserve global credits before per-user increments.
+  insert into public.portforge_ai_global_usage (usage_day,credits)
+  values (v_day,v_cost)
+  on conflict (usage_day) do update
+  set credits = public.portforge_ai_global_usage.credits + excluded.credits
+  where public.portforge_ai_global_usage.credits + excluded.credits <= p_global_credits
+  returning credits into v_global;
+  if v_global is null then return false; end if;
   insert into public.portforge_ai_usage (user_id,usage_day,mode,calls)
-  values (p_user_id,(now() at time zone 'utc')::date,p_mode,1)
+  values (p_user_id,v_day,p_mode,1)
   on conflict (user_id,usage_day,mode) do update
   set calls = public.portforge_ai_usage.calls + 1
   where public.portforge_ai_usage.calls < p_limit
   returning calls into v_calls;
-  return v_calls is not null;
+  if v_calls is null then
+    update public.portforge_ai_global_usage set credits = credits - v_cost where usage_day = v_day;
+    return false;
+  end if;
+  return true;
 end;
 $$;
-revoke all on function public.portforge_reserve_ai_quota(uuid,text,integer) from public, anon, authenticated;
-grant execute on function public.portforge_reserve_ai_quota(uuid,text,integer) to service_role;
+revoke all on function public.portforge_reserve_ai_quota(uuid,text,integer,integer) from public, anon, authenticated;
+grant execute on function public.portforge_reserve_ai_quota(uuid,text,integer,integer) to service_role;
 -- All authorization is performed using the verified Supabase Auth session, never editable user_metadata.
