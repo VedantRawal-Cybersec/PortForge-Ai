@@ -16,7 +16,7 @@ export interface ShowcaseProject {
   createdAt: number;
   updatedAt: number;
 }
-export type ShowcaseDraft = Pick<ShowcaseProject, "title" | "summary" | "technologies" | "role" | "outcome" | "projectUrl">;
+export type ShowcaseDraft = Pick<ShowcaseProject, "title" | "summary" | "challenge" | "approach" | "validation" | "technologies" | "role" | "outcome" | "projectUrl">;
 export const emptyShowcaseDraft: ShowcaseDraft = {
   title: "", summary: "", challenge: "", approach: "", validation: "", technologies: "", role: "", outcome: "", projectUrl: "",
 };
