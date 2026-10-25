@@ -79,7 +79,7 @@ export default function Dashboard(){
           <p className="text-muted-foreground mt-2 text-sm">{next?next.summary:"Try another track or use a skill test to practice your knowledge."}</p>
           <div className="mt-6 flex justify-between text-sm"><span>{recommended.name}</span><span>{done} of {recommended.lessons.length}</span></div>
           <div className="h-2 bg-surface-3 rounded-full overflow-hidden mt-2"><div className="h-full bg-led-cyan rounded-full" style={{width:(done/recommended.lessons.length*100)+"%"}}/></div>
-          <Link to="/learn" className="inline-flex items-center gap-2 px-5 py-3 rounded-lg mt-6 bg-foreground text-background font-bold">Continue learning <ArrowRight className="size-4"/></Link>
+          <Link to={"/learn?track="+encodeURIComponent(recommended.id)} className="inline-flex items-center gap-2 px-5 py-3 rounded-lg mt-6 bg-foreground text-background font-bold">Continue learning <ArrowRight className="size-4"/></Link>
         </div>
         <div className="grid grid-cols-2 gap-3 p-5 sm:p-7 border-t border-border">
           <div><div className="text-3xl font-extrabold">{completed}/{totalLessons()}</div><div className="text-sm text-muted-foreground mt-1">Lessons completed</div></div>
