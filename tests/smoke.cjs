@@ -127,7 +127,9 @@ async function run(){
   // Complete both tools with their explicit, no-network offline choices.
   await page.goto(base + "/skill-test");
   await page.getByRole("button", { name: "SQL", exact: true }).click();
+  await page.getByLabel("Question difficulty").selectOption("advanced");
   await page.getByRole("button", { name: /PRACTISE WITHOUT AI/i }).click();
+  assert((await page.locator("#main-content").innerText()).includes("complex SQL query plan"), "advanced SQL question should match selected level");
   await page.getByText(/GUIDED OFFLINE PRACTICE/i).first().waitFor({timeout:15000});
   await page.getByPlaceholder("Type your answer. Be specific. Show reasoning.")
     .fill("An inner join returns matching records, but a left join also preserves rows in the left table.");
@@ -137,7 +139,9 @@ async function run(){
   await page.goto(base + "/interview");
   await page.getByRole("combobox", { name: "Interview role or skill" }).fill("JavaScript");
   await page.getByRole("combobox", { name: "Interview role or skill" }).press("Escape");
+  await page.getByLabel("Interview seniority").selectOption("intermediate");
   await page.getByRole("button", { name: /START GUIDED PRACTICE/i }).click();
+  assert((await page.locator("#main-content").innerText()).includes("asynchronous JavaScript bug"), "intermediate interview needs appropriate first question");
   for (let i = 0; i < 3; i++) {
     await page.getByRole("button", { name: /RECORD PRACTICE ANSWER/i }).waitFor({timeout:15000, state:"visible"});
     await page.getByPlaceholder("You can complete the whole interview without a microphone. Type your answer here.")
@@ -149,6 +153,25 @@ async function run(){
   await page.getByText(/3 answers were guided offline and not automatically graded/).waitFor();
 
   process.stdout.write("OK no-network guided skill review and three-question interview\\n");
+  await page.goto(base + "/oracle");
+  await page.getByLabel("Your current experience").selectOption("advanced");
+  await page.getByRole("button",{name:/Use this learning path/i}).click();
+  assert((await page.locator("#main-content").innerText()).includes("Core Web Vitals"),"advanced Oracle roadmap must have measurable role-specific deliverable");
+  await page.goto(base + "/workspace");
+  await page.getByLabel("Review difficulty").selectOption("intermediate");
+  const codeExport = page.waitForEvent("download");
+  await page.getByRole("button",{name:/EXPORT CODE/i}).click();
+  const savedSource = await codeExport;
+  assert(savedSource.suggestedFilename().endsWith(".js"),"source export must retain JS extension");
+  await page.goto(base + "/portfolio");
+  await page.getByRole("button",{name:"Edit Portfolio smoke project"}).click();
+  await page.getByPlaceholder("Who needed this, and what problem were you solving?").fill("Readers need a credible project explanation.");
+  await page.getByPlaceholder("What approach did you take, and why? Mention one meaningful trade-off.").fill("Used a small responsive design with accessible controls.");
+  await page.getByPlaceholder("What did you actually test or observe? Include limitations, not fabricated results.").fill("Checked keyboard navigation in a local browser.");
+  await page.getByRole("button",{name:"Save project"}).click();
+  const enhanced = await page.locator('iframe[title="Preview of your locally generated portfolio"]').getAttribute("srcdoc");
+  assert(enhanced.includes("Checked keyboard navigation"),"portfolio export should contain structured evidence");
+  process.stdout.write("OK difficulty calibration across five tools and structured case studies\\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
