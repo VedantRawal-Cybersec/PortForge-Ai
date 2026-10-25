@@ -3,9 +3,10 @@ import { runIsolatedJavaScript } from "@/lib/sandbox";
 import { Panel, ScoreBar } from "@/components/Panel";
 import { ModuleIntro } from "@/components/ModuleIntro";
 import { addToPortfolio } from "@/lib/portfolio";
+import { practiceLevels, levelGuidance, type PracticeLevel } from "@/lib/practiceLevels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Check, ChevronsUpDown, Loader2, Play, Save, Search, Send, Terminal } from "lucide-react";
+import { Check, ChevronsUpDown, Download, Loader2, Play, Save, Search, Send, Terminal } from "lucide-react";
 
 type PEval = {
   scores: { logic: number; quality: number; structure: number; creativity: number };
@@ -178,6 +179,7 @@ export default function Workspace() {
   const lang = byId(langId);
   const [code, setCode] = useState(lang.starter);
   const [desc, setDesc] = useState("FizzBuzz implementation");
+  const [difficulty, setDifficulty] = useState<PracticeLevel>("beginner");
   const [output, setOutput] = useState<string[]>([]);
   const [evalData, setEvalData] = useState<PEval | null>(null);
   const [loading, setLoading] = useState(false);
@@ -268,13 +270,24 @@ export default function Workspace() {
   }
 
   async function submit() {
-    if (!code.trim()) return;
+    if (!code.trim() || loading) return;
+    if (code.length > 30000) { toast.error("Use up to 30,000 characters for review."); return; }
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-      body: { mode: "project_evaluate", code, description: desc, language: lang.label },
-    });
-    setLoading(false);
-    if (error || data?.error) { toast.error(data?.error ?? "AI review is unavailable"); return; }
+    let data: PEval | null = null;
+    let error: unknown = null;
+    try {
+      const response = await supabase.functions.invoke("ai-evaluate", {
+        body: { mode: "project_evaluate", code, description: desc.trim().slice(0, 500) || lang.label + " project", language: lang.label, difficulty },
+      });
+      data = response.data as PEval | null;
+      error = response.error;
+    } catch {
+      toast.error("AI review unavailable. Your draft remains safely saved on this device.");
+      return;
+    } finally {
+      setLoading(false);
+    }
+    if (error || !data) { toast.error("AI review is unavailable. Your draft is preserved."); return; }
     if (!data?.scores || !["logic", "quality", "structure", "creativity"].every(k =>
       typeof data.scores[k] === "number" && Number.isFinite(data.scores[k]) &&
       data.scores[k] >= 0 && data.scores[k] <= 5
@@ -291,11 +304,23 @@ export default function Workspace() {
       ).slice(0, 5),
       upgrades: data.upgrades.slice(0, 3),
     });
-    addToPortfolio({
+    try { addToPortfolio({
       type: "project", title: desc || "Untitled Project", skill: lang.label,
       level: data.level, scores: data.scores, verdict: data.verdict,
     });
-    toast.success("Project added to portfolio");
+    toast.success("AI-reviewed project saved locally. Review is advisory, not a passed test.");
+    } catch { toast.info("Review completed, but browser storage could not save it."); }
+  }
+
+  function downloadSource() {
+    const ext = ({javascript:"js",typescript:"ts",python:"py",html:"html",css:"css",java:"java",go:"go",rust:"rs"} as Record<string,string>)[langId] || "txt";
+    const file = new Blob([code], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "portforge-project-" + langId + "." + ext;
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
   return (
@@ -385,6 +410,14 @@ export default function Workspace() {
             <p className="text-xs text-muted-foreground" role="note">
               Autosaved on this device · Ctrl/⌘+S to save · {lang.runnable ? "Ctrl/⌘+Enter to run JavaScript" : "Editing and AI review only — no runtime for " + lang.label} · {code.length.toLocaleString()} characters
             </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="workspace-review-level" className="text-xs text-muted-foreground">Review difficulty</label>
+              <select id="workspace-review-level" value={difficulty} onChange={e => {setDifficulty(e.target.value as PracticeLevel);setEvalData(null);}}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-xs">
+                {practiceLevels.map(level=><option key={level} value={level}>{levelGuidance[level].label}</option>)}
+              </select>
+              <span className="text-xs text-muted-foreground">AI reviews are advisory; only JavaScript runs here.</span>
+            </div>
             <div className="flex gap-2 flex-wrap">
               <button onClick={run} disabled={running} className="bg-foreground text-background font-bold text-sm px-4 py-2.5 rounded hover:bg-led-green transition-colors inline-flex items-center gap-2">
                 <Play className="size-4" /> {running ? "RUNNING…" : lang.runnable ? "RUN JAVASCRIPT" : "RUNTIME UNAVAILABLE"}
@@ -392,9 +425,13 @@ export default function Workspace() {
               <button onClick={save} className="border border-border bg-surface-2 text-sm px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2">
                 <Save className="size-4" /> SAVE
               </button>
-              <button onClick={submit} disabled={loading} className="ml-auto bg-led-cyan text-background font-bold text-sm px-5 py-2.5 rounded hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2">
+              <button onClick={downloadSource} type="button"
+                className="border border-border bg-surface-2 text-sm px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2">
+                <Download className="size-4" /> EXPORT CODE
+              </button>
+              <button onClick={submit} disabled={loading || !code.trim() || code.length > 30000} className="ml-auto bg-led-cyan text-background font-bold text-sm px-5 py-2.5 rounded hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                SUBMIT FOR GRADING
+                REQUEST AI CODE REVIEW
               </button>
             </div>
           </div>
