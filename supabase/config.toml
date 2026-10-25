@@ -1,7 +1,7 @@
 project_id = "hoqzslivhdtikweussan"
 
 [functions.ai-evaluate]
-verify_jwt = false
+verify_jwt = true
 
 [functions.tts]
-verify_jwt = false
+verify_jwt = true

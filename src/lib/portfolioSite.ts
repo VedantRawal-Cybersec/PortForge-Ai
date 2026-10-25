@@ -54,6 +54,9 @@ export function buildPortfolioSite(
       '<div class="eyebrow">Self-reported project</div>' +
       '<h3>' + safeText(project.title) + '</h3>' +
       '<p>' + safeText(project.summary) + '</p>' +
+      (project.challenge ? '<p><strong>Problem:</strong> ' + safeText(project.challenge) + '</p>' : '') +
+      (project.approach ? '<p><strong>Approach:</strong> ' + safeText(project.approach) + '</p>' : '') +
+      (project.validation ? '<p><strong>Tests and evidence:</strong> ' + safeText(project.validation) + '</p>' : '') +
       (project.role ? '<p><strong>My role:</strong> ' + safeText(project.role) + '</p>' : '') +
       (project.outcome ? '<p><strong>What I achieved:</strong> ' + safeText(project.outcome) + '</p>' : '') +
       (project.technologies ? '<div class="footnote">Tools: ' + safeText(project.technologies) + '</div>' : '') +

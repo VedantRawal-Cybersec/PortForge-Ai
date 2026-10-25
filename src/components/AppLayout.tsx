@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { BookOpen, Briefcase, Code2, Mic, Target, Moon, Sun, ArrowUpRight, Sparkles } from "lucide-react";
+import { BookOpen, Briefcase, Code2, Mic, Target, Moon, Sun, ArrowUpRight, Sparkles, UserRound } from "lucide-react";
+import { usePortForgeAuth } from "@/lib/usePortForgeAuth";
 import { useEffect, useState } from "react";
 
 // Keep the original five core tools in primary navigation. Learning,
@@ -14,6 +15,7 @@ const navItems = [
 
 export default function AppLayout() {
   const location = useLocation();
+  const { user } = usePortForgeAuth();
   const [theme,setTheme] = useState<"dark"|"light">(()=>{try{return localStorage.getItem("portforge_theme")==="light"?"light":"dark";}catch{return "dark";}});
   useEffect(()=>{document.documentElement.classList.toggle("light",theme==="light");document.documentElement.classList.toggle("dark",theme==="dark");try{localStorage.setItem("portforge_theme",theme);}catch{}},[theme]);
   return (
@@ -33,6 +35,9 @@ export default function AppLayout() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <Link to="/account" className="inline-flex min-h-10 items-center gap-1.5 border border-border rounded-lg px-2.5 sm:px-3 text-xs font-semibold hover:border-led-cyan/50" title={user ? "Manage your account" : "Sign in to PortForge"}>
+              <UserRound className="size-4" aria-hidden="true"/><span className="hidden sm:inline">{user ? "Account" : "Sign in"}</span>
+            </Link>
             <button type="button" aria-label={theme==="dark"?"Switch to light mode":"Switch to dark mode"} title={theme==="dark"?"Light mode":"Dark mode"} onClick={()=>setTheme(v=>v==="dark"?"light":"dark")} className="inline-flex size-10 items-center justify-center rounded-lg border border-border hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-led-cyan">
               {theme==="dark"?<Sun className="size-5" aria-hidden="true"/>:<Moon className="size-5" aria-hidden="true"/>}
             </button>

@@ -12,12 +12,14 @@ export const AI_MODES = [
 export type AIMode = typeof AI_MODES[number];
 export type AIInput = {
   mode: AIMode;
+  difficulty: "beginner" | "intermediate" | "advanced";
   skill: string;
   question: string;
   answer: string;
   code: string;
   description: string;
   language: string;
+  projectContext: string;
   index: number;
 };
 
@@ -50,14 +52,21 @@ export function validateAIInput(raw: unknown): AIInput {
   }
   const result: AIInput = {
     mode: mode as AIMode,
+    difficulty: body.difficulty === undefined ? "beginner" :
+      ["beginner", "intermediate", "advanced"].includes(String(body.difficulty))
+        ? body.difficulty as AIInput["difficulty"] : (() => { throw new InvalidInput("Invalid difficulty."); })(),
     skill: stringField(body, "skill", 120, mode !== "project_evaluate"),
     question: "",
     answer: "",
     code: "",
     description: "",
     language: "",
+    projectContext: "",
     index: 1,
   };
+  if (mode === "interview_question" || mode === "interview_evaluate") {
+    result.projectContext = stringField(body, "projectContext", 900);
+  }
   if (mode === "evaluate" || mode === "interview_evaluate") {
     result.question = stringField(body, "question", 3000, true);
     result.answer = stringField(body, "answer", 8000, true);

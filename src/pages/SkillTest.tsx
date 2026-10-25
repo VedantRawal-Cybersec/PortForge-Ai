@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Panel, ScoreBar } from "@/components/Panel";
 import { ModuleIntro } from "@/components/ModuleIntro";
+import AIAccountNotice from "@/components/AIAccountNotice";
 import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { offlineSkillPrompt } from "@/lib/offlineCoach";
+import { createGuidedAssessment, saveGuidedAssessment, readGuidedAssessments, makeGuidedSummary, type GuidedAssessment } from "@/lib/guidedAssessments";
+import { practiceLevels, levelGuidance, type PracticeLevel } from "@/lib/practiceLevels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowRight, BookOpen, ExternalLink, Loader2, Lightbulb, Rocket, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Download, ExternalLink, Loader2, Lightbulb, Rocket, Sparkles, Zap } from "lucide-react";
 
 type Stage = "input" | "question" | "answering" | "evaluating" | "result" | "offline-result";
 type Eval = {
@@ -23,6 +26,7 @@ type Eval = {
 export default function SkillTest() {
   const [stage, setStage] = useState<Stage>("input");
   const [skill, setSkill] = useState("");
+  const [difficulty, setDifficulty] = useState<PracticeLevel>("beginner");
   const [honesty, setHonesty] = useState<"green"|"amber"|"alert">("green");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -31,6 +35,9 @@ export default function SkillTest() {
   const [hash, setHash] = useState("");
   const [offlineMode, setOfflineMode] = useState(false);
   const [offlineIndex, setOfflineIndex] = useState(0);
+  const [guided, setGuided] = useState<GuidedAssessment | null>(null);
+  const [history, setHistory] = useState(readGuidedAssessments);
+  const [hintOpen, setHintOpen] = useState(false);
 
   async function startTest(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +48,7 @@ export default function SkillTest() {
     setStage("question");
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "question", skill: skill.trim().slice(0, 100) },
+        body: { mode: "question", skill: skill.trim().slice(0, 100), difficulty },
       });
       if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
         throw new Error(data?.error || "A valid question was not returned. Try again.");
@@ -51,7 +58,8 @@ export default function SkillTest() {
       setStage("answering");
     } catch (error) {
       setOfflineMode(true);
-      setQuestion(offlineSkillPrompt(skill).question);
+      setGuided(createGuidedAssessment(skill,difficulty));
+      setQuestion(offlineSkillPrompt(skill, 0, difficulty).question);
       setAnswer("");
       setStage("answering");
       toast.info("AI is unavailable. Switched to guided offline practice—no automatic grading.");
@@ -64,7 +72,9 @@ export default function SkillTest() {
     if (!skill.trim()) { toast.error("Choose a skill first."); return; }
     setOfflineMode(true);
     setOfflineIndex(0);
-    setQuestion(offlineSkillPrompt(skill).question);
+    setGuided(createGuidedAssessment(skill,difficulty));
+    setHintOpen(false);
+    setQuestion(offlineSkillPrompt(skill, 0, difficulty).question);
     setAnswer("");
     setEvalData(null);
     setStage("answering");
@@ -73,14 +83,20 @@ export default function SkillTest() {
   async function submitAnswer() {
     if (!answer.trim() || loading) return;
     if (offlineMode) {
-      setStage("offline-result");
+      const base=guided ?? createGuidedAssessment(skill,difficulty);
+      const updated:GuidedAssessment={...base,
+        answers:[...base.answers,{question,answer:answer.slice(0,8000),criteriaMet:[]}].slice(0,3),
+        complete:offlineIndex===2};
+      try{saveGuidedAssessment(updated);setHistory(readGuidedAssessments());}
+      catch{toast.error("Could not store the session in this browser. Copy your answer to keep it.");}
+      setGuided(updated);setStage("offline-result");
       return;
     }
     setStage("evaluating");
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "evaluate", skill, question, answer: answer.trim().slice(0, 8000) },
+        body: { mode: "evaluate", skill, question, answer: answer.trim().slice(0, 8000), difficulty },
       });
       if (error || data?.error) throw new Error(data?.error || "The evaluation service is unavailable.");
       if (!data?.scores || !["logic", "clarity", "depth"].every(key =>
@@ -109,6 +125,10 @@ export default function SkillTest() {
       setStage("result");
     } catch (error) {
       setOfflineMode(true);
+      const base=createGuidedAssessment(skill,difficulty);
+      const updated={...base,answers:[{question,answer:answer.slice(0,8000),criteriaMet:[]}]};
+      setGuided(updated);
+      try{saveGuidedAssessment(updated);setHistory(readGuidedAssessments());}catch{}
       setStage("offline-result");
       toast.info("AI grading is unavailable. Review the guided checklist instead; your answer is preserved.");
     } finally {
@@ -117,7 +137,22 @@ export default function SkillTest() {
   }
 
   function reset() {
-    setStage("input"); setSkill(""); setQuestion(""); setAnswer(""); setEvalData(null); setHash(""); setOfflineMode(false); setOfflineIndex(0);
+    setStage("input"); setSkill(""); setQuestion(""); setAnswer(""); setEvalData(null); setHash(""); setOfflineMode(false); setOfflineIndex(0); setGuided(null); setHintOpen(false);
+  }
+
+  function toggleSelfCheck(criterion:string,checked:boolean){
+    if(!guided)return;
+    const answers=guided.answers.map((a,i)=>i===offlineIndex?{
+      ...a,criteriaMet:checked?[...new Set([...a.criteriaMet,criterion])]:a.criteriaMet.filter(c=>c!==criterion),
+    }:a);
+    const next={...guided,answers};setGuided(next);
+    try{saveGuidedAssessment(next);setHistory(readGuidedAssessments());}catch{}
+  }
+  function exportPracticeReport(){
+    if(!guided)return;
+    const url=URL.createObjectURL(new Blob([makeGuidedSummary(guided)],{type:"text/plain;charset=utf-8"}));
+    const link=document.createElement("a");link.href=url;link.download="portforge-"+difficulty+"-practice.txt";
+    link.click();window.setTimeout(()=>URL.revokeObjectURL(url),3000);
   }
 
   async function probe() {
@@ -131,6 +166,7 @@ export default function SkillTest() {
       <ModuleIntro eyebrow="01 / ASSESS" title="Test your skills. Know your next move."
         description="Answer a focused question, understand your gaps and leave with a practical improvement plan. AI feedback is advisory, not a professional certification."
         highlights={["Choose a topic", "Answer with context", "Improve with feedback"]} icon={<BookOpen size={16}/>} />
+      <div className="lg:col-span-12"><AIAccountNotice /></div>
       {/* LEFT — Input */}
       <aside className="lg:col-span-3">
         <Panel label="PARAMETERS" status="MOD 01" statusVariant="cyan">
@@ -145,6 +181,18 @@ export default function SkillTest() {
                 placeholder="e.g. Python, React hooks, SQL joins…"
                 className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30 transition-all disabled:opacity-50"
               />
+              <div className="space-y-2">
+                <label htmlFor="skill-difficulty" className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                  Question difficulty
+                </label>
+                <select id="skill-difficulty" value={difficulty}
+                  onChange={e => setDifficulty(e.target.value as PracticeLevel)}
+                  disabled={stage !== "input" || loading}
+                  className="w-full min-h-11 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                  {practiceLevels.map(level => <option key={level} value={level}>{levelGuidance[level].label}</option>)}
+                </select>
+                <p className="text-xs text-muted-foreground">{levelGuidance[difficulty].description}</p>
+              </div>
               <div role="group" aria-label="Try a suggested skill" className="flex flex-wrap gap-2">
                 {["Python", "JavaScript", "SQL", "Communication"].map(example => (
                   <button key={example} type="button" disabled={stage !== "input"}
@@ -162,6 +210,7 @@ export default function SkillTest() {
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Zap className="size-4" />}
                 INITIATE PROBE
               </button>
+              <p className="text-xs text-muted-foreground">The guided mode now offers three progressively different questions, optional hints and a saved reflection report—no AI service needed.</p>
               <button type="button" onClick={startOfflinePractice}
                 disabled={stage !== "input" || !skill.trim() || loading}
                 className="w-full border border-border bg-surface-2 rounded-lg py-3 text-xs font-semibold hover:border-led-cyan/50 disabled:opacity-50">
@@ -178,9 +227,16 @@ export default function SkillTest() {
                   }`}>{v === "green" ? "🟢 OWN" : v === "amber" ? "🟡 LEARN" : "🔴 GUESS"}</button>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">For reflection only. It never affects AI scores or offline practice.</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">For reflection only; this does not change your selected question difficulty or score.</p>
             </div>
 
+            {history.length>0 && <div className="border-t border-border pt-3 space-y-2">
+              <p className="font-mono text-[10px] text-muted-foreground uppercase">Recent guided practice</p>
+              {history.slice(0,3).map(h=><div key={h.id} className="rounded-lg border border-border p-2">
+                <p className="text-xs font-semibold break-words">{h.topic} · {h.difficulty}</p>
+                <p className="text-[11px] text-muted-foreground">{h.answers.length}/3 answers · {h.complete?"Completed":"In progress"}</p>
+              </div>)}
+            </div>}
             {(stage === "result" || stage === "offline-result") && (
               <button onClick={reset} className="w-full mt-4 border border-border bg-surface-2 text-foreground text-sm py-2.5 rounded hover:border-led-cyan/50 transition-colors font-mono tracking-wider text-xs">
                 NEW PROBE
@@ -222,6 +278,16 @@ export default function SkillTest() {
                   <div className="font-mono text-[10px] tracking-widest text-led-cyan uppercase mb-2">// QUESTION</div>
                   <p className="text-2xl font-bold leading-snug text-balance">{question}</p>
                 </div>
+                {offlineMode&&<div className="space-y-2">
+                  <p className="text-xs text-led-cyan font-semibold">Question {offlineIndex+1} of 3 · {levelGuidance[difficulty].label} · no automatic score</p>
+                  <button type="button" onClick={()=>setHintOpen(v=>!v)}
+                    className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs font-semibold">
+                    {hintOpen?"Hide planning hint":"Show a planning hint"}
+                  </button>
+                  {hintOpen&&<div className="rounded-lg border border-led-cyan/25 p-3 text-xs leading-relaxed text-muted-foreground">
+                    Begin with a definition, give one real example, then explain how you would check it. Your selected difficulty determines the depth expected.
+                  </div>}
+                </div>}
                 <div>
                   <label className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2 block">Your Answer</label>
                   <textarea
@@ -236,7 +302,7 @@ export default function SkillTest() {
                   />
                   <div className="flex flex-wrap justify-between gap-2 mt-2 text-xs text-muted-foreground">
                     <span>Explain your reasoning, include an example, and mention trade-offs.</span>
-                    <span className="tabular-nums">{answer.length}/8000 · Ctrl/⌘ + Enter</span>
+                    <span className="tabular-nums">{levelGuidance[difficulty].label} · {answer.length}/8000 · Ctrl/⌘ + Enter</span>
                   </div>
                   <button
                     onClick={submitAnswer}
@@ -253,7 +319,7 @@ export default function SkillTest() {
             {stage === "offline-result" && (
               <div className="space-y-5 animate-fade-in" role="status">
                 <span className="chip chip-amber">GUIDED PRACTICE · NOT AI-GRADED</span>
-                <h2 className="text-xl sm:text-2xl font-bold">Review your reasoning.</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">Review your {difficulty} answer.</h2>
                 <p className="text-sm text-muted-foreground">The AI service is unavailable. Your response remains on this device for this session; no score, level, certificate or peer ranking has been assigned.</p>
                 <div className="rounded-xl border border-border bg-surface-2/60 p-4">
                   <p className="text-xs text-led-cyan font-mono mb-2">YOUR ANSWER</p>
@@ -262,22 +328,34 @@ export default function SkillTest() {
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="font-bold mb-3">Self-review checklist</h3>
                   <ul className="list-disc pl-5 space-y-2 text-sm">
-                    {offlineSkillPrompt(skill, offlineIndex).checklist.map(item => <li key={item}>{item}</li>)}
+                    {offlineSkillPrompt(skill, offlineIndex, difficulty).checklist.map(item => <li key={item} className="list-none -ml-5">
+                      <label className="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" aria-label={"Self-review "+item} className="mt-1 accent-led-cyan"
+                          checked={guided?.answers[offlineIndex]?.criteriaMet.includes(item)??false}
+                          onChange={e=>toggleSelfCheck(item,e.target.checked)}/>
+                        <span>{item}</span>
+                      </label>
+                    </li>)}
                   </ul>
                 </div>
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="font-bold mb-2">A useful next project</h3>
-                  <p className="text-sm text-muted-foreground">{offlineSkillPrompt(skill, offlineIndex).exampleTask}</p>
+                  <p className="text-sm text-muted-foreground">{offlineSkillPrompt(skill, offlineIndex, difficulty).exampleTask}</p>
                 </div>
-                <button type="button" onClick={() => {
+                {guided&&<button type="button" onClick={exportPracticeReport}
+                  className="inline-flex items-center gap-2 border border-border rounded-lg px-4 py-3 text-sm font-semibold">
+                  <Download size={16}/> Download practice notes
+                </button>}
+                {offlineIndex < 2 ? <button type="button" onClick={() => {
                   const next = offlineIndex + 1;
                   setOfflineIndex(next);
-                  setQuestion(offlineSkillPrompt(skill, next).question);
+                  setHintOpen(false);
+                  setQuestion(offlineSkillPrompt(skill, next, difficulty).question);
                   setAnswer("");
                   setStage("answering");
                 }} className="w-full border border-led-cyan/40 rounded-lg p-3 font-bold text-sm hover:bg-led-cyan/10">
-                  Try the next practice question
-                </button>
+                  Continue to question {offlineIndex+2} of 3
+                </button>:<p className="text-sm text-led-green font-bold">Three-question guided session completed. Your reflections are saved locally where permitted.</p>}
               </div>
             )}
 

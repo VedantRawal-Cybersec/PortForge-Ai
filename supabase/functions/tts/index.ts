@@ -1,22 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as b64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { InvalidInput, MAX_TTS_BYTES, readBoundedJSON, validateTTSInput } from "../_shared/requestLimits.ts";
+import { requireBudget, corsFor, originAllowed } from "../_shared/authQuota.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, req?: Request) {
   return new Response(JSON.stringify(body), {
-    status, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
+    status, headers: { ...(req ? corsFor(req) : {"Access-Control-Allow-Origin":"https://portforge-ai.vercel.app"}), "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 }
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (!originAllowed(req)) return json({fallback:true,error:"Origin not allowed."},403,req);
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsFor(req) });
   if (req.method !== "POST") return json({ fallback: true, error: "Method not allowed." }, 405);
   try {
     const { text, voiceId } = validateTTSInput(await readBoundedJSON(req, MAX_TTS_BYTES));
+    const gate = await requireBudget(req, "tts");
+    if (!gate.ok) return json({fallback:true,error:gate.message},gate.status,req);
     const key = Deno.env.get("ELEVENLABS_API_KEY");
     if (!key) return json({ fallback: true, reason: "no_key" });
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {

@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Check, Edit3, ExternalLink, FolderPlus, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Edit3, ExternalLink, FolderPlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   deleteShowcaseProject, emptyShowcaseDraft, getShowcaseProjects,
-  MAX_SHOWCASE_PROJECTS, saveShowcaseProject, type ShowcaseDraft, type ShowcaseProject,
+  MAX_SHOWCASE_PROJECTS, saveShowcaseProject, reorderShowcaseProject, projectCompleteness, type ShowcaseDraft, type ShowcaseProject,
 } from "@/lib/showcaseProjects";
 
 export default function ShowcaseEditor() {
@@ -29,6 +29,7 @@ export default function ShowcaseEditor() {
     setEditingId(project.id);
     setDraft({
       title: project.title, summary: project.summary,
+      challenge: project.challenge, approach: project.approach, validation: project.validation,
       technologies: project.technologies, role: project.role,
       outcome: project.outcome, projectUrl: project.projectUrl,
     });
@@ -91,6 +92,22 @@ export default function ShowcaseEditor() {
               <textarea required minLength={10} maxLength={1200} rows={4} value={draft.summary} onChange={e => change("summary",e.target.value)}
                 placeholder="Explain the problem, how your project works and why it matters." className="block mt-2 w-full rounded-lg bg-background border border-border p-3 font-normal"/>
             </label>
+            <div className="sm:col-span-2 space-y-3 rounded-xl border border-border bg-background/40 p-4">
+              <p className="text-sm font-bold">Turn this into a stronger case study</p>
+              <p className="text-xs text-muted-foreground">Optional, but detailed context helps readers understand and trust the work. Only report facts you can support.</p>
+              <label className="block text-sm font-semibold">Problem or challenge
+                <textarea maxLength={800} rows={3} value={draft.challenge} onChange={e => change("challenge",e.target.value)}
+                  placeholder="Who needed this, and what problem were you solving?" className="block mt-2 w-full rounded-lg bg-background border border-border p-3 font-normal"/>
+              </label>
+              <label className="block text-sm font-semibold">Approach and decisions
+                <textarea maxLength={1000} rows={3} value={draft.approach} onChange={e => change("approach",e.target.value)}
+                  placeholder="What approach did you take, and why? Mention one meaningful trade-off." className="block mt-2 w-full rounded-lg bg-background border border-border p-3 font-normal"/>
+              </label>
+              <label className="block text-sm font-semibold">Testing or supporting evidence
+                <textarea maxLength={800} rows={3} value={draft.validation} onChange={e => change("validation",e.target.value)}
+                  placeholder="What did you actually test or observe? Include limitations, not fabricated results." className="block mt-2 w-full rounded-lg bg-background border border-border p-3 font-normal"/>
+              </label>
+            </div>
             <label className="block text-sm font-semibold">Technologies
               <input maxLength={180} value={draft.technologies} onChange={e => change("technologies",e.target.value)}
                 placeholder="React, TypeScript, PostgreSQL" className="block mt-2 w-full rounded-lg bg-background border border-border p-3 font-normal"/>
@@ -107,6 +124,15 @@ export default function ShowcaseEditor() {
               <input type="url" maxLength={600} value={draft.projectUrl} onChange={e => change("projectUrl",e.target.value)}
                 placeholder="https://github.com/..." className="block mt-2 w-full rounded-lg bg-background border border-border p-3 font-normal"/>
             </label>
+          </div>
+          <div className="rounded-lg border border-border bg-surface-2 p-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold">Case-study completeness (filled fields, not a quality score)</span>
+              <span className="tabular-nums">{projectCompleteness(draft)}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-background mt-2 overflow-hidden">
+              <div className="h-full bg-led-cyan transition-[width]" style={{width:projectCompleteness(draft)+"%"}}/>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button type="submit" className="inline-flex gap-2 items-center rounded-xl bg-foreground text-background px-5 py-3 text-sm font-bold">
@@ -127,11 +153,17 @@ export default function ShowcaseEditor() {
         </div>
       )}
       {projects.length > 0 && <div className="grid sm:grid-cols-2 gap-4">
-        {projects.map(project => (
+        {projects.map((project, index) => (
           <article key={project.id} className="rounded-xl border border-border bg-surface-2/40 p-5 space-y-3">
             <div className="flex gap-2 justify-between items-start">
               <span className="chip chip-cyan text-[10px]">SELF-REPORTED</span>
               <div className="flex gap-2">
+                <button type="button" disabled={index === 0} aria-label={"Move " + project.title + " up"}
+                  onClick={() => { try { reorderShowcaseProject(project.id, -1); } catch { toast.error("Could not reorder projects."); } }}
+                  className="p-2 rounded-lg border border-border disabled:opacity-30"><ArrowUp size={15}/></button>
+                <button type="button" disabled={index === projects.length-1} aria-label={"Move " + project.title + " down"}
+                  onClick={() => { try { reorderShowcaseProject(project.id, 1); } catch { toast.error("Could not reorder projects."); } }}
+                  className="p-2 rounded-lg border border-border disabled:opacity-30"><ArrowDown size={15}/></button>
                 <button type="button" aria-label={"Edit " + project.title} onClick={() => startEdit(project)}
                   className="p-2 rounded-lg hover:bg-surface-3 border border-border"><Edit3 size={15}/></button>
                 <button type="button" aria-label={"Delete " + project.title} onClick={() => remove(project)}
@@ -140,6 +172,9 @@ export default function ShowcaseEditor() {
             </div>
             <h3 className="text-xl font-bold break-words">{project.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">{project.summary}</p>
+            {project.challenge && <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap"><strong>Challenge:</strong> {project.challenge}</p>}
+            {project.approach && <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap"><strong>Approach:</strong> {project.approach}</p>}
+            {project.validation && <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap"><strong>Evidence:</strong> {project.validation}</p>}
             {project.technologies && <p className="text-xs text-led-cyan break-words">{project.technologies}</p>}
             {project.projectUrl && <a href={project.projectUrl} target="_blank" rel="noopener noreferrer"
               className="inline-flex gap-1.5 items-center text-sm text-led-cyan hover:underline">Open project <ExternalLink size={14}/></a>}

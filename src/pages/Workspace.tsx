@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { runIsolatedJavaScript } from "@/lib/sandbox";
+import { Link } from "react-router-dom";
+import { workspaceRecipes, findWorkspaceRecipe } from "@/lib/workspaceRecipes";
 import { Panel, ScoreBar } from "@/components/Panel";
 import { ModuleIntro } from "@/components/ModuleIntro";
+import AIAccountNotice from "@/components/AIAccountNotice";
 import { addToPortfolio } from "@/lib/portfolio";
+import { practiceLevels, levelGuidance, type PracticeLevel } from "@/lib/practiceLevels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Check, ChevronsUpDown, Loader2, Play, Save, Search, Send, Terminal } from "lucide-react";
+import { Check, ChevronsUpDown, Download, Loader2, Play, Save, Search, Send, Terminal } from "lucide-react";
 
 type PEval = {
   scores: { logic: number; quality: number; structure: number; creativity: number };
@@ -178,6 +182,10 @@ export default function Workspace() {
   const lang = byId(langId);
   const [code, setCode] = useState(lang.starter);
   const [desc, setDesc] = useState("FizzBuzz implementation");
+  const [difficulty, setDifficulty] = useState<PracticeLevel>("beginner");
+  const [recipeId, setRecipeId] = useState("");
+  const [recipeChecks, setRecipeChecks] = useState<string[]>([]);
+  const chosenRecipe=findWorkspaceRecipe(recipeId);
   const [output, setOutput] = useState<string[]>([]);
   const [evalData, setEvalData] = useState<PEval | null>(null);
   const [loading, setLoading] = useState(false);
@@ -201,6 +209,22 @@ export default function Workspace() {
     return g;
   }, [filtered]);
 
+  function loadRecipe(id:string){
+    const recipe=findWorkspaceRecipe(id);
+    if(!recipe)return;
+    if(code.trim() && code!==byId(langId).starter &&
+      !window.confirm("Load this guided project template? The current editor will be replaced. Your existing draft is saved separately for its language."))return;
+    try{storeDraft(langId,code,desc);}catch{toast.info("Your existing draft could not be saved in this browser.");}
+    setLangId(recipe.language);
+    setCode(recipe.starter);
+    setDesc(recipe.title);
+    setDifficulty(recipe.difficulty);
+    setRecipeId(recipe.id);
+    setRecipeChecks([]);
+    setEvalData(null);
+    setOutput([]);
+    toast.info("Project brief loaded. Complete the TODOs and verify the acceptance criteria before documenting your work.");
+  }
   function selectLang(id: string) {
     if (id === langId) { setPickerOpen(false); return; }
     try { storeDraft(langId, code, desc); }
@@ -212,6 +236,8 @@ export default function Workspace() {
     setDesc(typeof saved?.desc === "string" ? saved.desc : l.label + " practice project");
     setEvalData(null);
     setOutput([]);
+    setRecipeId("");
+    setRecipeChecks([]);
     setPickerOpen(false);
     setSearch("");
   }
@@ -268,13 +294,24 @@ export default function Workspace() {
   }
 
   async function submit() {
-    if (!code.trim()) return;
+    if (!code.trim() || loading) return;
+    if (code.length > 30000) { toast.error("Use up to 30,000 characters for review."); return; }
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-      body: { mode: "project_evaluate", code, description: desc, language: lang.label },
-    });
-    setLoading(false);
-    if (error || data?.error) { toast.error(data?.error ?? "AI review is unavailable"); return; }
+    let data: PEval | null = null;
+    let error: unknown = null;
+    try {
+      const response = await supabase.functions.invoke("ai-evaluate", {
+        body: { mode: "project_evaluate", code, description: desc.trim().slice(0, 500) || lang.label + " project", language: lang.label, difficulty },
+      });
+      data = response.data as PEval | null;
+      error = response.error;
+    } catch {
+      toast.error("AI review unavailable. Your draft remains safely saved on this device.");
+      return;
+    } finally {
+      setLoading(false);
+    }
+    if (error || !data) { toast.error("AI review is unavailable. Your draft is preserved."); return; }
     if (!data?.scores || !["logic", "quality", "structure", "creativity"].every(k =>
       typeof data.scores[k] === "number" && Number.isFinite(data.scores[k]) &&
       data.scores[k] >= 0 && data.scores[k] <= 5
@@ -291,11 +328,23 @@ export default function Workspace() {
       ).slice(0, 5),
       upgrades: data.upgrades.slice(0, 3),
     });
-    addToPortfolio({
+    try { addToPortfolio({
       type: "project", title: desc || "Untitled Project", skill: lang.label,
-      level: data.level, scores: data.scores, verdict: data.verdict,
+      level: data.level, scores: { logic:data.scores.logic, clarity:data.scores.quality, depth:data.scores.structure, quality:data.scores.quality, structure:data.scores.structure, creativity:data.scores.creativity }, verdict: data.verdict,
     });
-    toast.success("Project added to portfolio");
+    toast.success("AI-reviewed project saved locally. Review is advisory, not a passed test.");
+    } catch { toast.info("Review completed, but browser storage could not save it."); }
+  }
+
+  function downloadSource() {
+    const ext = ({javascript:"js",typescript:"ts",python:"py",html:"html",css:"css",java:"java",go:"go",rust:"rs"} as Record<string,string>)[langId] || "txt";
+    const file = new Blob([code], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "portforge-project-" + langId + "." + ext;
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
   return (
@@ -303,6 +352,45 @@ export default function Workspace() {
       <ModuleIntro eyebrow="03 / BUILD" title="Give your ideas somewhere to grow."
         description="Write real code, keep drafts organised and improve through clear feedback. JavaScript examples run in a restricted sandbox; other languages support editing and review."
         highlights={["Autosaved drafts", "Safe JavaScript practice", "Project feedback"]} icon={<Terminal size={16}/>} />
+      <div className="lg:col-span-12"><AIAccountNotice /></div>
+      <section className="lg:col-span-12 panel p-4 sm:p-6 space-y-4" aria-labelledby="workspace-project-briefs">
+        <div className="flex flex-wrap justify-between gap-3 items-start">
+          <div>
+            <h2 id="workspace-project-briefs" className="text-xl sm:text-2xl font-bold">Build something real, one project at a time.</h2>
+            <p className="text-sm text-muted-foreground mt-2">Start with a clear problem, editable starter code, and observable acceptance criteria. JavaScript runs in a restricted browser sandbox; Python and SQL are editor-only.</p>
+          </div>
+          <span className="chip chip-cyan text-xs">7 guided project briefs</span>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {workspaceRecipes.map(recipe=><button type="button" key={recipe.id}
+            onClick={()=>loadRecipe(recipe.id)}
+            aria-pressed={recipeId===recipe.id}
+            className={"text-left rounded-xl border p-4 space-y-2 "+(recipeId===recipe.id?"border-led-cyan bg-led-cyan/10":"border-border bg-surface-2/30 hover:border-led-cyan/40")}>
+            <div className="flex flex-wrap gap-2 text-[10px] font-mono uppercase text-led-cyan"><span>{recipe.language}</span><span>· {recipe.difficulty}</span></div>
+            <h3 className="font-bold text-sm">{recipe.title}</h3>
+            <p className="text-xs text-muted-foreground">{recipe.description}</p>
+          </button>)}
+        </div>
+        {chosenRecipe&&<div className="rounded-xl border border-led-cyan/30 bg-led-cyan/5 p-4 space-y-3">
+          <div className="flex flex-wrap justify-between items-center gap-2">
+            <div><h3 className="font-bold">{chosenRecipe.title} — project requirements</h3>
+              <p className="text-sm text-muted-foreground mt-1">{chosenRecipe.brief}</p></div>
+            <Link to="/portfolio" className="rounded-lg border border-border px-3 py-2 text-xs font-bold">
+              Document your genuine outcome in Portfolio
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground">{recipeChecks.length}/{chosenRecipe.acceptance.length} requirements self-checked. These boxes are not automated test results.</p>
+          <div className="grid md:grid-cols-3 gap-3">
+            {chosenRecipe.acceptance.map((criterion,i)=><label key={criterion} className="text-xs flex gap-2 items-start p-3 rounded-lg border border-border/70 bg-background/40">
+              <input type="checkbox" aria-label={"Requirement "+(i+1)+": "+criterion}
+                checked={recipeChecks.includes(criterion)}
+                onChange={e=>setRecipeChecks(prev=>e.target.checked?[...prev,criterion]:prev.filter(x=>x!==criterion))}
+                className="mt-0.5 accent-led-cyan"/>
+              <span>{criterion}</span>
+            </label>)}
+          </div>
+        </div>}
+      </section>
       {/* CENTER — Editor */}
       <section className="lg:col-span-8 space-y-4">
         <Panel label="WORKSPACE" status={`MOD 03 // ${lang.label.toUpperCase()}`} statusVariant="cyan">
@@ -385,6 +473,14 @@ export default function Workspace() {
             <p className="text-xs text-muted-foreground" role="note">
               Autosaved on this device · Ctrl/⌘+S to save · {lang.runnable ? "Ctrl/⌘+Enter to run JavaScript" : "Editing and AI review only — no runtime for " + lang.label} · {code.length.toLocaleString()} characters
             </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="workspace-review-level" className="text-xs text-muted-foreground">Review difficulty</label>
+              <select id="workspace-review-level" value={difficulty} onChange={e => {setDifficulty(e.target.value as PracticeLevel);setEvalData(null);}}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-xs">
+                {practiceLevels.map(level=><option key={level} value={level}>{levelGuidance[level].label}</option>)}
+              </select>
+              <span className="text-xs text-muted-foreground">AI reviews are advisory; only JavaScript runs here.</span>
+            </div>
             <div className="flex gap-2 flex-wrap">
               <button onClick={run} disabled={running} className="bg-foreground text-background font-bold text-sm px-4 py-2.5 rounded hover:bg-led-green transition-colors inline-flex items-center gap-2">
                 <Play className="size-4" /> {running ? "RUNNING…" : lang.runnable ? "RUN JAVASCRIPT" : "RUNTIME UNAVAILABLE"}
@@ -392,9 +488,13 @@ export default function Workspace() {
               <button onClick={save} className="border border-border bg-surface-2 text-sm px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2">
                 <Save className="size-4" /> SAVE
               </button>
-              <button onClick={submit} disabled={loading} className="ml-auto bg-led-cyan text-background font-bold text-sm px-5 py-2.5 rounded hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2">
+              <button onClick={downloadSource} type="button"
+                className="border border-border bg-surface-2 text-sm px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2">
+                <Download className="size-4" /> EXPORT CODE
+              </button>
+              <button onClick={submit} disabled={loading || !code.trim() || code.length > 30000} className="ml-auto bg-led-cyan text-background font-bold text-sm px-5 py-2.5 rounded hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center gap-2">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                SUBMIT FOR GRADING
+                REQUEST AI CODE REVIEW
               </button>
             </div>
           </div>
