@@ -19,6 +19,7 @@ export type AIInput = {
   code: string;
   description: string;
   language: string;
+  projectContext: string;
   index: number;
 };
 
@@ -60,8 +61,12 @@ export function validateAIInput(raw: unknown): AIInput {
     code: "",
     description: "",
     language: "",
+    projectContext: "",
     index: 1,
   };
+  if (mode === "interview_question" || mode === "interview_evaluate") {
+    result.projectContext = stringField(body, "projectContext", 900);
+  }
   if (mode === "evaluate" || mode === "interview_evaluate") {
     result.question = stringField(body, "question", 3000, true);
     result.answer = stringField(body, "answer", 8000, true);
