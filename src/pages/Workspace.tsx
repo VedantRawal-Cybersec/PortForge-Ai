@@ -306,7 +306,7 @@ export default function Workspace() {
     });
     try { addToPortfolio({
       type: "project", title: desc || "Untitled Project", skill: lang.label,
-      level: data.level, scores: data.scores, verdict: data.verdict,
+      level: data.level, scores: { logic:data.scores.logic, clarity:data.scores.quality, depth:data.scores.structure, quality:data.scores.quality, structure:data.scores.structure, creativity:data.scores.creativity }, verdict: data.verdict,
     });
     toast.success("AI-reviewed project saved locally. Review is advisory, not a passed test.");
     } catch { toast.info("Review completed, but browser storage could not save it."); }
