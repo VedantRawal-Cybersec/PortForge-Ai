@@ -4,6 +4,7 @@ import { ModuleIntro } from "@/components/ModuleIntro";
 import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { offlineSkillPrompt } from "@/lib/offlineCoach";
+import { practiceLevels, levelGuidance, type PracticeLevel } from "@/lib/practiceLevels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowRight, BookOpen, ExternalLink, Loader2, Lightbulb, Rocket, Sparkles, Zap } from "lucide-react";
@@ -23,6 +24,7 @@ type Eval = {
 export default function SkillTest() {
   const [stage, setStage] = useState<Stage>("input");
   const [skill, setSkill] = useState("");
+  const [difficulty, setDifficulty] = useState<PracticeLevel>("beginner");
   const [honesty, setHonesty] = useState<"green"|"amber"|"alert">("green");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -41,7 +43,7 @@ export default function SkillTest() {
     setStage("question");
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "question", skill: skill.trim().slice(0, 100) },
+        body: { mode: "question", skill: skill.trim().slice(0, 100), difficulty },
       });
       if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
         throw new Error(data?.error || "A valid question was not returned. Try again.");
@@ -51,7 +53,7 @@ export default function SkillTest() {
       setStage("answering");
     } catch (error) {
       setOfflineMode(true);
-      setQuestion(offlineSkillPrompt(skill).question);
+      setQuestion(offlineSkillPrompt(skill, 0, difficulty).question);
       setAnswer("");
       setStage("answering");
       toast.info("AI is unavailable. Switched to guided offline practice—no automatic grading.");
@@ -64,7 +66,7 @@ export default function SkillTest() {
     if (!skill.trim()) { toast.error("Choose a skill first."); return; }
     setOfflineMode(true);
     setOfflineIndex(0);
-    setQuestion(offlineSkillPrompt(skill).question);
+    setQuestion(offlineSkillPrompt(skill, 0, difficulty).question);
     setAnswer("");
     setEvalData(null);
     setStage("answering");
@@ -80,7 +82,7 @@ export default function SkillTest() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-        body: { mode: "evaluate", skill, question, answer: answer.trim().slice(0, 8000) },
+        body: { mode: "evaluate", skill, question, answer: answer.trim().slice(0, 8000), difficulty },
       });
       if (error || data?.error) throw new Error(data?.error || "The evaluation service is unavailable.");
       if (!data?.scores || !["logic", "clarity", "depth"].every(key =>
@@ -145,6 +147,18 @@ export default function SkillTest() {
                 placeholder="e.g. Python, React hooks, SQL joins…"
                 className="w-full bg-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:border-led-cyan focus:ring-1 focus:ring-led-cyan/30 transition-all disabled:opacity-50"
               />
+              <div className="space-y-2">
+                <label htmlFor="skill-difficulty" className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                  Question difficulty
+                </label>
+                <select id="skill-difficulty" value={difficulty}
+                  onChange={e => setDifficulty(e.target.value as PracticeLevel)}
+                  disabled={stage !== "input" || loading}
+                  className="w-full min-h-11 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                  {practiceLevels.map(level => <option key={level} value={level}>{levelGuidance[level].label}</option>)}
+                </select>
+                <p className="text-xs text-muted-foreground">{levelGuidance[difficulty].description}</p>
+              </div>
               <div role="group" aria-label="Try a suggested skill" className="flex flex-wrap gap-2">
                 {["Python", "JavaScript", "SQL", "Communication"].map(example => (
                   <button key={example} type="button" disabled={stage !== "input"}
@@ -178,7 +192,7 @@ export default function SkillTest() {
                   }`}>{v === "green" ? "🟢 OWN" : v === "amber" ? "🟡 LEARN" : "🔴 GUESS"}</button>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">For reflection only. It never affects AI scores or offline practice.</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">For reflection only; this does not change your selected question difficulty or score.</p>
             </div>
 
             {(stage === "result" || stage === "offline-result") && (
@@ -236,7 +250,7 @@ export default function SkillTest() {
                   />
                   <div className="flex flex-wrap justify-between gap-2 mt-2 text-xs text-muted-foreground">
                     <span>Explain your reasoning, include an example, and mention trade-offs.</span>
-                    <span className="tabular-nums">{answer.length}/8000 · Ctrl/⌘ + Enter</span>
+                    <span className="tabular-nums">{levelGuidance[difficulty].label} · {answer.length}/8000 · Ctrl/⌘ + Enter</span>
                   </div>
                   <button
                     onClick={submitAnswer}
@@ -253,7 +267,7 @@ export default function SkillTest() {
             {stage === "offline-result" && (
               <div className="space-y-5 animate-fade-in" role="status">
                 <span className="chip chip-amber">GUIDED PRACTICE · NOT AI-GRADED</span>
-                <h2 className="text-xl sm:text-2xl font-bold">Review your reasoning.</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">Review your {difficulty} answer.</h2>
                 <p className="text-sm text-muted-foreground">The AI service is unavailable. Your response remains on this device for this session; no score, level, certificate or peer ranking has been assigned.</p>
                 <div className="rounded-xl border border-border bg-surface-2/60 p-4">
                   <p className="text-xs text-led-cyan font-mono mb-2">YOUR ANSWER</p>
@@ -262,17 +276,17 @@ export default function SkillTest() {
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="font-bold mb-3">Self-review checklist</h3>
                   <ul className="list-disc pl-5 space-y-2 text-sm">
-                    {offlineSkillPrompt(skill, offlineIndex).checklist.map(item => <li key={item}>{item}</li>)}
+                    {offlineSkillPrompt(skill, offlineIndex, difficulty).checklist.map(item => <li key={item}>{item}</li>)}
                   </ul>
                 </div>
                 <div className="rounded-xl border border-border p-4">
                   <h3 className="font-bold mb-2">A useful next project</h3>
-                  <p className="text-sm text-muted-foreground">{offlineSkillPrompt(skill, offlineIndex).exampleTask}</p>
+                  <p className="text-sm text-muted-foreground">{offlineSkillPrompt(skill, offlineIndex, difficulty).exampleTask}</p>
                 </div>
                 <button type="button" onClick={() => {
                   const next = offlineIndex + 1;
                   setOfflineIndex(next);
-                  setQuestion(offlineSkillPrompt(skill, next).question);
+                  setQuestion(offlineSkillPrompt(skill, next, difficulty).question);
                   setAnswer("");
                   setStage("answering");
                 }} className="w-full border border-led-cyan/40 rounded-lg p-3 font-bold text-sm hover:bg-led-cyan/10">
