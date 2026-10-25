@@ -3,7 +3,7 @@ const DATA_KEYS=[
  "portforge_profile_v2","portforge_learning_v1","portforge_missions_v1",
  "aero_workspace","aero_portfolio_v1","portforge_practice_v1",
  "portforge_project_interviews_v1","portforge_career_plan_v1",
- "portforge_showcase_projects_v1","portforge_workspace_language_drafts_v1"
+ "portforge_showcase_projects_v1","portforge_workspace_language_drafts_v1","portforge_resume_v1"
 ] as const;
 type Backup={format:"portforge-local-backup";version:1;createdAt:string;items:Record<string,unknown>};
 export const PORTABLE_KEYS=[...DATA_KEYS];
@@ -40,6 +40,18 @@ function valid(key:string,value:unknown):boolean{
   case "portforge_learning_v1":return Array.isArray(x.passed)&&x.passed.length<=500&&x.passed.every(v=>typeof v==="string")&&!!x.attempts&&typeof x.attempts==="object";
   case "portforge_missions_v1":return Object.keys(x).length<=100&&Object.values(x).every(v=>Array.isArray(v)&&v.length<=100);
   case "aero_workspace":return typeof x.code==="string"&&x.code.length<=30000&&typeof x.langId==="string"&&typeof x.desc==="string";
+  case "portforge_resume_v1":
+    return typeof x.name==="string"&&x.name.length<=1100&&
+      typeof x.summary==="string"&&x.summary.length<=1400&&
+      typeof x.skills==="string"&&x.skills.length<=1400&&
+      ["projects","experience","education"].every(field=>
+        Array.isArray(x[field])&&x[field].length<=24&&(x[field] as unknown[]).every(entry=>
+          !!entry&&typeof entry==="object"&&!Array.isArray(entry)&&
+          typeof (entry as Record<string,unknown>).heading==="string"&&
+          ((entry as Record<string,unknown>).heading as string).length<=180 &&
+          typeof (entry as Record<string,unknown>).description==="string"&&
+          ((entry as Record<string,unknown>).description as string).length<=2500
+        ));
   case "portforge_career_plan_v1":return typeof x.role==="string"&&Array.isArray(x.steps)&&x.steps.length<=20&&Array.isArray(x.checked);
   case "portforge_workspace_language_drafts_v1":
     return Object.keys(x).length<=80&&Object.values(x).every(entry=>
@@ -74,6 +86,7 @@ export function restoreLocalBackup(content:string):number{
  window.dispatchEvent(new Event("portforge:project-interview"));
  window.dispatchEvent(new Event("portforge:career"));
  window.dispatchEvent(new Event("portforge:showcase-projects"));
+ window.dispatchEvent(new Event("portforge:resume"));
  return entries.length;
 }
 export function clearLocalProgress(){
@@ -85,4 +98,5 @@ export function clearLocalProgress(){
  window.dispatchEvent(new Event("portforge:project-interview"));
  window.dispatchEvent(new Event("portforge:career"));
  window.dispatchEvent(new Event("portforge:showcase-projects"));
+ window.dispatchEvent(new Event("portforge:resume"));
 }
