@@ -222,7 +222,7 @@ async function run(){
   await page.getByRole("button",{name:/Use data without taking ownership/}).click();
   await page.getByText("Correct — lesson completed.").waitFor();
   await page.reload({waitUntil:"domcontentloaded"});
-  await page.getByRole("heading",{name:"Rust",exact:true}).last().waitFor();
+  await page.getByRole("region",{name:"Selected learning path"}).getByRole("heading",{name:/Rust/}).waitFor();
   await page.getByText("1/3 lessons completed").waitFor();
   await page.getByRole("searchbox",{name:"Search learning tracks"}).fill("");
   await page.getByLabel("Filter learning tracks by category").selectOption("Mobile & Games");
