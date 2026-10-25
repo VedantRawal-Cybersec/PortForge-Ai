@@ -9,6 +9,9 @@ const project: ShowcaseProject = {
   id: "local-1",
   title: "Student Portfolio",
   summary: "Built a portfolio website to show my genuine projects.",
+  challenge: "Students need clear project presentation.",
+  approach: "Compared two approaches and implemented one.",
+  validation: "Tested keyboard access on a demo project.",
   technologies: "React, TypeScript",
   role: "Full stack",
   outcome: "Learned how to ship responsive applications.",
@@ -39,6 +42,8 @@ describe("manually authored portfolio projects", () => {
       [{ ...project, title: '<script>alert("x")</script>', summary: '<img src=x onerror=alert(1)>', projectUrl: "javascript:alert(1)" }],
     );
     expect(html).toContain("Self-reported project");
+    expect(html).toContain("Tests and evidence:");
+    expect(html).toContain("keyboard access");
     expect(html).toContain("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;");
     expect(html).not.toContain("<img src=x onerror");
     expect(html).not.toContain('href="javascript:');

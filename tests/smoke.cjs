@@ -114,8 +114,8 @@ async function run(){
   const preview = page.locator('iframe[title="Preview of your locally generated portfolio"]');
   await preview.waitFor({ state: "visible" });
   await page.getByRole("button", { name: "Editorial" }).click();
-  await page.getByRole("button", { name: "Mobile", exact: true }).click();
-  assert.equal(await page.getByRole("button", { name: "Mobile", exact: true }).getAttribute("aria-pressed"), "true");
+  await page.getByRole("group", { name: "Preview device size" }).getByRole("button", { name: "Mobile", exact: true }).click();
+  assert.equal(await page.getByRole("group", { name: "Preview device size" }).getByRole("button", { name: "Mobile", exact: true }).getAttribute("aria-pressed"), "true");
   assert((await preview.getAttribute("srcdoc")).includes("--bg:#f4efe6"), "portfolio theme should appear in live preview");
   assert.equal(await preview.getAttribute("sandbox"), "", "portfolio iframe must be sandboxed");
   assert((await preview.getAttribute("srcdoc")).includes("Portfolio smoke project"), "authored projects must appear in the exported preview");
@@ -123,6 +123,23 @@ async function run(){
   await page.getByRole("button", { name: /Download portfolio HTML/i }).click();
   const portfolioDownload = await portfolioDownloadPromise;
   assert(portfolioDownload.suggestedFilename().endsWith(".html"), "portfolio export must download HTML");
+  await page.getByRole("button",{name:"Bring in my projects"}).click();
+  const resumePreview=page.locator('iframe[title="Live preview of editable resume"]');
+  await resumePreview.waitFor();
+  assert((await resumePreview.getAttribute("srcdoc")).includes("Portfolio smoke project"),"resume must import the real saved project");
+  await page.getByRole("tab",{name:"Templates"}).click();
+  await page.getByRole("button",{name:/Editorial Serif/i}).click();
+  assert((await resumePreview.getAttribute("srcdoc")).includes("style-editorial"),"resume must change template appearance");
+  await page.getByRole("tab",{name:"Content"}).click();
+  await page.getByPlaceholder("name@example.com").fill("candidate@example.com");
+  await page.getByRole("button",{name:"Save draft"}).click();
+  const txtPromise=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Download plain text"}).click();
+  const txt=await txtPromise;
+  assert(txt.suggestedFilename().endsWith(".txt"),"resume exports a genuine text document");
+  await page.reload({waitUntil:"domcontentloaded"});
+  assert.equal(await page.getByPlaceholder("name@example.com").inputValue(),"candidate@example.com","resume draft must persist");
+  process.stdout.write("OK resume project import, templates, draft persistence, and text export\n");
   process.stdout.write("OK premium homepage, five-tool navigation, mobile layout and portfolio studio preview/export\\n");
   // Complete both tools with their explicit, no-network offline choices.
   await page.goto(base + "/skill-test");
@@ -169,6 +186,14 @@ async function run(){
   await page.goto(base + "/dashboard");
   await page.getByText("Knowledge checks and your next action").waitFor();
   process.stdout.write("OK locally assessed six-question adaptive practice, Oracle evidence and dashboard\n");
+  await page.goto(base + "/workspace");
+  page.once("dialog", dialog => dialog.accept());
+  await page.getByRole("button",{name:/Analyse product transactions/i}).click();
+  await page.getByText("Group records by category").waitFor();
+  assert((await page.getByLabel("JavaScript source code editor").inputValue()).includes("totalsByCategory"),"guided project should populate code editor");
+  await page.getByRole("checkbox",{name:/Requirement 1:/}).check();
+  await page.getByText("1/3 requirements manually checked").waitFor();
+  process.stdout.write("OK guided project selection, starter code and manual acceptance criteria\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
