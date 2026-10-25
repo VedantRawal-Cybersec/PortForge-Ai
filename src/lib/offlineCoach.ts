@@ -156,6 +156,31 @@ export function offlineSkillPrompt(skill: string, index = 0, level: PracticeLeve
     exampleTask: `${level === "beginner" ? "Build a small" : level === "intermediate" ? "Build and test a realistic" : "Design and critically evaluate a complex"} ${safeName} example; explain the evidence supporting your result.`,
   };
 }
-export function offlineInterviewPrompt(skill: string, index: number, level: PracticeLevel = "beginner"): OfflinePrompt {
-  return offlineSkillPrompt(skill, index, level);
+export function offlineInterviewPrompt(skill: string, index: number, level: PracticeLevel = "beginner", projectTitle = ""): OfflinePrompt {
+  const base = offlineSkillPrompt(skill, index, level);
+  const title = projectTitle.trim().slice(0, 100);
+  if (!title) return base;
+  const prompts: Record<PracticeLevel, readonly [string, string, string]> = {
+    beginner: [
+      "In your project, what problem were you trying to solve, and who would use it?",
+      "Describe one feature you built yourself and explain how it works in simple terms.",
+      "What did you test in the project? Describe one result you actually observed.",
+    ],
+    intermediate: [
+      "What design or implementation decision mattered most in this project, and which alternative did you reject?",
+      "Describe a real bug or challenge in this project, how you investigated it, and how you verified the fix.",
+      "How would you improve reliability or accessibility in this project? Explain a test for your proposal.",
+    ],
+    advanced: [
+      "Defend the architecture of this project against a plausible failure or growth scenario. What would you measure?",
+      "Explain an important security, concurrency or scalability trade-off relevant to this project and how you would validate your decision.",
+      "Review this project as a senior engineer. Prioritize reliability risks and propose measurable, testable improvements.",
+    ],
+  };
+  const k = ((index % 3) + 3) % 3;
+  return {
+    ...base,
+    question: `About your project "${title}": ${prompts[level][k]}`,
+    exampleTask: `Document a genuine decision, test, or limitation from "${title}" in your case study.`,
+  };
 }
