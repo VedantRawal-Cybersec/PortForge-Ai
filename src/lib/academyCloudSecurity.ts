@@ -359,7 +359,7 @@ const items:TrackSpec[]=[
     "📟",
     "Manage reliability with measurement, alerts and incident learning.",
     "Define two service-level indicators and a safe incident runbook.",
-    "software-architect",
+    "",
     [
       [
         "SLIs and SLOs",
