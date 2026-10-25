@@ -5,11 +5,12 @@ import AIAccountNotice from "@/components/AIAccountNotice";
 import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { offlineInterviewPrompt } from "@/lib/offlineCoach";
+import { interviewPreparation, interviewReport, type InterviewAnswerRecord } from "@/lib/interviewCoach";
 import { practiceLevels, levelGuidance, type PracticeLevel } from "@/lib/practiceLevels";
 import { getShowcaseProjects } from "@/lib/showcaseProjects";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Mic, MicOff, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Download, Lightbulb, Loader2, Mic, MicOff, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 
 type IEval = {
   scores: { logic: number; clarity: number; depth: number; confidence: number };
@@ -40,6 +41,9 @@ export default function Interview() {
   const [evals, setEvals] = useState<IEval[]>([]);
   const [offlineMode, setOfflineMode] = useState(false);
   const [offlineReviews, setOfflineReviews] = useState<{ index: number; answer: string; question: string }[]>([]);
+  const [answerRecords, setAnswerRecords] = useState<InterviewAnswerRecord[]>([]);
+  const [showGuide, setShowGuide] = useState(false);
+  const preparation=interviewPreparation(qIndex,difficulty,selectedProject?.title);
   const [loadingQ, setLoadingQ] = useState(false);
   const [loadingE, setLoadingE] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
@@ -111,6 +115,8 @@ export default function Interview() {
     if (!skill.trim()) { toast.error("Enter a skill first"); return; }
     setOfflineMode(false);
     setOfflineReviews([]);
+    setAnswerRecords([]);
+    setShowGuide(false);
     setStarted(true);
     await nextQuestion(0);
   }
@@ -123,6 +129,8 @@ export default function Interview() {
     setUseBrowserTTS(true);
     setEvals([]);
     setOfflineReviews([]);
+    setAnswerRecords([]);
+    setShowGuide(false);
     setQuestion(offlineInterviewPrompt(skill, 0, difficulty, selectedProject?.title).question);
     setQIndex(0);
     setTranscript("");
@@ -132,7 +140,7 @@ export default function Interview() {
 
   async function nextQuestion(index: number) {
     stopSpeaking(); stopListening();
-    setLoadingQ(true); setQIndex(index); setQuestion(""); setTranscript(""); setInterim("");
+    setLoadingQ(true); setQIndex(index); setQuestion(""); setTranscript(""); setInterim(""); setShowGuide(false);
     if (offlineMode) {
       setQuestion(offlineInterviewPrompt(skill, index, difficulty, selectedProject?.title).question);
       setLoadingQ(false);
@@ -243,6 +251,7 @@ export default function Interview() {
     stopListening();
     if (offlineMode) {
       setOfflineReviews(p => [...p, { index: qIndex, question, answer: ans }]);
+      setAnswerRecords(p => [...p,{round:qIndex,question,answer:ans,mode:"Guided (not graded)",feedback:"Review your structure, example and verification."}]);
       toast.info(qIndex === 2 ? "Guided session complete. No AI scores were assigned." : "Answer recorded locally for this session. Check the reflection prompts, then continue.");
       return;
     }
@@ -265,12 +274,14 @@ export default function Interview() {
       setOfflineMode(true);
       setUseBrowserTTS(true);
       setOfflineReviews(p => [...p, { index: qIndex, question, answer: ans }]);
+      setAnswerRecords(p => [...p,{round:qIndex,question,answer:ans,mode:"Guided (not graded)",feedback:"AI unavailable. Review your answers against the relevant checklist."}]);
       toast.info("AI evaluation unavailable. Answer recorded as guided practice, without a score.");
       return;
     } finally {
       setLoadingE(false);
     }
     setEvals((p) => [...p, ev]);
+    setAnswerRecords(p => [...p,{round:qIndex,question,answer:ans,mode:"AI-reviewed",feedback:ev.feedback}]);
     setLoad((l) => Math.max(0, Math.min(100, l + ev.cognitiveLoadDelta)));
     if (qIndex + 1 < 3) {
       toast.success("Answer reviewed. Read your feedback, then choose Next question.");
@@ -295,7 +306,7 @@ export default function Interview() {
   function retry() { setTranscript(""); setInterim(""); }
   function reset() {
     stopSpeaking(); stopListening();
-    setStarted(false); setEvals([]); setOfflineMode(false); setOfflineReviews([]); setQuestion(""); setTranscript(""); setInterim(""); setLoad(20); setQIndex(0);
+    setStarted(false); setEvals([]); setAnswerRecords([]); setShowGuide(false); setOfflineMode(false); setOfflineReviews([]); setQuestion(""); setTranscript(""); setInterim(""); setLoad(20); setQIndex(0);
   }
 
   useEffect(() => () => { stopSpeaking(); stopListening(); }, []);
@@ -307,6 +318,13 @@ export default function Interview() {
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     }
   }, []);
+
+  function downloadInterviewNotes(){
+    if(answerRecords.length===0)return;
+    const url=URL.createObjectURL(new Blob([interviewReport(skill,difficulty,answerRecords)],{type:"text/plain;charset=utf-8"}));
+    const link=document.createElement("a");link.href=url;link.download="portforge-interview-notes.txt";
+    link.click();window.setTimeout(()=>URL.revokeObjectURL(url),3000);
+  }
 
   const avgConf = evals.length ? evals.reduce((s, x) => s + x.scores.confidence, 0) / evals.length : 0;
   const completedCount = evals.length + offlineReviews.length;
@@ -518,6 +536,20 @@ export default function Interview() {
                     {transcript || <span className="text-muted-foreground">{listening ? "Listening…" : "—"}</span>}
                     {interim && <span className="text-led-cyan/70"> {interim}</span>}
                   </div>
+                  <div className="mt-4 border border-border rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold">Answer coaching · {preparation.title}</span>
+                      <button type="button" aria-expanded={showGuide} onClick={()=>setShowGuide(v=>!v)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold">
+                        <Lightbulb size={14}/>{showGuide?"Hide outline":"Show outline"}
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{preparation.levelTip}</p>
+                    {showGuide&&<div className="space-y-2 text-xs">
+                      <ul className="list-disc pl-4 space-y-1">{preparation.steps.map(s=><li key={s}>{s}</li>)}</ul>
+                      <p className="text-muted-foreground">{preparation.context}</p>
+                    </div>}
+                  </div>
                   <label htmlFor="interview-text-answer" className="block text-xs text-muted-foreground mt-3 mb-2">
                     Type your answer or correct the transcript before submitting
                   </label>
@@ -549,6 +581,10 @@ export default function Interview() {
                   {completedCount === 3 && (
                     <p className="text-xs mt-3 text-led-green" role="status">Session complete. Only AI-reviewed answers receive scores; offline responses remain ungraded.</p>
                   )}
+                  {answerRecords.length>0&&<button type="button" onClick={downloadInterviewNotes}
+                    className="mt-3 inline-flex items-center gap-2 border border-border rounded-lg px-4 py-2.5 font-semibold text-xs">
+                    <Download size={15}/> Download interview notes ({answerRecords.length}/3)
+                  </button>}
                 </div>
               </>
             )}
