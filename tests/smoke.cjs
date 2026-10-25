@@ -172,6 +172,13 @@ async function run(){
   await page.getByRole("button",{name:"Save project"}).click();
   const enhanced = await page.locator('iframe[title="Preview of your locally generated portfolio"]').getAttribute("srcdoc");
   assert(enhanced.includes("Checked keyboard navigation"),"portfolio export should contain structured evidence");
+  await page.goto(base + "/interview");
+  await page.getByLabel("Interview seniority").selectOption("intermediate");
+  await page.getByLabel("Interview about your actual project (optional)").selectOption({label:"Portfolio smoke project"});
+  await page.getByRole("combobox",{name:"Interview role or skill"}).fill("React");
+  await page.getByRole("combobox",{name:"Interview role or skill"}).press("Escape");
+  await page.getByRole("button",{name:/START GUIDED PRACTICE/i}).click();
+  assert((await page.locator("#main-content").innerText()).includes('About your project "Portfolio smoke project"'),"guided interview must use explicitly chosen portfolio case study");
   process.stdout.write("OK difficulty calibration across five tools and structured case studies\\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
