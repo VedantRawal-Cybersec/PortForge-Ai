@@ -60,6 +60,16 @@ export default function SkillTest() {
     }
   }
 
+  function startOfflinePractice() {
+    if (!skill.trim()) { toast.error("Choose a skill first."); return; }
+    setOfflineMode(true);
+    setOfflineIndex(0);
+    setQuestion(offlineSkillPrompt(skill).question);
+    setAnswer("");
+    setEvalData(null);
+    setStage("answering");
+  }
+
   async function submitAnswer() {
     if (!answer.trim() || loading) return;
     if (offlineMode) {
@@ -151,6 +161,11 @@ export default function SkillTest() {
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Zap className="size-4" />}
                 INITIATE PROBE
+              </button>
+              <button type="button" onClick={startOfflinePractice}
+                disabled={stage !== "input" || !skill.trim() || loading}
+                className="w-full border border-border bg-surface-2 rounded-lg py-3 text-xs font-semibold hover:border-led-cyan/50 disabled:opacity-50">
+                PRACTISE WITHOUT AI · NO GRADES
               </button>
             </form>
 
