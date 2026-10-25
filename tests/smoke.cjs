@@ -194,6 +194,20 @@ async function run(){
   await page.getByRole("checkbox",{name:/Requirement 1:/}).check();
   await page.getByText("1/3 requirements manually checked").waitFor();
   process.stdout.write("OK guided project selection, starter code and manual acceptance criteria\n");
+  // Calibrated Oracle deliverables and portfolio-grounded interviews.
+  await page.goto(base + "/oracle");
+  await page.getByLabel("Your current experience").selectOption("advanced");
+  page.once("dialog", dialog => dialog.accept());
+  await page.getByRole("button",{name:/Use this learning path/i}).click();
+  await page.getByText(/Core Web Vitals/).waitFor();
+  await page.goto(base + "/interview");
+  await page.getByLabel("Interview seniority").selectOption("intermediate");
+  await page.getByLabel("Interview about your actual project (optional)").selectOption({label:"Portfolio smoke project"});
+  await page.getByRole("combobox",{name:"Interview role or skill"}).fill("React");
+  await page.getByRole("combobox",{name:"Interview role or skill"}).press("Escape");
+  await page.getByRole("button",{name:/START GUIDED PRACTICE/i}).click();
+  assert((await page.locator("#main-content").innerText()).includes('About your project "Portfolio smoke project"'),"interview must use user-selected case study");
+  process.stdout.write("OK level-aware Oracle and portfolio-grounded interview coaching\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
