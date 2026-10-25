@@ -36,7 +36,7 @@ const originalCareers:CareerPath[]=[
  */
 export const starterCareers: CareerPath[]=[
  ...originalCareers.map(p=>({...p,learnTrackId:
-   p.id==="data"?"data-analyst":
+   p.id==="data"?"data":
    p.id==="design"?"ux-design":
    p.id==="marketing"?"digital-marketing":
    p.id==="security"?"cybersecurity":p.id,
@@ -106,16 +106,16 @@ export function makeCuratedCareerPlan(path: CareerPath, difficulty: PracticeLeve
   return {
     role: path.role, overview: path.overview, skills: path.skills,
     steps, checked: [], source: "curated", savedAt: Date.now(),
-    difficulty, knownSkills: known,
+    difficulty, knownSkills: known, careerId:path.id, learnTrackId:path.learnTrackId,
   };
 }
-export type SavedCareer={role:string;overview:string;skills:string[];steps:CareerStep[];checked:number[];source:"curated"|"ai";savedAt:number;difficulty?:PracticeLevel;knownSkills?:string[]};
+export type SavedCareer={role:string;overview:string;skills:string[];steps:CareerStep[];checked:number[];source:"curated"|"ai";savedAt:number;difficulty?:PracticeLevel;knownSkills?:string[];careerId?:string;learnTrackId?:string};
 const KEY="portforge_career_plan_v1";
 export function getCareerPlan():SavedCareer|null{
  try{
   const x=JSON.parse(localStorage.getItem(KEY)||"null");
   if(!x||typeof x.role!=="string"||!Array.isArray(x.steps)||!Array.isArray(x.checked))return null;
-  return {role:x.role.slice(0,150),overview:String(x.overview||"").slice(0,1200),skills:Array.isArray(x.skills)?x.skills.slice(0,30):[],steps:x.steps.slice(0,12),checked:x.checked.filter((n:unknown)=>Number.isInteger(n)),source:x.source==="ai"?"ai":"curated",savedAt:Number(x.savedAt)||0,difficulty:parsePracticeLevel(x.difficulty),knownSkills:Array.isArray(x.knownSkills)?x.knownSkills.filter((y:unknown)=>typeof y==="string").slice(0,20):[]};
+  return {role:x.role.slice(0,150),overview:String(x.overview||"").slice(0,1200),skills:Array.isArray(x.skills)?x.skills.slice(0,30):[],steps:x.steps.slice(0,12),checked:x.checked.filter((n:unknown)=>Number.isInteger(n)),source:x.source==="ai"?"ai":"curated",savedAt:Number(x.savedAt)||0,difficulty:parsePracticeLevel(x.difficulty),knownSkills:Array.isArray(x.knownSkills)?x.knownSkills.filter((y:unknown)=>typeof y==="string").slice(0,20):[],careerId:typeof x.careerId==="string"?x.careerId.slice(0,100):undefined,learnTrackId:typeof x.learnTrackId==="string"&&tracks.some(t=>t.id===x.learnTrackId)?x.learnTrackId:undefined};
  }catch{return null;}
 }
 export function saveCareerPlan(plan:SavedCareer){
