@@ -197,7 +197,7 @@ async function run(){
   // Calibrated Oracle deliverables and portfolio-grounded interviews.
   await page.goto(base + "/oracle");
   await page.getByLabel("Your current experience").selectOption("advanced");
-  page.once("dialog", dialog => dialog.accept());
+
   await page.getByRole("button",{name:/Use this learning path/i}).click();
   await page.getByText(/Core Web Vitals/).waitFor();
   await page.goto(base + "/interview");
@@ -224,7 +224,7 @@ async function run(){
   await page.goto(base + "/oracle");
   await page.getByRole("searchbox",{name:"Find your career or skill path"}).fill("Rust");
   await page.getByLabel("Choose a curated beginner-friendly path").selectOption("rust");
-  page.once("dialog",dialog=>dialog.accept());
+
   await page.getByRole("button",{name:/Use this learning path/i}).click();
   await page.getByRole("link",{name:/Open Rust lessons/}).waitFor();
   await page.getByRole("link",{name:/Open Rust lessons/}).click();
