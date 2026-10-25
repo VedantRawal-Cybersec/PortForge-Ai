@@ -53,13 +53,13 @@ export async function requireBudget(req: Request, mode: string): Promise<GateRes
     // SQL function is denied to anon/authenticated and atomically increments
     // one row by (verified user, UTC day, mode). Do not trust client user IDs.
     const { data: permitted, error: usageError } = await admin.rpc("portforge_reserve_ai_quota", {
-      p_user_id: data.user.id, p_mode: mode, p_limit: limit,
+      p_user_id: data.user.id, p_mode: mode, p_limit: limit, p_global_credits: 750,
     });
     if (usageError) {
       console.error("PortForge quota reservation error", usageError.code);
       return { ok: false, status: 503, message: "Usage protection is unavailable. Try later." };
     }
-    if (permitted !== true) return { ok: false, status: 429, message: "Daily AI practice limit reached. Guided offline practice is still available." };
+    if (permitted !== true) return { ok: false, status: 429, message: "AI daily usage budget reached. Guided offline practice is still available." };
     return { ok: true, userId: data.user.id };
   } catch {
     return { ok: false, status: 503, message: "Could not verify your session or usage limit." };
