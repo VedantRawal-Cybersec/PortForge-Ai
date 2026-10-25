@@ -6,6 +6,9 @@ export interface ShowcaseProject {
   id: string;
   title: string;
   summary: string;
+  challenge: string;
+  approach: string;
+  validation: string;
   technologies: string;
   role: string;
   outcome: string;
@@ -15,9 +18,9 @@ export interface ShowcaseProject {
 }
 export type ShowcaseDraft = Pick<ShowcaseProject, "title" | "summary" | "technologies" | "role" | "outcome" | "projectUrl">;
 export const emptyShowcaseDraft: ShowcaseDraft = {
-  title: "", summary: "", technologies: "", role: "", outcome: "", projectUrl: "",
+  title: "", summary: "", challenge: "", approach: "", validation: "", technologies: "", role: "", outcome: "", projectUrl: "",
 };
-const limits = { title: 100, summary: 1200, technologies: 180, role: 140, outcome: 400, projectUrl: 600 };
+const limits = { title: 100, summary: 1200, challenge: 800, approach: 1000, validation: 800, technologies: 180, role: 140, outcome: 400, projectUrl: 600 };
 const fields = Object.keys(limits) as (keyof ShowcaseDraft)[];
 
 function safeText(value: unknown, limit: number): string {
@@ -48,6 +51,9 @@ export function getShowcaseProjects(): ShowcaseProject[] {
       id: safeText(raw.id, 80),
       title: safeText(raw.title, limits.title),
       summary: safeText(raw.summary, limits.summary),
+      challenge: safeText(raw.challenge, limits.challenge),
+      approach: safeText(raw.approach, limits.approach),
+      validation: safeText(raw.validation, limits.validation),
       technologies: safeText(raw.technologies, limits.technologies),
       role: safeText(raw.role, limits.role),
       outcome: safeText(raw.outcome, limits.outcome),
@@ -76,6 +82,20 @@ export function saveShowcaseProject(draft: ShowcaseDraft, existingId?: string): 
   localStorage.setItem(SHOWCASE_KEY, JSON.stringify(next));
   window.dispatchEvent(new Event("portforge:showcase-projects"));
   return current;
+}
+export function reorderShowcaseProject(id: string, direction: -1 | 1): void {
+  const projects = getShowcaseProjects();
+  const index = projects.findIndex(p => p.id === id);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= projects.length) return;
+  [projects[index], projects[target]] = [projects[target], projects[index]];
+  localStorage.setItem(SHOWCASE_KEY, JSON.stringify(projects));
+  window.dispatchEvent(new Event("portforge:showcase-projects"));
+}
+export function projectCompleteness(project: ShowcaseDraft): number {
+  const completed = ["title", "summary", "challenge", "approach", "validation", "technologies", "role", "outcome", "projectUrl"]
+    .filter(field => Boolean(project[field as keyof ShowcaseDraft].trim())).length;
+  return Math.round(100 * completed / 9);
 }
 export function deleteShowcaseProject(id: string): void {
   localStorage.setItem(SHOWCASE_KEY, JSON.stringify(getShowcaseProjects().filter(p => p.id !== id)));
