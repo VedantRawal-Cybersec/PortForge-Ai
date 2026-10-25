@@ -187,6 +187,7 @@ async function run(){
   await page.getByText("Knowledge checks and your next action").waitFor();
   process.stdout.write("OK locally assessed six-question adaptive practice, Oracle evidence and dashboard\n");
   await page.goto(base + "/workspace");
+  page.once("dialog", dialog => dialog.accept());
   await page.getByRole("button",{name:/Analyse product transactions/i}).click();
   await page.getByText("Group records by category").waitFor();
   assert((await page.getByLabel("JavaScript source code editor").inputValue()).includes("totalsByCategory"),"guided project should populate code editor");
