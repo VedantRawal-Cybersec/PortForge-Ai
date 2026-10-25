@@ -133,8 +133,8 @@ export default function SkillTest() {
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-7 sm:py-10 grid lg:grid-cols-12 gap-5 sm:gap-6">
       <ModuleIntro eyebrow="01 / ASSESS" title="Test your skills. Know your next move."
         description="Answer a focused question, understand your gaps and leave with a practical improvement plan. AI feedback is advisory, not a professional certification."
-        highlights={["Choose a topic", "Answer with context", "Improve with feedback"]} icon={<BookOpen size={16}/>
-      <div className="lg:col-span-12"><AIAccountNotice /></div>} />
+        highlights={["Choose a topic", "Answer with context", "Improve with feedback"]} icon={<BookOpen size={16}/>} />
+      <div className="lg:col-span-12"><AIAccountNotice /></div>
       {/* LEFT — Input */}
       <aside className="lg:col-span-3">
         <Panel label="PARAMETERS" status="MOD 01" statusVariant="cyan">
