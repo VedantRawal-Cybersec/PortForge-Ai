@@ -218,6 +218,7 @@ async function run(){
   await page.reload({waitUntil:"domcontentloaded"});
   await page.getByRole("heading",{name:"Rust",exact:true}).last().waitFor();
   await page.getByText("1/3 lessons completed").waitFor();
+  await page.getByRole("searchbox",{name:"Search learning tracks"}).fill("");
   await page.getByLabel("Filter learning tracks by category").selectOption("Mobile & Games");
   await page.getByRole("heading",{name:"Flutter",exact:true}).waitFor({timeout:7000});
   await page.goto(base + "/oracle");
