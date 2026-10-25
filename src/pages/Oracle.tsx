@@ -4,6 +4,7 @@ import { Loader2, Target, BookOpen, ArrowRight, CheckCircle2, Save, BriefcaseBus
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { starterCareers, getCareerPlan, saveCareerPlan, type SavedCareer } from "@/lib/careerPlans";
+import { readKnowledgeSessions, knowledgeSummary } from "@/lib/knowledgeChecks";
 
 export default function Oracle(){
  const [plan,setPlan]=useState<SavedCareer|null>(getCareerPlan);
@@ -12,6 +13,7 @@ export default function Oracle(){
  const [known,setKnown]=useState("");
  const [loading,setLoading]=useState(false);
  const [message,setMessage]=useState("");
+ const [knowledge] = useState(()=>knowledgeSummary(readKnowledgeSessions()));
  function persist(next:SavedCareer){
   try{saveCareerPlan(next);setPlan(next);setMessage("Career plan saved on this device.");}
   catch{setMessage("Your browser cannot save changes right now.");}
@@ -63,6 +65,18 @@ export default function Oracle(){
  }
  return <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-10 space-y-8">
   <header className="max-w-3xl space-y-3"><span className="chip chip-cyan"><BriefcaseBusiness className="size-4"/> CAREER EXPLORER</span><h1 className="text-4xl md:text-5xl font-bold tracking-tight">Turn a role into a practical plan.</h1><p className="text-muted-foreground text-lg leading-relaxed">Start with a researched-skill example pathway, adapt it to your interests, and track milestones. These are learning suggestions, not real-time job vacancies or verified salary forecasts.</p></header>
+  <section className="panel p-5 sm:p-6 space-y-3" aria-labelledby="oracle-evidence-title">
+    <h2 id="oracle-evidence-title" className="text-lg font-bold">Use your actual learning evidence</h2>
+    <p className="text-xs text-muted-foreground">Your local answer-key results help you choose what to practise next. These are not verified professional qualifications or automatic career matches.</p>
+    <div className="grid sm:grid-cols-3 gap-3">
+      {knowledge.map(k=><div key={k.topic} className="rounded-xl border border-border p-3">
+        <strong className="text-sm">{k.title}</strong>
+        <p className="text-xs text-muted-foreground mt-1">{k.attempts?k.correct+" of "+k.attempts+" locally correct":"No checks yet"}</p>
+        <p className="text-xs text-led-cyan mt-2">{k.recommended}</p>
+      </div>)}
+    </div>
+    <Link to="/skill-test" className="text-sm font-bold text-led-cyan inline-flex items-center gap-2">Continue a knowledge check <ArrowRight size={15}/></Link>
+  </section>
   <div className="grid lg:grid-cols-[minmax(280px,0.7fr)_minmax(0,1.35fr)] gap-5">
    <aside className="space-y-5">
     <section className="panel p-5 sm:p-6 space-y-4"><h2 className="text-xl font-bold">Choose a starting career</h2>

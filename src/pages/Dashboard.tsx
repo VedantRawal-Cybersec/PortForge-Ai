@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { readKnowledgeSessions, knowledgeSummary } from "@/lib/knowledgeChecks";
 import { Link } from "react-router-dom";
 import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy, FlaskConical, MessageSquareText } from "lucide-react";
 import { getProfile, saveProfile, type LearnerProfile } from "@/lib/profile";
@@ -36,12 +37,27 @@ export default function Dashboard(){
   const next=recommended.lessons.find(l=>!progress.passed.includes(l.id));
   const submit=(event:React.FormEvent)=>{event.preventDefault();saveProfile(profile);setSaved(true);};
   const update=(key:keyof LearnerProfile,value:string)=>{setProfile(prev=>({...prev,[key]:value}));setSaved(false);};
+  const knowledge=knowledgeSummary(readKnowledgeSessions());
   return <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-8">
     <header className="max-w-4xl space-y-3">
       <div className="chip chip-cyan">MY LEARNING SPACE</div>
       <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{profile.name.trim()?"Welcome back, "+profile.name.trim()+".":"Your next step starts here."}</h1>
       <p className="text-muted-foreground text-lg leading-relaxed">Pick a direction, learn one concept, practice it and turn your work into a portfolio. You can start without experience.</p>
     </header>
+    <section className="panel p-5 sm:p-6 space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><h2 className="text-xl font-bold">Knowledge checks and your next action</h2>
+          <p className="text-xs text-muted-foreground mt-1">Practice answers checked locally, not a verified professional qualification.</p></div>
+        <Link to="/skill-test" className="rounded-lg bg-foreground text-background px-4 py-2.5 text-sm font-bold">Start a quick check</Link>
+      </div>
+      <div className="grid sm:grid-cols-3 gap-3">
+        {knowledge.map(k=><div key={k.topic} className="border border-border rounded-xl p-3">
+          <strong className="text-sm">{k.title}</strong>
+          <p className="text-xs text-muted-foreground mt-1">{k.attempts?k.correct+" / "+k.attempts+" locally correct":"Not started yet"}</p>
+          <p className="text-xs text-led-cyan mt-1">{k.recommended}</p>
+        </div>)}
+      </div>
+    </section>
     <div className="grid xl:grid-cols-[1.1fr_0.9fr] gap-5">
       <section className="panel p-5 sm:p-7">
         <h2 className="text-2xl font-bold mb-2">Personalize your journey</h2>

@@ -149,6 +149,26 @@ async function run(){
   await page.getByText(/3 answers were guided offline and not automatically graded/).waitFor();
 
   process.stdout.write("OK no-network guided skill review and three-question interview\\n");
+  // Every learner can complete a level-responsive answer-key check without calling AI.
+  await page.goto(base + "/skill-test");
+  await page.getByLabel("Quick check learning track").selectOption("data");
+  await page.getByLabel("Quick check starting level").selectOption("beginner");
+  await page.getByRole("button",{name:/Begin six-question check/i}).click();
+  for(let i=0;i<6;i++){
+    await page.locator('input[type="radio"][name="knowledge-answer"]').first().check();
+    await page.getByRole("button",{name:"Check my answer"}).click();
+    await page.getByText(/Question|Needs review|Correct/).first().waitFor();
+    await page.getByRole("button",{name:i<5?"Next question":"View summary"}).click();
+  }
+  await page.getByText(/Practice complete/).waitFor();
+  const practiceDownload=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Download practice notes"}).click();
+  assert((await practiceDownload).suggestedFilename().endsWith(".txt"),"objective practice report must export");
+  await page.goto(base + "/oracle");
+  await page.getByText("Your actual learning evidence").waitFor();
+  await page.goto(base + "/dashboard");
+  await page.getByText("Knowledge checks and your next action").waitFor();
+  process.stdout.write("OK locally assessed six-question adaptive practice, Oracle evidence and dashboard\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
