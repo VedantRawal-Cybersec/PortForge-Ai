@@ -115,8 +115,8 @@ async function run(){
   const preview = page.locator('iframe[title="Preview of your locally generated portfolio"]');
   await preview.waitFor({ state: "visible" });
   await page.getByRole("button", { name: "Editorial" }).click();
-  await page.getByRole("button", { name: "Mobile", exact: true }).click();
-  assert.equal(await page.getByRole("button", { name: "Mobile", exact: true }).getAttribute("aria-pressed"), "true");
+  await page.getByRole("group", { name: "Preview device size" }).getByRole("button", { name: "Mobile", exact: true }).click();
+  assert.equal(await page.getByRole("group", { name: "Preview device size" }).getByRole("button", { name: "Mobile", exact: true }).getAttribute("aria-pressed"), "true");
   assert((await preview.getAttribute("srcdoc")).includes("--bg:#f4efe6"), "portfolio theme should appear in live preview");
   assert.equal(await preview.getAttribute("sandbox"), "", "portfolio iframe must be sandboxed");
   assert((await preview.getAttribute("srcdoc")).includes("Portfolio smoke project"), "authored projects must appear in the exported preview");
