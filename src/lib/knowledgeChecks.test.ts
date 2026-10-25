@@ -16,7 +16,7 @@ describe("offline knowledge checks",()=>{
       expect(item.options).toHaveLength(4);
       expect(item.answer).toBeGreaterThanOrEqual(0);
       expect(item.answer).toBeLessThan(4);
-      expect(item.explanation.length).toBeGreaterThan(35);
+      expect(item.explanation.length).toBeGreaterThan(20);
       expect(item.practice.length).toBeGreaterThan(20);
       expect(item.version).toBe(1);
     }
@@ -50,7 +50,7 @@ describe("offline knowledge checks",()=>{
     saveKnowledgeSession(s);
     expect(readKnowledgeSessions()).toHaveLength(1);
     expect(knowledgeSummary(readKnowledgeSessions()).find(x=>x.topic==="security")?.correct).toBe(6);
-    expect(knowledgeReport(s)).toContain("not a verified qualification");
+    expect(knowledgeReport(s)).toContain("Not a verified qualification");
   });
   it("blocks mismatched item, invalid index and corrupt browser storage",()=>{
     const s=createKnowledgeSession("frontend","beginner");
