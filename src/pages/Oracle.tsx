@@ -10,6 +10,9 @@ import { readKnowledgeSessions, knowledgeSummary } from "@/lib/knowledgeChecks";
 export default function Oracle(){
  const [plan,setPlan]=useState<SavedCareer|null>(getCareerPlan);
  const [selected,setSelected]=useState(starterCareers[0].id);
+ const [careerSearch,setCareerSearch]=useState("");
+ const matchingCareers=starterCareers.filter(p=>
+   !careerSearch.trim()||[p.role,p.overview,p.category||"",...p.skills].join(" ").toLowerCase().includes(careerSearch.trim().toLowerCase()));
  const [customRole,setCustomRole]=useState("");
  const [known,setKnown]=useState("");
  const [difficulty,setDifficulty]=useState<PracticeLevel>("beginner");
@@ -99,8 +102,17 @@ export default function Oracle(){
       <p className="text-xs text-muted-foreground">Self-reported skills customize suggestions, not verified capabilities.</p>
     </section>
     <section className="panel p-5 sm:p-6 space-y-4"><h2 className="text-xl font-bold">Choose a starting career</h2>
-     <label htmlFor="career-role" className="block text-sm font-semibold">Curated beginner roadmap</label>
-     <select id="career-role" className="w-full rounded-lg border border-border bg-background p-3" value={selected} onChange={e=>setSelected(e.target.value)}>{starterCareers.map(c=><option key={c.id} value={c.id}>{c.role}</option>)}</select>
+     <label htmlFor="career-search" className="block text-sm font-semibold">Find your career or skill path</label>
+     <input id="career-search" type="search" value={careerSearch}
+       onChange={e=>setCareerSearch(e.target.value)}
+       placeholder="Search cloud, data, UX, mobile, AI…" className="w-full rounded-lg border border-border bg-background p-3"/>
+     <label htmlFor="career-role" className="block text-sm font-semibold">Choose a curated beginner-friendly path</label>
+     <select id="career-role" className="w-full rounded-lg border border-border bg-background p-3"
+       value={selected} onChange={e=>setSelected(e.target.value)}>
+       {!matchingCareers.some(p=>p.id===selected)&&<option value={selected}>{starterCareers.find(p=>p.id===selected)?.role||"Current selection"}</option>}
+       {matchingCareers.map(c=><option key={c.id} value={c.id}>{c.role} · {c.category||"Learning"}</option>)}
+     </select>
+     <p className="text-xs text-muted-foreground">{matchingCareers.length} matching paths · {starterCareers.length} total</p>
      <button type="button" className="bg-foreground text-background rounded-lg px-5 py-3 w-full font-bold inline-flex justify-center gap-2 items-center" onClick={useTemplate}><Target className="size-4"/> Use this learning path</button>
      <p className="text-xs text-muted-foreground">This {difficulty}-level path works without AI and includes a suggested portfolio deliverable.</p>
     </section>
@@ -131,6 +143,15 @@ export default function Oracle(){
          Download my roadmap (.md)
        </button>
      </div>
+     {starterCareers.find(p=>p.role===plan.role)?.learnTrackId&&
+       <div className="border border-led-cyan/30 bg-led-cyan/5 p-4 rounded-xl space-y-2">
+         <h3 className="font-bold text-sm">Start learning this path</h3>
+         <p className="text-xs text-muted-foreground">Open the matching introductory lessons, answer the short knowledge checks, then return to your roadmap with genuine progress.</p>
+         <Link className="inline-flex items-center gap-2 text-sm font-bold text-led-cyan hover:underline"
+           to={"/learn?track="+encodeURIComponent(starterCareers.find(p=>p.role===plan.role)!.learnTrackId!)}>
+           Open {plan.role} lessons <ArrowRight size={15}/>
+         </Link>
+       </div>}
      <div><h3 className="font-bold mb-3">Skills to explore</h3><div className="flex flex-wrap gap-2">{plan.skills.map((s,i)=>
        <span className={"chip "+((plan.knownSkills||[]).includes(s.toLowerCase())?"chip-green":"")} key={i}>
          {s}{(plan.knownSkills||[]).includes(s.toLowerCase())?" · familiar":""}
