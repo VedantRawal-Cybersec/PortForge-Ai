@@ -143,12 +143,12 @@ export default function Oracle(){
          Download my roadmap (.md)
        </button>
      </div>
-     {starterCareers.find(p=>p.role===plan.role)?.learnTrackId&&
+     {(plan.learnTrackId||starterCareers.find(p=>p.role===plan.role)?.learnTrackId)&&
        <div className="border border-led-cyan/30 bg-led-cyan/5 p-4 rounded-xl space-y-2">
          <h3 className="font-bold text-sm">Start learning this path</h3>
          <p className="text-xs text-muted-foreground">Open the matching introductory lessons, answer the short knowledge checks, then return to your roadmap with genuine progress.</p>
          <Link className="inline-flex items-center gap-2 text-sm font-bold text-led-cyan hover:underline"
-           to={"/learn?track="+encodeURIComponent(starterCareers.find(p=>p.role===plan.role)!.learnTrackId!)}>
+           to={"/learn?track="+encodeURIComponent(plan.learnTrackId||starterCareers.find(p=>p.role===plan.role)!.learnTrackId!)}>
            Open {plan.role} lessons <ArrowRight size={15}/>
          </Link>
        </div>}
