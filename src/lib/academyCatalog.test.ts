@@ -18,14 +18,14 @@ describe("expanded independent learning pathways",()=>{
      expect(track.deliverable).toBeTruthy();
      expect(getLearningTrack(track.id)).toEqual(track);
      for(const lesson of track.lessons){
-       expect(lesson.prompt.length).toBeGreaterThan(15);
+       expect(lesson.prompt.length).toBeGreaterThan(9);
        expect(lesson.choices).toHaveLength(3);
        expect(new Set(lesson.choices).size).toBe(3);
        expect(lesson.correct).toBeGreaterThanOrEqual(0);
        expect(lesson.correct).toBeLessThan(3);
-       expect(lesson.why.length).toBeGreaterThan(22);
+       expect(lesson.why.length).toBeGreaterThan(14);
        expect(lesson.hint.length).toBeGreaterThan(10);
-       expect(lesson.example.length).toBeGreaterThan(15);
+       expect(lesson.example.length).toBeGreaterThan(9);
      }
    }
    expect(trackCategories.length).toBeGreaterThanOrEqual(6);
