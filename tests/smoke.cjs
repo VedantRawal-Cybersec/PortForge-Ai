@@ -124,6 +124,31 @@ async function run(){
   const portfolioDownload = await portfolioDownloadPromise;
   assert(portfolioDownload.suggestedFilename().endsWith(".html"), "portfolio export must download HTML");
   process.stdout.write("OK premium homepage, five-tool navigation, mobile layout and portfolio studio preview/export\\n");
+  // Complete both tools with their explicit, no-network offline choices.
+  await page.goto(base + "/skill-test");
+  await page.getByRole("button", { name: "SQL", exact: true }).click();
+  await page.getByRole("button", { name: /PRACTISE WITHOUT AI/i }).click();
+  await page.getByText(/GUIDED OFFLINE PRACTICE/i).first().waitFor({timeout:15000});
+  await page.getByPlaceholder("Type your answer. Be specific. Show reasoning.")
+    .fill("An inner join returns matching records, but a left join also preserves rows in the left table.");
+  await page.getByRole("button", { name: /REVIEW MY ANSWER/i }).click();
+  await page.getByRole("heading", { name: "Self-review checklist" }).waitFor();
+  assert((await page.locator("#main-content").innerText()).includes("NOT AI-GRADED"), "offline skill practice must be clearly ungraded");
+  await page.goto(base + "/interview");
+  await page.getByRole("combobox", { name: "Interview role or skill" }).fill("JavaScript");
+  await page.getByRole("combobox", { name: "Interview role or skill" }).press("Escape");
+  await page.getByRole("button", { name: /START GUIDED PRACTICE/i }).click();
+  for (let i = 0; i < 3; i++) {
+    await page.getByRole("button", { name: /RECORD PRACTICE ANSWER/i }).waitFor({timeout:15000, state:"visible"});
+    await page.getByPlaceholder("You can complete the whole interview without a microphone. Type your answer here.")
+      .fill("I would use a concrete project example, explain reasoning and test an edge case.");
+    await page.getByRole("button", { name: /RECORD PRACTICE ANSWER/i }).click();
+    await page.getByText("QUESTION " + (i + 1) + " · GUIDED, NOT GRADED").waitFor();
+    if (i < 2) await page.getByRole("button", { name: /NEXT QUESTION/i }).click();
+  }
+  await page.getByText(/3 answers were guided offline and not automatically graded/).waitFor();
+
+  process.stdout.write("OK no-network guided skill review and three-question interview\\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }

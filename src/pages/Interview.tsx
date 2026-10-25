@@ -3,6 +3,7 @@ import { Panel, ScoreBar } from "@/components/Panel";
 import { ModuleIntro } from "@/components/ModuleIntro";
 import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
+import { offlineInterviewPrompt } from "@/lib/offlineCoach";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Mic, MicOff, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
@@ -10,6 +11,7 @@ import { Loader2, Mic, MicOff, Play, RotateCcw, Volume2, VolumeX } from "lucide-
 type IEval = {
   scores: { logic: number; clarity: number; depth: number; confidence: number };
   verdict: string; feedback: string; idealAnswer: string; cognitiveLoadDelta: number;
+  questionIndex: number;
 };
 
 declare global { interface Window { webkitSpeechRecognition: any; SpeechRecognition: any; } }
@@ -25,6 +27,8 @@ export default function Interview() {
   const [speaking, setSpeaking] = useState(false);
   const [load, setLoad] = useState(20);
   const [evals, setEvals] = useState<IEval[]>([]);
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [offlineReviews, setOfflineReviews] = useState<{ index: number; answer: string; question: string }[]>([]);
   const [loadingQ, setLoadingQ] = useState(false);
   const [loadingE, setLoadingE] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
@@ -94,21 +98,52 @@ export default function Interview() {
 
   async function startInterview() {
     if (!skill.trim()) { toast.error("Enter a skill first"); return; }
+    setOfflineMode(false);
+    setOfflineReviews([]);
     setStarted(true);
     await nextQuestion(0);
+  }
+
+  function startOfflineInterview() {
+    if (!skill.trim()) { toast.error("Choose a role or skill first."); return; }
+    stopSpeaking(); stopListening();
+    setStarted(true);
+    setOfflineMode(true);
+    setUseBrowserTTS(true);
+    setEvals([]);
+    setOfflineReviews([]);
+    setQuestion(offlineInterviewPrompt(skill, 0).question);
+    setQIndex(0);
+    setTranscript("");
+    setInterim("");
+    setLoad(20);
   }
 
   async function nextQuestion(index: number) {
     stopSpeaking(); stopListening();
     setLoadingQ(true); setQIndex(index); setQuestion(""); setTranscript(""); setInterim("");
-    const { data, error } = await supabase.functions.invoke("ai-evaluate", { body: { mode: "interview_question", skill, index: index + 1 } });
-    setLoadingQ(false);
-    if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
-      toast.error(data?.error ?? "Question unavailable. End the session and try again.");
+    if (offlineMode) {
+      setQuestion(offlineInterviewPrompt(skill, index).question);
+      setLoadingQ(false);
       return;
     }
-    setQuestion(data.question);
-    speak(data.question);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-evaluate", {
+        body: { mode: "interview_question", skill, index: index + 1 },
+      });
+      if (error || data?.error || typeof data?.question !== "string" || !data.question.trim()) {
+        throw new Error("AI interview question unavailable.");
+      }
+      setQuestion(data.question);
+      void speak(data.question);
+    } catch {
+      setOfflineMode(true);
+      setUseBrowserTTS(true);
+      setQuestion(offlineInterviewPrompt(skill, index).question);
+      toast.info("AI unavailable. Switched to three guided offline questions without automatic scoring.");
+    } finally {
+      setLoadingQ(false);
+    }
   }
 
   // Mic visualizer + auto-submit on silence
@@ -149,7 +184,7 @@ export default function Interview() {
   }
 
   async function startListening() {
-    if (!question || loadingQ || loadingE || evals.length > qIndex) return;
+    if (!question || loadingQ || loadingE || evals.length + offlineReviews.length > qIndex) return;
     stopSpeaking();
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { toast.error("Speech recognition not supported. Use the text fallback."); return; }
@@ -191,17 +226,39 @@ export default function Interview() {
   }
 
   async function submitAnswer() {
-    if (loadingQ || loadingE || !question || evals.length > qIndex) return;
+    if (loadingQ || loadingE || !question || evals.length + offlineReviews.length > qIndex) return;
     const ans = (transcript + " " + interim).trim();
     if (!ans) { toast.error("No answer recorded"); return; }
     stopListening();
+    if (offlineMode) {
+      setOfflineReviews(p => [...p, { index: qIndex, question, answer: ans }]);
+      toast.info(qIndex === 2 ? "Guided session complete. No AI scores were assigned." : "Answer recorded locally for this session. Check the reflection prompts, then continue.");
+      return;
+    }
     setLoadingE(true);
-    const { data, error } = await supabase.functions.invoke("ai-evaluate", {
-      body: { mode: "interview_evaluate", skill, question, answer: ans },
-    });
-    setLoadingE(false);
-    if (error || data?.error) { toast.error(data?.error ?? "Eval failed"); return; }
-    const ev: IEval = data;
+    let ev: IEval;
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-evaluate", {
+        body: { mode: "interview_evaluate", skill, question, answer: ans.slice(0, 8000) },
+      });
+      if (error || data?.error || !data?.scores ||
+        !["logic", "clarity", "depth", "confidence"].every(key =>
+          typeof data.scores[key] === "number" && Number.isFinite(data.scores[key]) &&
+          data.scores[key] >= 0 && data.scores[key] <= 5) ||
+        typeof data.verdict !== "string" || typeof data.idealAnswer !== "string" ||
+        typeof data.feedback !== "string" || !Number.isFinite(data.cognitiveLoadDelta)) {
+        throw new Error("AI response unavailable or incomplete.");
+      }
+      ev = { ...data, questionIndex: qIndex };
+    } catch {
+      setOfflineMode(true);
+      setUseBrowserTTS(true);
+      setOfflineReviews(p => [...p, { index: qIndex, question, answer: ans }]);
+      toast.info("AI evaluation unavailable. Answer recorded as guided practice, without a score.");
+      return;
+    } finally {
+      setLoadingE(false);
+    }
     setEvals((p) => [...p, ev]);
     setLoad((l) => Math.max(0, Math.min(100, l + ev.cognitiveLoadDelta)));
     if (qIndex + 1 < 3) {
@@ -215,18 +272,19 @@ export default function Interview() {
       const aCo = all.reduce((s, x) => s + x.scores.confidence, 0) / all.length;
       const overall = avg(aL, aC, aD, aCo);
       const level = overall >= 4 ? "Strong" : overall >= 2.5 ? "Intermediate" : "Beginner";
-      addToPortfolio({
+      try { addToPortfolio({
         type: "interview", title: `Voice Interview: ${skill}`, skill,
         level: level as any, scores: { logic: aL, clarity: aC, depth: aD, confidence: aCo }, verdict: ev.verdict,
       });
-      toast.success("Interview saved to portfolio");
+      toast.success("AI interview saved on this device.");
+      } catch { toast.info("Could not save this session; browser storage may be unavailable."); }
     }
   }
 
   function retry() { setTranscript(""); setInterim(""); }
   function reset() {
     stopSpeaking(); stopListening();
-    setStarted(false); setEvals([]); setQuestion(""); setTranscript(""); setInterim(""); setLoad(20); setQIndex(0);
+    setStarted(false); setEvals([]); setOfflineMode(false); setOfflineReviews([]); setQuestion(""); setTranscript(""); setInterim(""); setLoad(20); setQIndex(0);
   }
 
   useEffect(() => () => { stopSpeaking(); stopListening(); }, []);
@@ -240,6 +298,7 @@ export default function Interview() {
   }, []);
 
   const avgConf = evals.length ? evals.reduce((s, x) => s + x.scores.confidence, 0) / evals.length : 0;
+  const completedCount = evals.length + offlineReviews.length;
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-7 sm:py-10 grid lg:grid-cols-12 gap-5 sm:gap-6">
@@ -260,9 +319,15 @@ export default function Interview() {
               />
             </div>
             {!started ? (
-              <button onClick={startInterview} disabled={!skill.trim()} className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
-                <Play className="size-4" /> START INTERVIEW
-              </button>
+              <div className="space-y-2">
+                <button onClick={startInterview} disabled={!skill.trim()} className="w-full bg-foreground text-background font-bold text-sm py-3 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                  <Play className="size-4" /> START INTERVIEW
+                </button>
+                <button type="button" onClick={startOfflineInterview} disabled={!skill.trim()}
+                  className="w-full border border-border rounded-lg bg-surface-2 px-3 py-3 text-xs font-semibold hover:border-led-cyan/50 disabled:opacity-50">
+                  START GUIDED PRACTICE · NO AI
+                </button>
+              </div>
             ) : (
               <button onClick={reset} className="w-full border border-border bg-surface-2 text-sm py-2.5 rounded hover:border-led-alert/50 transition-colors font-mono tracking-wider text-xs">
                 END SESSION
@@ -307,12 +372,12 @@ export default function Interview() {
             {started && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">AI-estimated practice intensity</span>
-                  <span className="font-mono text-xs tabular-nums">{Math.round(load)}%</span>
+                  <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">{offlineMode ? "Guided session progress" : "AI-estimated practice intensity"}</span>
+                  <span className="font-mono text-xs tabular-nums">{offlineMode ? Math.round(completedCount / 3 * 100) : Math.round(load)}%</span>
                 </div>
                 <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
                   <div className="h-full transition-all duration-700 ease-out rounded-full"
-                    style={{ width: `${load}%`, background: load > 70 ? "hsl(var(--led-alert))" : load > 40 ? "hsl(var(--led-amber))" : "hsl(var(--led-green))" }} />
+                    style={{ width: `${offlineMode ? completedCount / 3 * 100 : load}%`, background: offlineMode ? "hsl(var(--led-cyan))" : load > 70 ? "hsl(var(--led-alert))" : load > 40 ? "hsl(var(--led-amber))" : "hsl(var(--led-green))" }} />
                 </div>
               </div>
             )}
@@ -372,7 +437,7 @@ export default function Interview() {
                     )}
                     <button
                       onClick={listening ? stopListening : startListening}
-                      disabled={loadingE || loadingQ || speaking || !question || evals.length > qIndex}
+                      disabled={loadingE || loadingQ || speaking || !question || completedCount > qIndex}
                       className={`relative size-24 rounded-full flex items-center justify-center transition-all duration-300 disabled:opacity-50 ${
                         listening
                           ? "bg-led-alert/20 border-2 border-led-alert glow-cyan"
@@ -411,7 +476,7 @@ export default function Interview() {
 
                 {/* Transcript */}
                 <div className="mt-6">
-                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2">Live Transcript</div>
+                  <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2">Your answer</div>
                   <div className="bg-background border border-border rounded p-4 min-h-[80px] font-mono text-sm leading-relaxed">
                     {transcript || <span className="text-muted-foreground">{listening ? "Listening…" : "—"}</span>}
                     {interim && <span className="text-led-cyan/70"> {interim}</span>}
@@ -430,22 +495,22 @@ export default function Interview() {
                     className="w-full bg-background border border-border rounded p-3 text-sm focus:outline-none focus:border-led-cyan/50 disabled:opacity-65"
                   />
                   <div className="flex gap-2 mt-3 flex-wrap">
-                    <button onClick={submitAnswer} disabled={loadingE || loadingQ || evals.length > qIndex || (!transcript.trim() && !interim.trim())} className="flex-1 bg-foreground text-background font-bold text-sm py-2.5 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
-                      {loadingE ? <Loader2 className="size-4 animate-spin" /> : <>SUBMIT ANSWER</>}
+                    <button onClick={submitAnswer} disabled={loadingE || loadingQ || completedCount > qIndex || (!transcript.trim() && !interim.trim())} className="flex-1 bg-foreground text-background font-bold text-sm py-2.5 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                      {loadingE ? <Loader2 className="size-4 animate-spin" /> : <>{offlineMode ? "RECORD PRACTICE ANSWER" : "SUBMIT ANSWER"}</>}
                     </button>
-                    <button onClick={retry} disabled={loadingE || evals.length > qIndex} className="border border-border bg-surface-2 px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2 text-sm">
+                    <button onClick={retry} disabled={loadingE || completedCount > qIndex} className="border border-border bg-surface-2 px-4 py-2.5 rounded hover:border-led-cyan/50 inline-flex items-center gap-2 text-sm">
                       <RotateCcw className="size-4" /> RETRY
                     </button>
                   </div>
-                  {evals.length > qIndex && qIndex < 2 && (
+                  {completedCount > qIndex && qIndex < 2 && (
                     <button type="button" onClick={() => { stopSpeaking(); void nextQuestion(qIndex + 1); }}
                       disabled={loadingQ}
                       className="mt-4 w-full rounded-lg bg-led-cyan px-4 py-3 text-sm font-bold text-background hover:opacity-90">
                       NEXT QUESTION ({qIndex + 2}/3)
                     </button>
                   )}
-                  {evals.length === 3 && (
-                    <p className="text-xs mt-3 text-led-green" role="status">Session complete. Your AI-assisted practice results were saved locally where storage permits.</p>
+                  {completedCount === 3 && (
+                    <p className="text-xs mt-3 text-led-green" role="status">Session complete. Only AI-reviewed answers receive scores; offline responses remain ungraded.</p>
                   )}
                 </div>
               </>
@@ -456,13 +521,13 @@ export default function Interview() {
 
       {/* RIGHT — Live evals */}
       <aside className="lg:col-span-3 space-y-4">
-        <Panel label="LIVE EVALUATION" status={`${evals.length}/3`} statusVariant={evals.length === 3 ? "green" : "cyan"}>
+        <Panel label={offlineMode ? "SESSION REFLECTION" : "AI REVIEW"} status={`${completedCount}/3`} statusVariant={completedCount === 3 ? "green" : "cyan"}>
           <div className="p-5 space-y-4">
-            {evals.length === 0 && <p className="text-xs text-muted-foreground">Awaiting first answer…</p>}
+            {completedCount === 0 && <p className="text-xs text-muted-foreground">Awaiting first answer…</p>}
             {evals.map((e, i) => (
               <div key={i} className="space-y-2 pb-3 border-b border-border last:border-0">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] tracking-widest text-led-cyan uppercase">Q {i + 1}</span>
+                  <span className="font-mono text-[10px] tracking-widest text-led-cyan uppercase">Q {e.questionIndex + 1} · AI REVIEW</span>
                   <span className="text-xs text-muted-foreground">{e.verdict}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
@@ -477,13 +542,25 @@ export default function Interview() {
                 </button>
               </div>
             ))}
+            {offlineReviews.map(review => (
+              <div key={review.index} className="rounded-lg border border-led-amber/30 bg-led-amber/5 p-3 space-y-2">
+                <span className="font-mono text-[10px] text-led-amber">QUESTION {review.index + 1} · GUIDED, NOT GRADED</span>
+                <p className="text-xs font-bold">{review.question}</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words">{review.answer}</p>
+                <p className="font-semibold text-xs">Self-review your answer for:</p>
+                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                  {offlineInterviewPrompt(skill, review.index).checklist.map(item => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            ))}
           </div>
         </Panel>
 
-        {evals.length === 3 && (
+        {completedCount === 3 && (
           <Panel label="SESSION SUMMARY" status="DONE" statusVariant="green">
             <div className="p-5 text-sm space-y-2">
-              <p>Avg confidence: <span className="font-mono text-led-amber">{avgConf.toFixed(1)}/5</span></p>
+              {evals.length > 0 && <p>AI-estimated confidence for {evals.length} reviewed answers: <span className="font-mono text-led-amber">{avgConf.toFixed(1)}/5</span></p>}
+              {offlineReviews.length > 0 && <p>{offlineReviews.length} answers were guided offline and not automatically graded.</p>}
               <p className="text-muted-foreground text-xs">Stored on this device as AI-assisted practice, not a verified credential.</p>
             </div>
           </Panel>

@@ -3,11 +3,12 @@ import { Panel, ScoreBar } from "@/components/Panel";
 import { ModuleIntro } from "@/components/ModuleIntro";
 import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
+import { offlineSkillPrompt } from "@/lib/offlineCoach";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowRight, BookOpen, ExternalLink, Loader2, Lightbulb, Rocket, Sparkles, Zap } from "lucide-react";
 
-type Stage = "input" | "question" | "answering" | "evaluating" | "result";
+type Stage = "input" | "question" | "answering" | "evaluating" | "result" | "offline-result";
 type Eval = {
   scores: { logic: number; clarity: number; depth: number };
   level: "Beginner"|"Intermediate"|"Strong";
@@ -28,11 +29,15 @@ export default function SkillTest() {
   const [evalData, setEvalData] = useState<Eval | null>(null);
   const [loading, setLoading] = useState(false);
   const [hash, setHash] = useState("");
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [offlineIndex, setOfflineIndex] = useState(0);
 
   async function startTest(e: React.FormEvent) {
     e.preventDefault();
     if (!skill.trim() || loading) return;
     setLoading(true);
+    setOfflineMode(false);
+    setOfflineIndex(0);
     setStage("question");
     try {
       const { data, error } = await supabase.functions.invoke("ai-evaluate", {
@@ -45,15 +50,32 @@ export default function SkillTest() {
       setAnswer("");
       setStage("answering");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Question service unavailable");
-      setStage("input");
+      setOfflineMode(true);
+      setQuestion(offlineSkillPrompt(skill).question);
+      setAnswer("");
+      setStage("answering");
+      toast.info("AI is unavailable. Switched to guided offline practice—no automatic grading.");
     } finally {
       setLoading(false);
     }
   }
 
+  function startOfflinePractice() {
+    if (!skill.trim()) { toast.error("Choose a skill first."); return; }
+    setOfflineMode(true);
+    setOfflineIndex(0);
+    setQuestion(offlineSkillPrompt(skill).question);
+    setAnswer("");
+    setEvalData(null);
+    setStage("answering");
+  }
+
   async function submitAnswer() {
     if (!answer.trim() || loading) return;
+    if (offlineMode) {
+      setStage("offline-result");
+      return;
+    }
     setStage("evaluating");
     setLoading(true);
     try {
@@ -86,19 +108,21 @@ export default function SkillTest() {
       } catch { toast.info("Evaluation finished, but this device could not save its portfolio entry."); }
       setStage("result");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Evaluation failed");
-      setStage("answering");
+      setOfflineMode(true);
+      setStage("offline-result");
+      toast.info("AI grading is unavailable. Review the guided checklist instead; your answer is preserved.");
     } finally {
       setLoading(false);
     }
   }
 
   function reset() {
-    setStage("input"); setSkill(""); setQuestion(""); setAnswer(""); setEvalData(null); setHash("");
+    setStage("input"); setSkill(""); setQuestion(""); setAnswer(""); setEvalData(null); setHash(""); setOfflineMode(false); setOfflineIndex(0);
   }
 
   async function probe() {
     if (!evalData) return;
+    setOfflineMode(false);
     setStage("answering"); setQuestion(evalData.probeFollowUp); setAnswer(""); setEvalData(null);
   }
 
@@ -138,6 +162,11 @@ export default function SkillTest() {
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Zap className="size-4" />}
                 INITIATE PROBE
               </button>
+              <button type="button" onClick={startOfflinePractice}
+                disabled={stage !== "input" || !skill.trim() || loading}
+                className="w-full border border-border bg-surface-2 rounded-lg py-3 text-xs font-semibold hover:border-led-cyan/50 disabled:opacity-50">
+                PRACTISE WITHOUT AI · NO GRADES
+              </button>
             </form>
 
             <div className="pt-4 border-t border-border space-y-3">
@@ -149,10 +178,10 @@ export default function SkillTest() {
                   }`}>{v === "green" ? "🟢 OWN" : v === "amber" ? "🟡 LEARN" : "🔴 GUESS"}</button>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">For personal reflection only. This choice does not change your AI score.</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">For reflection only. It never affects AI scores or offline practice.</p>
             </div>
 
-            {stage === "result" && (
+            {(stage === "result" || stage === "offline-result") && (
               <button onClick={reset} className="w-full mt-4 border border-border bg-surface-2 text-foreground text-sm py-2.5 rounded hover:border-led-cyan/50 transition-colors font-mono tracking-wider text-xs">
                 NEW PROBE
               </button>
@@ -164,9 +193,9 @@ export default function SkillTest() {
       {/* CENTER — Interaction */}
       <section className="lg:col-span-6">
         <Panel
-          label="AI EVALUATION PROTOCOL"
-          status={stage === "input" ? "STANDBY" : stage === "result" ? "COMPLETE" : "ACTIVE"}
-          statusVariant={stage === "result" ? "green" : "cyan"}
+          label={offlineMode ? "GUIDED OFFLINE PRACTICE" : "AI EVALUATION PROTOCOL"}
+          status={stage === "input" ? "STANDBY" : stage === "result" || stage === "offline-result" ? "COMPLETE" : "ACTIVE"}
+          statusVariant={stage === "result" || stage === "offline-result" ? "green" : "cyan"}
           className={stage !== "input" && stage !== "result" ? "scanline" : ""}
         >
           <div className="p-8 min-h-[400px]">
@@ -215,9 +244,40 @@ export default function SkillTest() {
                     className="mt-3 bg-foreground text-background font-bold text-sm px-5 py-2.5 rounded hover:bg-led-cyan transition-colors disabled:opacity-50 inline-flex items-center gap-2"
                   >
                     {stage === "evaluating" ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-                    SUBMIT FOR GRADING
+                    {offlineMode ? "REVIEW MY ANSWER" : "SUBMIT FOR GRADING"}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {stage === "offline-result" && (
+              <div className="space-y-5 animate-fade-in" role="status">
+                <span className="chip chip-amber">GUIDED PRACTICE · NOT AI-GRADED</span>
+                <h2 className="text-xl sm:text-2xl font-bold">Review your reasoning.</h2>
+                <p className="text-sm text-muted-foreground">The AI service is unavailable. Your response remains on this device for this session; no score, level, certificate or peer ranking has been assigned.</p>
+                <div className="rounded-xl border border-border bg-surface-2/60 p-4">
+                  <p className="text-xs text-led-cyan font-mono mb-2">YOUR ANSWER</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{answer}</p>
+                </div>
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="font-bold mb-3">Self-review checklist</h3>
+                  <ul className="list-disc pl-5 space-y-2 text-sm">
+                    {offlineSkillPrompt(skill, offlineIndex).checklist.map(item => <li key={item}>{item}</li>)}
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="font-bold mb-2">A useful next project</h3>
+                  <p className="text-sm text-muted-foreground">{offlineSkillPrompt(skill, offlineIndex).exampleTask}</p>
+                </div>
+                <button type="button" onClick={() => {
+                  const next = offlineIndex + 1;
+                  setOfflineIndex(next);
+                  setQuestion(offlineSkillPrompt(skill, next).question);
+                  setAnswer("");
+                  setStage("answering");
+                }} className="w-full border border-led-cyan/40 rounded-lg p-3 font-bold text-sm hover:bg-led-cyan/10">
+                  Try the next practice question
+                </button>
               </div>
             )}
 
