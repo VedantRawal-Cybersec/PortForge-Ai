@@ -208,6 +208,27 @@ async function run(){
   await page.getByRole("button",{name:/START GUIDED PRACTICE/i}).click();
   assert((await page.locator("#main-content").innerText()).includes('About your project "Portfolio smoke project"'),"interview must use user-selected case study");
   process.stdout.write("OK level-aware Oracle and portfolio-grounded interview coaching\n");
+  // New academy catalog: browse, deep-link, complete and restore a real lesson.
+  await page.goto(base + "/learn");
+  await page.getByRole("searchbox",{name:"Search learning tracks"}).fill("Rust");
+  await page.getByRole("heading",{name:"Rust",exact:true}).click();
+  assert(page.url().includes("track=rust"),"the selected academy track needs a shareable deep link");
+  await page.getByRole("button",{name:/Use data without taking ownership/}).click();
+  await page.getByText("Correct — lesson completed.").waitFor();
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"Rust",exact:true}).last().waitFor();
+  await page.getByText("1/3 lessons completed").waitFor();
+  await page.getByLabel("Filter learning tracks by category").selectOption("Mobile & Games");
+  await page.getByRole("heading",{name:"Flutter",exact:true}).waitFor({timeout:7000});
+  await page.goto(base + "/oracle");
+  await page.getByRole("searchbox",{name:"Find your career or skill path"}).fill("Rust");
+  await page.getByLabel("Choose a curated beginner-friendly path").selectOption("rust");
+  page.once("dialog",dialog=>dialog.accept());
+  await page.getByRole("button",{name:/Use this learning path/i}).click();
+  await page.getByRole("link",{name:/Open Rust lessons/}).waitFor();
+  await page.getByRole("link",{name:/Open Rust lessons/}).click();
+  assert(page.url().includes("track=rust"),"Oracle must link to the matching learning path");
+  process.stdout.write("OK 69-track catalog, search/filter, deep-links, persisted lessons and Oracle integration\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
