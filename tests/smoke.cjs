@@ -3,6 +3,9 @@ const { chromium } = require("playwright");
 const { spawn } = require("node:child_process");
 const assert = require("node:assert/strict");
 const base = "http://127.0.0.1:4173";
+// Prevent a stalled browser-close operation from holding CI indefinitely after a failure.
+const watchdog=setTimeout(()=>{process.stderr.write("Browser smoke exceeded its safety deadline\n");process.exit(124);},90000);
+watchdog.unref();
 const delay = ms => new Promise(resolve => setTimeout(resolve,ms));
 const server = spawn(process.execPath,["node_modules/vite/bin/vite.js","preview","--host","127.0.0.1","--port","4173","--strictPort"],{stdio:["ignore","pipe","pipe"]});
 server.stderr.on("data",d=>process.stderr.write(String(d)));
@@ -17,6 +20,8 @@ async function run(){
   browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
   const context=await browser.newContext({viewport:{width:390,height:844}});
   const page=await context.newPage();
+  // Test runner makes one intentional user choice for confirmation dialogs; never register competing one-shot handlers.
+  page.on("dialog", dialog => { void dialog.accept().catch(error=>process.stderr.write("Dialog handling: "+String(error)+"\n")); });
   const errors=[];
   page.on("pageerror",e=>errors.push(e.message));
   const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/my-data","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle"];
@@ -47,7 +52,7 @@ async function run(){
   await page.getByRole("button",{name:/A browser requests webpage content from a server/i}).click();
   await page.getByText("Correct — lesson completed.").waitFor({timeout:7000});
   await page.goto(base+"/dashboard");
-  assert((await page.locator("#main-content").innerText()).includes("1/12"),"lesson progress not reflected in dashboard");
+  assert((await page.locator("#main-content").innerText()).includes("1/207"),"lesson progress not reflected in dashboard");
   process.stdout.write("OK dashboard and learning persistence\n");
   await page.goto(base+"/practice");
   await page.getByLabel("Your JavaScript solution").fill("function sumEven(numbers) { return numbers.filter(n => n % 2 === 0).reduce((sum,n) => sum+n,0); }");
@@ -86,7 +91,6 @@ async function run(){
   assert(download.suggestedFilename().endsWith(".json"),"missing JSON backup download");
   const backup={format:"portforge-local-backup",version:1,createdAt:new Date().toISOString(),items:{portforge_profile_v2:{name:"Restored Learner",goal:"explore",level:"new",focus:"digital",headline:"",bio:"",links:[],visibility:"private"}}};
   await page.locator("#backup-file").setInputFiles({name:"portforge-local-backup.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(backup))});
-  page.once("dialog",dialog=>dialog.accept());
   await page.getByRole("button",{name:"Restore selected file"}).click();
   await page.getByText(/Restored 1 browser-local sections/i).waitFor({timeout:7000});
   await page.goto(base+"/dashboard");
@@ -187,7 +191,6 @@ async function run(){
   await page.getByText("Knowledge checks and your next action").waitFor();
   process.stdout.write("OK locally assessed six-question adaptive practice, Oracle evidence and dashboard\n");
   await page.goto(base + "/workspace");
-  page.once("dialog", dialog => dialog.accept());
   await page.getByRole("button",{name:/Analyse product transactions/i}).click();
   await page.getByText("Group records by category").waitFor();
   assert((await page.getByLabel("JavaScript source code editor").inputValue()).includes("totalsByCategory"),"guided project should populate code editor");
@@ -197,7 +200,7 @@ async function run(){
   // Calibrated Oracle deliverables and portfolio-grounded interviews.
   await page.goto(base + "/oracle");
   await page.getByLabel("Your current experience").selectOption("advanced");
-  page.once("dialog", dialog => dialog.accept());
+
   await page.getByRole("button",{name:/Use this learning path/i}).click();
   await page.getByText(/Core Web Vitals/).waitFor();
   await page.goto(base + "/interview");
@@ -208,6 +211,32 @@ async function run(){
   await page.getByRole("button",{name:/START GUIDED PRACTICE/i}).click();
   assert((await page.locator("#main-content").innerText()).includes('About your project "Portfolio smoke project"'),"interview must use user-selected case study");
   process.stdout.write("OK level-aware Oracle and portfolio-grounded interview coaching\n");
+  // New academy catalog: browse, deep-link, complete and restore a real lesson.
+  process.stdout.write("START expanded academy browser journey\n");
+  await page.goto(base + "/learn");
+  await page.getByRole("searchbox",{name:"Search learning tracks"}).fill("Rust");
+  process.stdout.write("Academy filter typed; selecting Rust\n");
+  await page.getByRole("heading",{name:"Rust",exact:true}).click();
+  assert(page.url().includes("track=rust"),"the selected academy track needs a shareable deep link");
+  process.stdout.write("Rust path loaded; checking its answer\n");
+  await page.getByRole("button",{name:/Use data without taking ownership/}).click();
+  await page.getByText("Correct — lesson completed.").waitFor();
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.getByRole("region",{name:"Selected learning path"}).getByRole("heading",{name:/Rust/}).waitFor();
+  await page.getByText("1/3 lessons completed").waitFor();
+  await page.getByRole("searchbox",{name:"Search learning tracks"}).fill("");
+  await page.getByLabel("Filter learning tracks by category").selectOption("Mobile & Games");
+  await page.getByRole("heading",{name:"Flutter",exact:true}).waitFor({timeout:7000});
+  await page.goto(base + "/oracle");
+  process.stdout.write("Academy completion persisted; testing Oracle handoff\n");
+  await page.getByRole("searchbox",{name:"Find your career or skill path"}).fill("Rust");
+  await page.getByLabel("Choose a curated beginner-friendly path").selectOption("rust");
+
+  await page.getByRole("button",{name:/Use this learning path/i}).click();
+  await page.getByRole("link",{name:/Open Rust lessons/}).waitFor();
+  await page.getByRole("link",{name:/Open Rust lessons/}).click();
+  assert(page.url().includes("track=rust"),"Oracle must link to the matching learning path");
+  process.stdout.write("OK 69-track catalog, search/filter, deep-links, persisted lessons and Oracle integration\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }

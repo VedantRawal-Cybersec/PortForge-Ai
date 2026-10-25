@@ -1,6 +1,10 @@
+import {webAndProgrammingTracks} from "./academyWeb";
+import {dataAndAiTracks} from "./academyData";
+import {cloudSecurityTracks} from "./academyCloudSecurity";
+import {mobileDesignTracks} from "./academyMobileDesign";
 export type Lesson = { id: string; title: string; summary: string; minutes: number; concept: string; example: string; prompt: string; choices: string[]; correct: number; why: string; hint: string };
-export type Track = { id: string; name: string; description: string; icon: string; lessons: Lesson[] };
-export const tracks: Track[] = [
+export type Track = { id: string; name: string; description: string; icon: string; lessons: Lesson[]; category?: string; deliverable?: string; resourceUrl?: string };
+const originalTracks: Track[] = [
   { id:"digital",name:"Digital Foundations",description:"Start from zero: essential digital concepts and practical skills.",icon:"🌱",lessons:[
     {id:"digital-1",title:"How the web works",summary:"Understand browsers, websites and the internet.",minutes:7,concept:"A browser is an application that requests webpages from servers. The internet connects networks; the Web is a service that uses it. HTTPS protects data in transit.",example:"Typing an HTTPS address tells the browser to contact the site's server and request its content.",prompt:"Which statement is correct?",choices:["The internet and the Web are exactly the same","A browser requests webpage content from a server","HTTPS guarantees every website is trustworthy"],correct:1,why:"Browsers request site content; HTTPS encrypts transmission, but does not guarantee the site's honesty.",hint:"Think about what happens after you enter a web address."},
     {id:"digital-2",title:"Files, accounts and cloud",summary:"Find, save and safeguard your digital work.",minutes:6,concept:"Local files live on a device; cloud services store data on remote systems. Strong unique passwords and multi-factor authentication reduce account risk.",example:"Saving a file locally does not automatically mean it is backed up to the cloud.",prompt:"Which practice most improves account security?",choices:["Reuse one strong password everywhere","Use unique passwords with multi-factor authentication","Share login details only with friends"],correct:1,why:"Unique passwords limit credential reuse and MFA adds another protection layer.",hint:"Consider what stops attackers if one password is leaked."},
@@ -22,6 +26,13 @@ export const tracks: Track[] = [
     {id:"career-3",title:"Tell your story in interviews",summary:"Use structured examples to communicate impact.",minutes:9,concept:"The STAR framework structures an answer around Situation, Task, Action and Result. It works best with truthful concrete examples.",example:"Explain what challenge you faced, what you were responsible for, what you did and what changed.",prompt:"What does the A in STAR represent?",choices:["Authority","Action","Achievement"],correct:1,why:"Action covers what you personally did in the situation.",hint:"It is the step where you describe your contribution."}
   ]}
 ];
+export const tracks: Track[]=[
+  ...originalTracks.map(t=>({...t,category:"Core Foundations",
+    deliverable:"Apply the lessons in a small independent activity and explain what you learned."})),
+  ...webAndProgrammingTracks,...dataAndAiTracks,...cloudSecurityTracks,...mobileDesignTracks,
+];
+export const trackCategories=["All tracks",...Array.from(new Set(tracks.map(t=>t.category||"Other")))];
+export function getLearningTrack(id:string):Track|undefined{return tracks.find(t=>t.id===id);}
 const KEY = "portforge_learning_v1";
 export type LearningRecord = { passed: string[]; attempts: Record<string, number> };
 export function getLearning(): LearningRecord { try { const parsed = JSON.parse(localStorage.getItem(KEY)||"{}"); return {passed:Array.isArray(parsed.passed)?parsed.passed.filter((x:unknown)=>typeof x==="string"):[], attempts:parsed.attempts&&typeof parsed.attempts==="object"?parsed.attempts:{}}; } catch {return {passed:[],attempts:{}};} }

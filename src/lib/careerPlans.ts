@@ -1,7 +1,8 @@
 import { type PracticeLevel, parsePracticeLevel } from "./practiceLevels";
+import { tracks } from "./academy";
 export type CareerStep={title:string;description:string};
-export type CareerPath={id:string;role:string;overview:string;skills:string[];steps:CareerStep[]};
-export const starterCareers:CareerPath[]=[
+export type CareerPath={id:string;role:string;overview:string;skills:string[];steps:CareerStep[];learnTrackId?:string;category?:string};
+const originalCareers:CareerPath[]=[
  {id:"frontend",role:"Frontend Developer",overview:"Create accessible interactive websites and explain how you test them.",skills:["HTML & CSS","JavaScript","React fundamentals","Accessibility","Git","Testing"],steps:[
  {title:"Understand the Web",description:"Learn HTML semantics, responsive layouts and browser fundamentals."},
  {title:"Practice JavaScript",description:"Solve functions, conditions and data-structure exercises independently."},
@@ -27,6 +28,32 @@ export const starterCareers:CareerPath[]=[
  {title:"Practice safe analysis",description:"Interpret sample logs and identify suspicious patterns."},
  {title:"Document a scenario",description:"Write a defensible incident report based on authorized lab evidence."},
  {title:"Communicate response",description:"Explain root cause, detection logic and remediation steps."}]}
+];
+/**
+ * The learning catalog is also the offline Oracle role/skill-path catalog.
+ * These are short introductory routes, not independent occupational standards.
+ * Keep original curated roles first to preserve existing saved plans.
+ */
+export const starterCareers: CareerPath[]=[
+ ...originalCareers.map(p=>({...p,learnTrackId:
+   p.id==="data"?"data":
+   p.id==="design"?"ux-design":
+   p.id==="marketing"?"digital-marketing":
+   p.id==="security"?"cybersecurity":p.id,
+   category:"Original career paths",
+ })),
+ ...tracks.filter(t=>!originalCareers.some(p=>p.id===t.id)).map(t=>({
+   id:t.id,role:t.name,overview:t.description,learnTrackId:t.id,
+   category:t.category||"Core Foundations",
+   skills:t.lessons.map(l=>l.title),
+   steps:[
+     {title:"Learn the foundations",description:t.lessons[0].concept+" Try this: "+t.lessons[0].example},
+     {title:"Apply a core technique",description:t.lessons[1].concept+" Try this: "+t.lessons[1].example},
+     {title:"Build a project",description:t.deliverable||"Choose a project and explain the result."},
+     {title:"Validate, explain and present",description:t.lessons[2].concept+
+       " Capture evidence of what really worked, what failed and how you would improve it."},
+   ],
+ })),
 ];
 const demonstrators: Record<string, Record<PracticeLevel, string>> = {
   frontend: {
@@ -58,7 +85,14 @@ const demonstrators: Record<string, Record<PracticeLevel, string>> = {
 export function makeCuratedCareerPlan(path: CareerPath, difficulty: PracticeLevel, skillsAlreadyKnown = ""): SavedCareer {
   const known = skillsAlreadyKnown.toLowerCase().split(/[,;\n]/).map(s => s.trim()).filter(Boolean).slice(0, 20);
   const challenges = demonstrators[path.id];
-  const proof = challenges?.[difficulty] || "Create and document a project appropriate to your target role.";
+  const learningTrack=tracks.find(t=>t.id===path.learnTrackId);
+  const suggestedProject=learningTrack?.deliverable;
+  const proof = challenges?.[difficulty] ||
+    (suggestedProject
+      ? difficulty==="beginner" ? suggestedProject :
+        difficulty==="intermediate" ? suggestedProject+" Add repeatable checks and handle at least one failure case." :
+        suggestedProject+" Measure outcomes, justify trade-offs and attach reproducible testing evidence."
+      : "Create and document a project appropriate to your target role.");
   const levelTask = difficulty === "beginner"
     ? "Focus on one manageable example and explain it in everyday language."
     : difficulty === "intermediate"
@@ -72,16 +106,16 @@ export function makeCuratedCareerPlan(path: CareerPath, difficulty: PracticeLeve
   return {
     role: path.role, overview: path.overview, skills: path.skills,
     steps, checked: [], source: "curated", savedAt: Date.now(),
-    difficulty, knownSkills: known,
+    difficulty, knownSkills: known, careerId:path.id, learnTrackId:path.learnTrackId,
   };
 }
-export type SavedCareer={role:string;overview:string;skills:string[];steps:CareerStep[];checked:number[];source:"curated"|"ai";savedAt:number;difficulty?:PracticeLevel;knownSkills?:string[]};
+export type SavedCareer={role:string;overview:string;skills:string[];steps:CareerStep[];checked:number[];source:"curated"|"ai";savedAt:number;difficulty?:PracticeLevel;knownSkills?:string[];careerId?:string;learnTrackId?:string};
 const KEY="portforge_career_plan_v1";
 export function getCareerPlan():SavedCareer|null{
  try{
   const x=JSON.parse(localStorage.getItem(KEY)||"null");
   if(!x||typeof x.role!=="string"||!Array.isArray(x.steps)||!Array.isArray(x.checked))return null;
-  return {role:x.role.slice(0,150),overview:String(x.overview||"").slice(0,1200),skills:Array.isArray(x.skills)?x.skills.slice(0,30):[],steps:x.steps.slice(0,12),checked:x.checked.filter((n:unknown)=>Number.isInteger(n)),source:x.source==="ai"?"ai":"curated",savedAt:Number(x.savedAt)||0,difficulty:parsePracticeLevel(x.difficulty),knownSkills:Array.isArray(x.knownSkills)?x.knownSkills.filter((y:unknown)=>typeof y==="string").slice(0,20):[]};
+  return {role:x.role.slice(0,150),overview:String(x.overview||"").slice(0,1200),skills:Array.isArray(x.skills)?x.skills.slice(0,30):[],steps:x.steps.slice(0,12),checked:x.checked.filter((n:unknown)=>Number.isInteger(n)),source:x.source==="ai"?"ai":"curated",savedAt:Number(x.savedAt)||0,difficulty:parsePracticeLevel(x.difficulty),knownSkills:Array.isArray(x.knownSkills)?x.knownSkills.filter((y:unknown)=>typeof y==="string").slice(0,20):[],careerId:typeof x.careerId==="string"?x.careerId.slice(0,100):undefined,learnTrackId:typeof x.learnTrackId==="string"&&tracks.some(t=>t.id===x.learnTrackId)?x.learnTrackId:undefined};
  }catch{return null;}
 }
 export function saveCareerPlan(plan:SavedCareer){
