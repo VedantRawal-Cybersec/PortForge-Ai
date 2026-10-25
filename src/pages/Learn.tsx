@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BookOpen, ArrowLeft, ArrowRight, CheckCircle2, Lightbulb, PlayCircle, RotateCcw, Sparkles } from "lucide-react";
 import { getLearning, saveLearning, tracks, totalLessons, trackCategories } from "@/lib/academy";
@@ -8,6 +8,11 @@ export default function Learn() {
   const [params,setParams]=useSearchParams();
   const requestedTrack=params.get("track");
   const [activeTrack,setActiveTrack]=useState(()=>tracks.some(t=>t.id===requestedTrack)?requestedTrack!:tracks[0].id);
+  useEffect(()=>{
+    if(requestedTrack&&tracks.some(t=>t.id===requestedTrack)){
+      setActiveTrack(requestedTrack);setIndex(0);setSelected(null);setShowHint(false);
+    }
+  },[requestedTrack]);
   const [search,setSearch]=useState("");
   const [category,setCategory]=useState("All tracks");
   const [pageSize,setPageSize]=useState(12);
