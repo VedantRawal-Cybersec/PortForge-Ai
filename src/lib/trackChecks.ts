@@ -7,9 +7,9 @@ function validRecord(value:unknown):value is TrackCheckRecord{
  const t=typeof r.trackId==="string"?getLearningTrack(r.trackId):null;
  return !!t&&typeof r.id==="string"&&r.id.length<100&&
   typeof r.completedAt==="number"&&Number.isFinite(r.completedAt)&&r.completedAt>0&&
-  Array.isArray(r.answers)&&r.answers.length===t.lessons.length&&
+  Array.isArray(r.answers)&&r.answers.length===3&&
   r.answers.every((x:unknown,i:number)=>Number.isInteger(x)&&Number(x)>=0&&Number(x)<t.lessons[i].choices.length)&&
-  typeof r.correct==="number"&&r.correct===t.lessons.filter((l,i)=>l.correct===r.answers[i]).length;
+  typeof r.correct==="number"&&r.correct===t.lessons.slice(0,3).filter((l,i)=>l.correct===r.answers[i]).length;
 }
 export function readTrackChecks():TrackCheckRecord[]{
  try{
@@ -19,11 +19,11 @@ export function readTrackChecks():TrackCheckRecord[]{
 }
 export function evaluateTrackCheck(trackId:string,answers:number[]):TrackCheckRecord{
  const track=getLearningTrack(trackId);
- if(!track||answers.length!==track.lessons.length||
+ if(!track||answers.length!==3||
     !answers.every((x,i)=>Number.isInteger(x)&&x>=0&&x<track.lessons[i].choices.length))
    throw Error("Finish every question using the available answer choices.");
  return {id:crypto.randomUUID(),trackId,completedAt:Date.now(),answers:answers.slice(),
-   correct:track.lessons.filter((l,i)=>l.correct===answers[i]).length};
+   correct:track.lessons.slice(0,3).filter((l,i)=>l.correct===answers[i]).length};
 }
 export function saveTrackCheck(result:TrackCheckRecord):void{
  if(!validRecord(result))throw Error("Invalid saved check.");
@@ -43,7 +43,7 @@ export function exportTrackCheck(result:TrackCheckRecord):string{
   "Locally checked practice; not a verified professional skill certification.",
   "Date: "+new Date(result.completedAt).toISOString(),
   "Answers correct: "+result.correct+"/"+result.answers.length,
-  ...track.lessons.map((l,i)=>[String(i+1)+". "+l.prompt,
+  ...track.lessons.slice(0,3).map((l,i)=>[String(i+1)+". "+l.prompt,
      "Your answer: "+l.choices[result.answers[i]],
      "Expected: "+l.choices[l.correct],
      "Explanation: "+l.why,"Try: "+track.deliverable].join("\n"))].join("\n\n");
