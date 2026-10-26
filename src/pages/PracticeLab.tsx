@@ -69,7 +69,7 @@ export default function PracticeLab(){
       </label>
       <p className="text-xs text-muted-foreground">{filtered.length} matching exercises · {exercises.length} total</p>
       <div className="space-y-2 max-h-[62vh] overflow-y-auto pr-1">
-      {filtered.slice(0,visible).map(e=>{const h=history.find(x=>x.exerciseId===e.id);return <button type="button" key={e.id} onClick={()=>select(e.id)} aria-pressed={e.id===id} className={"block w-full text-left rounded-lg p-3 border "+(e.id===id?"border-led-cyan bg-led-cyan/10":"border-transparent hover:bg-surface-2")}><strong className="text-sm">{e.title}</strong><span className="block text-xs text-muted-foreground mt-1">{h&&h.total>0&&h.passed===h.total?<CheckCircle2 className="size-3 inline text-led-green"/>:null} {e.level} · {e.topic}</span></button>)}</div>
+      {filtered.slice(0,visible).map(e=>{const h=history.find(x=>x.exerciseId===e.id);return <button type="button" key={e.id} onClick={()=>select(e.id)} aria-pressed={e.id===id} className={"block w-full text-left rounded-lg p-3 border "+(e.id===id?"border-led-cyan bg-led-cyan/10":"border-transparent hover:bg-surface-2")}><strong className="text-sm">{e.title}</strong><span className="block text-xs text-muted-foreground mt-1">{h&&h.total>0&&h.passed===h.total?<CheckCircle2 className="size-3 inline text-led-green"/>:null} {e.level} · {e.topic}</span></button>})}</div>
       {filtered.length===0&&<p role="status" className="text-xs text-muted-foreground">No matching challenges. Try a broader search.</p>}
       {filtered.length>visible&&<button type="button" onClick={()=>setVisible(v=>v+12)}
         className="text-sm text-led-cyan rounded-lg border border-border px-3 py-2 w-full">Show more ({filtered.length-visible} remaining)</button>}
