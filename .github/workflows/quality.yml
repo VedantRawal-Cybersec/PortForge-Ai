@@ -35,5 +35,5 @@ jobs:
         timeout-minutes: 6
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps chromium
+          # GitHub hosted Ubuntu already provides Chromium shared libraries. Avoid apt package updates,\n          # which can hang on unreliable package mirrors and mask a healthy application build.\n          npx playwright install chromium
           node tests/smoke.cjs
