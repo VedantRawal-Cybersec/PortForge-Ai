@@ -72,9 +72,13 @@ export function learningActions(focus:string,now=Date.now()):RecommendedAction[]
  const next=track.lessons.find(x=>!done.has(x.id));
  if(next)actions.push({title:"Learn "+next.title,reason:"Continue the next incomplete lesson in "+track.name,
    path:"/learn?track="+encodeURIComponent(track.id)+"&lesson="+encodeURIComponent(next.id),kind:"learn"});
- const role=Object.entries(groups).find(([,ids])=>ids.includes(track.id))?.[0]||"frontend";
+ const role=Object.entries(groups).find(([,ids])=>ids.includes(track.id))?.[0];
+ // A learner in a different field must not be assigned a frontend-specific project.
+ // Prefer known related exercises; otherwise recommend a topic check or curriculum lesson.
+ const roleProjects=role?projects[role]:[];
+
  const passed=new Set(getPractice().filter(a=>a.total>0&&a.total===a.passed).map(a=>a.exerciseId));
- const exercise=projects[role].map(id=>exercises.find(e=>e.id===id)).find(e=>e&&!passed.has(e.id));
+ const exercise=roleProjects.map(id=>exercises.find(e=>e.id===id)).find(e=>e&&!passed.has(e.id));
  if(exercise)actions.push({title:"Build: "+exercise.title,reason:"Attempt a project task and execute its published sample tests.",
    path:"/practice?exercise="+encodeURIComponent(exercise.id),kind:"project"});
  if(!readTrackChecks().some(c=>c.trackId===track.id))actions.push({
