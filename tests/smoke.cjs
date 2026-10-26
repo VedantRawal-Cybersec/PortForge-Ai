@@ -24,7 +24,7 @@ async function run(){
   page.on("dialog", dialog => { void dialog.accept().catch(error=>process.stderr.write("Dialog handling: "+String(error)+"\n")); });
   const errors=[];
   page.on("pageerror",e=>errors.push(e.message));
-  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/my-data","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle"];
+  const paths=["/","/dashboard","/learn","/portfolio","/skill-dna","/missions","/data-use","/my-data","/practice","/project-interview","/workspace","/skill-test","/interview","/oracle","/role-lab","/proof"];
   for(const path of paths){
     const resp=await page.goto(base+path,{waitUntil:"domcontentloaded"});
     assert(resp&&resp.ok(),"route "+path+" returned non-2xx");
@@ -253,6 +253,35 @@ async function run(){
   await page.goto(base + "/dashboard");
   await page.getByText("1 completed quick checks").waitFor();
   process.stdout.write("OK cross-track Skill Test and Dashboard: 3 objective Rust questions, explanations, local result and export\n");
+
+  // Core role simulation -> tested code task -> local evidence report.
+  await page.goto(base+"/role-lab?role=frontend");
+  await page.getByRole("heading",{name:"Repair a student's registration form"}).waitFor();
+  await page.getByRole("button",{name:"Start scenario"}).first().click();
+  for(let i=0;i<3;i++){
+    await page.locator('input[type="radio"][name="role-reality-choice"]').first().check();
+    await page.getByRole("button",{name:"Check decision"}).click();
+    await page.getByRole("button",{name:i<2?"Continue to next decision":"Reflect on this experience"}).click();
+  }
+  await page.getByPlaceholder(/What surprised you/).fill("Clear form errors and tests matter.");
+  await page.getByRole("button",{name:"Save my simulation"}).click();
+  await page.getByText(/Simulation saved locally/).waitFor();
+  const decisionPromise=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Download decision report"}).click();
+  assert((await decisionPromise).suggestedFilename().includes("role-reality"),"scenario report should download");
+  await page.getByRole("link",{name:"Attempt a related tested challenge"}).click();
+  assert(page.url().includes("exercise=real-form-validation"),"role sim should deep-link to the exact practice exercise");
+  await page.getByRole("heading",{name:"Validate a real signup form",exact:true}).waitFor();
+  await page.getByLabel("Your JavaScript solution").fill("function validateSignup(user) {\n  const name = typeof user?.name === 'string' ? user.name.trim() : '';\n  const email = typeof user?.email === 'string' ? user.email.trim() : '';\n  const errors = [];\n  if (name.length < 2) errors.push('name');\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) errors.push('email');\n  return {valid:errors.length===0,errors};\n}");
+  await page.getByRole("button",{name:"Run practice tests"}).click();
+  await page.getByText("4/4 passed").waitFor({timeout:12000});
+  await page.goto(base+"/proof");
+  await page.getByRole("heading",{name:"See what you've actually practised."}).waitFor();
+  await page.getByText("Repair a student's registration form").waitFor();
+  const proofPromise=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Export my evidence"}).click();
+  assert((await proofPromise).suggestedFilename().endsWith(".md"),"proof record should be exportable");
+  process.stdout.write("OK Role Reality Lab -> executable task -> provenance ledger -> export\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
