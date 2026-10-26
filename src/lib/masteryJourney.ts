@@ -11,11 +11,11 @@ export type ReviewMap=Record<string,LessonReview>;
 export function validReview(id:string,v:unknown):v is LessonReview{
  if(!allIds.has(id)||!v||typeof v!=="object"||Array.isArray(v))return false;
  const x=v as Record<string,unknown>;
- return x.id===id&&Number.isSafeInteger(x.lastAt)&&Number(x.lastAt)>=0&&
- Number.isSafeInteger(x.dueAt)&&Number(x.dueAt)>=Number(x.lastAt)&&
- Number.isSafeInteger(x.streak)&&Number(x.streak)>=0&&Number(x.streak)<=1000&&
- Number.isSafeInteger(x.correct)&&Number(x.correct)>=0&&
- Number.isSafeInteger(x.attempts)&&Number(x.attempts)>=1&&Number(x.attempts)<=100000&&
+ return x.id===id&&typeof x.lastAt==="number"&&Number.isSafeInteger(x.lastAt)&&Number(x.lastAt)>=0&&
+ typeof x.dueAt==="number"&&Number.isSafeInteger(x.dueAt)&&Number(x.dueAt)>=Number(x.lastAt)&&
+ typeof x.streak==="number"&&Number.isSafeInteger(x.streak)&&Number(x.streak)>=0&&Number(x.streak)<=1000&&
+ typeof x.correct==="number"&&Number.isSafeInteger(x.correct)&&Number(x.correct)>=0&&
+ typeof x.attempts==="number"&&Number.isSafeInteger(x.attempts)&&Number(x.attempts)>=1&&Number(x.attempts)<=100000&&
  Number(x.correct)<=Number(x.attempts);
 }
 export function readReviews():ReviewMap{
