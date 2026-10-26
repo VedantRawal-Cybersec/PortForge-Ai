@@ -3,8 +3,8 @@ import {appliedLabs} from "./practiceAppliedLabs";
 import {exercises} from "./practice";
 
 describe("hands-on benchmark project catalog",()=>{
- it("offers 24 distinct projects, including 12 new realistic, tested labs",()=>{
-   expect(exercises.length).toBe(24);
+ it("offers 27 distinct projects, including 12 applied labs and three capstones",()=>{
+   expect(exercises.length).toBe(27);
    expect(appliedLabs).toHaveLength(12);
    expect(new Set(exercises.map(x=>x.id)).size).toBe(exercises.length);
    for(const topic of ["Frontend","Data","Defensive Security"]){
