@@ -3,7 +3,7 @@ const DATA_KEYS=[
  "portforge_profile_v2","portforge_learning_v1","portforge_missions_v1",
  "aero_workspace","aero_portfolio_v1","portforge_practice_v1",
  "portforge_project_interviews_v1","portforge_career_plan_v1",
- "portforge_showcase_projects_v1","portforge_workspace_language_drafts_v1","portforge_knowledge_checks_v1","portforge_resume_v1,"portforge_track_checks_v1"
+ "portforge_showcase_projects_v1","portforge_workspace_language_drafts_v1","portforge_knowledge_checks_v1","portforge_resume_v1","portforge_track_checks_v1"
 ] as const;
 type Backup={format:"portforge-local-backup";version:1;createdAt:string;items:Record<string,unknown>};
 export const PORTABLE_KEYS=[...DATA_KEYS];
