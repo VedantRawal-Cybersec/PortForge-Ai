@@ -98,6 +98,7 @@ async function run(){
   process.stdout.write("OK portable backup, restoration and public data settings\n");
   // Commercial UI regression: five-tool navigation, interactive hero and safe portfolio preview.
   await page.goto(base + "/");
+  await page.getByRole("tab",{name:"Portfolio"}).waitFor({state:"visible",timeout:10000});
   const tabs = page.getByRole("tab");
   assert.equal(await tabs.count(), 5, "homepage must display exactly five core-tool preview tabs");
   await page.getByRole("tab", { name: "Portfolio" }).click();
