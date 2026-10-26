@@ -3,7 +3,7 @@ const DATA_KEYS=[
  "portforge_profile_v2","portforge_learning_v1","portforge_missions_v1",
  "aero_workspace","aero_portfolio_v1","portforge_practice_v1",
  "portforge_project_interviews_v1","portforge_career_plan_v1",
- "portforge_showcase_projects_v1","portforge_workspace_language_drafts_v1","portforge_knowledge_checks_v1","portforge_resume_v1","portforge_track_checks_v1","portforge_role_reality_v1"
+ "portforge_showcase_projects_v1","portforge_workspace_language_drafts_v1","portforge_knowledge_checks_v1","portforge_resume_v1","portforge_track_checks_v1","portforge_role_reality_v1","portforge_learning_reviews_v1"
 ] as const;
 type Backup={format:"portforge-local-backup";version:1;createdAt:string;items:Record<string,unknown>};
 export const PORTABLE_KEYS=[...DATA_KEYS];
@@ -68,6 +68,17 @@ function valid(key:string,value:unknown):boolean{
           typeof (entry as Record<string,unknown>).description==="string"&&
           ((entry as Record<string,unknown>).description as string).length<=2500
         ));
+  case "portforge_learning_reviews_v1":
+    return Object.keys(x).length<=350&&Object.entries(x).every(([id,r])=>{
+      if(!/^[a-z0-9-]{2,100}$/i.test(id)||!r||typeof r!=="object"||Array.isArray(r))return false;
+      const v=r as Record<string,unknown>;
+      return v.id===id&&typeof v.lastAt==="number"&&Number.isSafeInteger(v.lastAt)&&Number(v.lastAt)>=0&&
+        typeof v.dueAt==="number"&&Number.isSafeInteger(v.dueAt)&&Number(v.dueAt)>=Number(v.lastAt)&&
+        typeof v.streak==="number"&&Number.isSafeInteger(v.streak)&&Number(v.streak)>=0&&Number(v.streak)<=1000&&
+        typeof v.correct==="number"&&Number.isSafeInteger(v.correct)&&Number(v.correct)>=0&&
+        typeof v.attempts==="number"&&Number.isSafeInteger(v.attempts)&&Number(v.attempts)>=1&&Number(v.attempts)<=100000&&
+        Number(v.correct)<=Number(v.attempts);
+    });
   case "portforge_career_plan_v1":return typeof x.role==="string"&&Array.isArray(x.steps)&&x.steps.length<=20&&Array.isArray(x.checked);
   case "portforge_workspace_language_drafts_v1":
     return Object.keys(x).length<=80&&Object.values(x).every(entry=>
@@ -105,6 +116,7 @@ export function restoreLocalBackup(content:string):number{
  window.dispatchEvent(new Event("portforge:knowledge-checks"));
  window.dispatchEvent(new Event("portforge:track-checks"));
  window.dispatchEvent(new Event("portforge:role-reality"));
+ window.dispatchEvent(new Event("portforge:reviews"));
  window.dispatchEvent(new Event("portforge:resume"));
  return entries.length;
 }

@@ -283,6 +283,28 @@ async function run(){
   await page.getByRole("button",{name:"Export my evidence"}).click();
   assert((await proofPromise).suggestedFilename().endsWith(".md"),"proof record should be exportable");
   process.stdout.write("OK Role Reality Lab -> executable task -> provenance ledger -> export\n");
+  // A finished lesson must create a recoverable retrieval-practice schedule.
+  await page.goto(base+"/learn?track=frontend&lesson=frontend-1");
+  await page.getByRole("heading",{name:"Semantic HTML",exact:true}).waitFor();
+  await page.getByRole("button",{name:/<main>/}).first().click();
+  await page.getByText("Correct — lesson completed.").waitFor();
+  const evidence=await page.evaluate(()=>{
+    const value=JSON.parse(localStorage.getItem("portforge_learning_reviews_v1")||"{}");
+    const current=value["frontend-1"];
+    if(!current)throw Error("New lesson practice was not stored");
+    current.dueAt=Date.now()-1;
+    localStorage.setItem("portforge_learning_reviews_v1",JSON.stringify(value));
+    return current;
+  });
+  assert.equal(evidence.streak,1,"correct first answer should start day-one retrieval plan");
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.getByRole("button",{name:/Review now: Semantic HTML/}).click();
+  await page.getByRole("heading",{name:"Semantic HTML",exact:true}).waitFor();
+  await page.goto(base+"/dashboard");
+  await page.getByRole("heading",{name:"Your practical study plan"}).waitFor();
+  await page.getByText(/concepts ready to review/).first().waitFor();
+  await page.getByRole("link",{name:/Review Semantic HTML/}).waitFor();
+  process.stdout.write("OK durable review scheduling, deep-linked retrieval and evidence-based next action\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
