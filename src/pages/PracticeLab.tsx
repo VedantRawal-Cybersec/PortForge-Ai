@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Play, Save, Lightbulb, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,13 @@ export default function PracticeLab(){
  const [results,setResults]=useState<TestResult[]>([]);
  const [running,setRunning]=useState(false);
  const [hint,setHint]=useState(false);
+ const [query,setQuery]=useState("");
+ const [difficulty,setDifficulty]=useState("All levels");
+ const [visible,setVisible]=useState(12);
+ const filtered=useMemo(()=>exercises.filter(e=>
+   (difficulty==="All levels"||e.level===difficulty)&&
+   (!query.trim()||[e.title,e.topic,e.brief].join(" ").toLowerCase().includes(query.trim().toLowerCase()))
+ ),[query,difficulty]);
  const [error,setError]=useState("");
  const code=drafts[id]||"";
  const completed=history.filter(h=>h.total>0&&h.passed===h.total).length;
@@ -43,7 +50,30 @@ export default function PracticeLab(){
    <header><span className="chip chip-cyan">INDEPENDENT PRACTICE LAB</span><h1 className="text-4xl md:text-5xl font-bold mt-4">Build it yourself.</h1><p className="text-muted-foreground mt-3 max-w-3xl">Solve realistic small challenges, run repeatable tests, and describe your work. The focus is understanding—not copying generated solutions.</p></header>
    <div className="panel p-4 flex flex-wrap justify-between gap-3"><strong>Challenges passed: {completed} / {exercises.length}</strong><Link to="/skill-dna" className="text-led-cyan inline-flex gap-2 items-center">View learning progress <ArrowRight className="size-4"/></Link></div>
    <div className="grid lg:grid-cols-[250px_minmax(0,1fr)] gap-5">
-    <aside className="panel p-4 h-fit space-y-2"><h2 className="font-bold mb-4">Choose a challenge</h2>{exercises.map(e=>{const h=history.find(x=>x.exerciseId===e.id);return <button type="button" key={e.id} onClick={()=>select(e.id)} aria-pressed={e.id===id} className={"block w-full text-left rounded-lg p-3 border "+(e.id===id?"border-led-cyan bg-led-cyan/10":"border-transparent hover:bg-surface-2")}><strong className="text-sm">{e.title}</strong><span className="block text-xs text-muted-foreground mt-1">{h&&h.total>0&&h.passed===h.total?<CheckCircle2 className="size-3 inline text-led-green"/>:null} {e.level} · {e.topic}</span></button>})}</aside>
+    <aside className="panel p-4 h-fit space-y-3" aria-label="Available coding challenges">
+      <h2 className="font-bold">Choose a challenge</h2>
+      <label className="block space-y-1">
+        <span className="text-xs text-muted-foreground">Find a project task</span>
+        <input type="search" aria-label="Search coding challenges" value={query}
+          onChange={e=>{setQuery(e.target.value);setVisible(12);}}
+          placeholder="Forms, SQL, security…"
+          className="w-full rounded-lg border border-border bg-background p-2.5 text-sm"/>
+      </label>
+      <label className="block space-y-1">
+        <span className="text-xs text-muted-foreground">Difficulty</span>
+        <select aria-label="Filter challenge difficulty" value={difficulty}
+          onChange={e=>{setDifficulty(e.target.value);setVisible(12);}}
+          className="w-full rounded-lg border border-border bg-background p-2.5 text-sm">
+          {["All levels","Beginner","Intermediate","Advanced"].map(d=><option key={d} value={d}>{d}</option>)}
+        </select>
+      </label>
+      <p className="text-xs text-muted-foreground">{filtered.length} matching exercises · {exercises.length} total</p>
+      <div className="space-y-2 max-h-[62vh] overflow-y-auto pr-1">
+      {filtered.slice(0,visible).map(e=>{const h=history.find(x=>x.exerciseId===e.id);return <button type="button" key={e.id} onClick={()=>select(e.id)} aria-pressed={e.id===id} className={"block w-full text-left rounded-lg p-3 border "+(e.id===id?"border-led-cyan bg-led-cyan/10":"border-transparent hover:bg-surface-2")}><strong className="text-sm">{e.title}</strong><span className="block text-xs text-muted-foreground mt-1">{h&&h.total>0&&h.passed===h.total?<CheckCircle2 className="size-3 inline text-led-green"/>:null} {e.level} · {e.topic}</span></button>)}</div>
+      {filtered.length===0&&<p role="status" className="text-xs text-muted-foreground">No matching challenges. Try a broader search.</p>}
+      {filtered.length>visible&&<button type="button" onClick={()=>setVisible(v=>v+12)}
+        className="text-sm text-led-cyan rounded-lg border border-border px-3 py-2 w-full">Show more ({filtered.length-visible} remaining)</button>}
+    </aside>
     <div className="space-y-5 min-w-0">
      <section className="panel p-5 md:p-7 space-y-4"><span className="chip">{exercise.level}</span><h2 className="text-2xl font-bold">{exercise.title}</h2><p className="text-muted-foreground">{exercise.brief}</p>
       <button type="button" className="inline-flex gap-2 items-center text-led-cyan text-sm" onClick={()=>setHint(x=>!x)}><Lightbulb className="size-4"/>{hint?"Hide hint":"Need a hint?"}</button>{hint&&<div role="note" className="rounded-lg border border-led-amber/40 p-4 text-sm">{exercise.hint}</div>}
