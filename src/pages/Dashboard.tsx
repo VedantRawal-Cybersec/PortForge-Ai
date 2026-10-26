@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { readKnowledgeSessions, knowledgeSummary } from "@/lib/knowledgeChecks";
 import {trackCheckSummary} from "@/lib/trackChecks";
 import {getProofSummary} from "@/lib/proofEngine";
+import {learningActions,reviewOverview} from "@/lib/masteryJourney";
 import {readRealityResults} from "@/lib/roleReality";
 import { Link } from "react-router-dom";
 import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy, FlaskConical, MessageSquareText, ShieldCheck } from "lucide-react";
@@ -46,6 +47,8 @@ export default function Dashboard(){
   const trackChecks=trackCheckSummary();
   const proof=getProofSummary();
   const roleCount=readRealityResults().length;
+  const reviewed=reviewOverview();
+  const nextActions=learningActions(profile.focus);
   return <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-8">
     <header className="max-w-4xl space-y-3">
       <div className="chip chip-cyan">MY LEARNING SPACE</div>
@@ -82,6 +85,22 @@ export default function Dashboard(){
       <Link className="text-led-cyan text-sm font-semibold inline-flex items-center gap-2" to="/proof">
         View my evidence and its limitations <ArrowRight size={15}/>
       </Link>
+    </section>
+    <section className="panel p-5 sm:p-6 space-y-4" aria-labelledby="dashboard-study-plan">
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <div><h2 id="dashboard-study-plan" className="text-xl font-bold">Your practical study plan</h2>
+          <p className="text-xs text-muted-foreground mt-1">{reviewed.due} concepts ready to review · {reviewed.scheduled} future reviews. Actions derive from your local learning and practice, not AI-generated mastery claims.</p></div>
+        <Link to="/learn" className="text-sm text-led-cyan font-bold">Open academy <ArrowRight size={15} className="inline"/></Link>
+      </div>
+      <div className="grid md:grid-cols-2 gap-3">
+        {nextActions.map(action=><Link to={action.path} key={action.path}
+          className="border border-border hover:border-led-cyan/50 rounded-xl p-4 space-y-2">
+          <span className="text-[10px] uppercase tracking-wider font-mono text-led-cyan">{action.kind}</span>
+          <h3 className="font-bold text-sm">{action.title}</h3>
+          <p className="text-xs text-muted-foreground">{action.reason}</p>
+          <span className="text-xs text-led-cyan">Continue <ArrowRight size={13} className="inline"/></span>
+        </Link>)}
+      </div>
     </section>
     <section className="panel p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
