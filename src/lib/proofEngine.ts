@@ -21,7 +21,7 @@ export function getProofSummary():ProofSummary{
  const practice=getPractice();
  const scenarios=readRealityResults();
  const projects=getShowcaseProjects();
- const lessonEntries:ProofEntry[]=record.passed.filter(x=>knownLesson.has(x)).slice(0,220).map(id=>{
+ const lessonEntries:ProofEntry[]=record.passed.filter(x=>knownLesson.has(x)).slice(0,500).map(id=>{
   const l=knownLesson.get(id)!;
   return {id:"lesson:"+id,kind:"lesson",title:l.title,detail:"Completed a locally checked introductory lesson in "+l.name,
     recordedAt:null,link:"/learn?track="+encodeURIComponent(l.trackId)};
