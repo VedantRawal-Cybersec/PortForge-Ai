@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BookOpen, ArrowLeft, ArrowRight, CheckCircle2, Lightbulb, PlayCircle, RotateCcw, Sparkles } from "lucide-react";
 import { getLearning, saveLearning, tracks, totalLessons, trackCategories } from "@/lib/academy";
+import {reviewAnswer,readReviews,dueReviews,reviewOverview} from "@/lib/masteryJourney";
 
 export default function Learn() {
   const [record,setRecord]=useState(getLearning);
@@ -19,27 +20,32 @@ export default function Learn() {
   const [index,setIndex]=useState(0);
   const [selected,setSelected]=useState<number|null>(null);
   const [showHint,setShowHint]=useState(false);
+  const [reviews,setReviews]=useState(readReviews);
   useEffect(()=>{
     if(requestedTrack&&tracks.some(t=>t.id===requestedTrack)){
-      setActiveTrack(requestedTrack);setIndex(0);setSelected(null);setShowHint(false);
+      setActiveTrack(requestedTrack);setIndex(Math.max(0,tracks.find(t=>t.id===requestedTrack)!.lessons.findIndex(l=>l.id===params.get("lesson"))));setSelected(null);setShowHint(false);
     }
-  },[requestedTrack]);
+  },[requestedTrack,params]);
 
   const track=tracks.find(t=>t.id===activeTrack)||tracks[0];
   const lesson=track.lessons[Math.min(index,track.lessons.length-1)];
   const passed=record.passed.includes(lesson.id);
   const finished=useMemo(()=>new Set(record.passed).size,[record.passed]);
   const progress=Math.round((finished/totalLessons())*100);
+  const reviewStats=reviewOverview();
+  const due=dueReviews().filter(x=>track.lessons.some(l=>l.id===x.id));
   const chooseTrack=(id:string)=>{
     setActiveTrack(id);setIndex(0);setSelected(null);setShowHint(false);
     setParams({track:id},{replace:true});
   };
-  const chooseLesson=(i:number)=>{setIndex(i);setSelected(null);setShowHint(false);};
+  const chooseLesson=(i:number)=>{setIndex(i);setSelected(null);setShowHint(false);setParams({track:track.id,lesson:track.lessons[i].id},{replace:true});};
   const check=(choice:number)=>{
     if(selected!==null)return;
     setSelected(choice);
     const updated={passed:record.passed.slice(),attempts:{...record.attempts,[lesson.id]:(record.attempts[lesson.id]||0)+1}};
     if(choice===lesson.correct&&!updated.passed.includes(lesson.id))updated.passed.push(lesson.id);
+    reviewAnswer(lesson.id,choice===lesson.correct);
+    setReviews(readReviews());
     setRecord(updated);saveLearning(updated);
   };
   return (
@@ -60,6 +66,19 @@ export default function Learn() {
         </div>
         <span className="text-sm text-muted-foreground">Practice first. Mastery takes repetition.</span>
       </div>
+      <section className="panel p-4 sm:p-5 space-y-3" aria-labelledby="review-queue-heading">
+        <div className="flex flex-wrap justify-between gap-2 items-center">
+          <div>
+            <h2 id="review-queue-heading" className="font-bold text-lg">Your retrieval-practice plan</h2>
+            <p className="text-sm text-muted-foreground mt-1">Review concepts again after 1, 3, 7, 14 and 30 days of correct practice. Wrong answers return tomorrow. These are repeat prompts, not validated mastery scores.</p>
+          </div>
+          <span className="chip chip-cyan">{reviewStats.due} due · {reviewStats.scheduled} scheduled</span>
+        </div>
+        {due.length>0?<button type="button" onClick={()=>chooseLesson(track.lessons.findIndex(l=>l.id===due[0].id))}
+          className="text-left border border-led-cyan/40 bg-led-cyan/5 rounded-xl px-4 py-3 text-sm font-bold hover:border-led-cyan/70">
+          Review now: {track.lessons.find(l=>l.id===due[0].id)?.title} <ArrowRight size={15} className="inline ml-1"/>
+        </button>:<p className="text-xs text-muted-foreground">No reviews due in this course. Complete a lesson and return when its next practice is scheduled.</p>}
+      </section>
       <section className="panel p-4 sm:p-5 space-y-4" aria-label="Find a learning track">
         <div className="flex flex-col sm:flex-row gap-3">
           <label className="flex-1 block space-y-2"><span className="text-sm font-semibold">Find a learning track</span>
@@ -112,7 +131,7 @@ export default function Learn() {
             {track.lessons.map((l,i)=>(
               <button key={l.id} type="button" onClick={()=>chooseLesson(i)} aria-current={index===i?"step":undefined} className={"w-full flex items-center gap-3 text-left rounded-lg p-3 transition-colors "+(index===i?"bg-led-cyan/10 border border-led-cyan/30":"hover:bg-surface-2 border border-transparent")}>
                 <span className="size-9 rounded-lg bg-surface-3 flex items-center justify-center text-xs font-bold shrink-0">{record.passed.includes(l.id)?<CheckCircle2 className="size-5 text-led-green"/>:i+1}</span>
-                <span className="flex-1"><span className="font-semibold block text-sm">{l.title}</span><span className="text-xs text-muted-foreground">{l.minutes} min · {record.passed.includes(l.id)?"Completed":"To learn"}</span></span>
+                <span className="flex-1"><span className="font-semibold block text-sm">{l.title}</span><span className="text-xs text-muted-foreground">{l.minutes} min · {reviews[l.id]&&reviews[l.id].dueAt<=Date.now()?"Review due":record.passed.includes(l.id)?"Completed":"To learn"}</span></span>
               </button>
             ))}
           </nav>
@@ -144,6 +163,7 @@ export default function Learn() {
             {selected!==null&&<div aria-live="polite" className="rounded-xl bg-surface-2 border border-border p-4">
               <p className={"font-semibold "+(selected===lesson.correct?"text-led-green":"text-led-amber")}>{selected===lesson.correct?"Correct — lesson completed.":"Not quite. Review the explanation and try again."}</p>
               <p className="text-sm mt-2 text-muted-foreground leading-relaxed">{lesson.why}</p>
+              <p className="text-xs text-muted-foreground mt-2">{reviews[lesson.id]?"This lesson is scheduled for another attempt in "+(selected===lesson.correct?[1,3,7,14,30][Math.min(reviews[lesson.id].streak-1,4)]:1)+" day(s).":"Repeat this concept later to strengthen recall."} Repeating the same question cannot prove professional skill.</p>
               {selected!==lesson.correct&&<button onClick={()=>setSelected(null)} type="button" className="inline-flex items-center gap-2 text-sm text-led-cyan mt-3 hover:underline"><RotateCcw className="size-4"/> Try again</button>}
             </div>}
             {!showHint&&selected===null&&<button type="button" className="text-led-cyan inline-flex gap-2 items-center text-sm hover:underline" onClick={()=>setShowHint(true)}><Lightbulb className="size-4"/> Need a hint?</button>}
