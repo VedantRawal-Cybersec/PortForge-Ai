@@ -23,6 +23,14 @@ export default function RoleRealityLab(){
  const last=scenario&&answers.length?scenario.steps[answers.length-1]:null;
  const finished=!!scenario&&answers.length===scenario.steps.length;
  const previousRoleResults=history.filter(x=>x.role===role);
+ const exerciseForScenario:Record<string,string>={
+   "frontend-registration":"real-form-validation",
+   "frontend-slow-page":"immutable-task-update",
+   "data-duplicate-sales":"valid-revenue-report",
+   "data-missing-values":"data-quality-counts",
+   "security-alert-triage":"synthetic-auth-log-counts",
+   "security-private-record":"owner-authorization-model"
+ };
  const correct=answers.filter((a,i)=>scenario?.steps[i].correct===a).length;
  function chooseRole(id:RealityRole){
    setRole(id);setSearchParams({role:id},{replace:true});
@@ -146,6 +154,10 @@ export default function RoleRealityLab(){
            <p className="text-sm text-led-green font-semibold">Simulation saved locally. Add the actual deliverable to your portfolio only after completing it.</p>
            <div className="flex gap-2 flex-wrap">
              <button type="button" onClick={download} className="rounded-lg border border-border px-4 py-3 inline-flex items-center gap-2 font-semibold text-sm"><Download size={15}/> Download decision report</button>
+             <Link to={"/practice?exercise="+encodeURIComponent(exerciseForScenario[scenario.id])}
+               className="rounded-lg border border-led-cyan/40 px-4 py-3 text-sm font-semibold text-led-cyan">
+               Attempt a related tested challenge
+             </Link>
              <Link to="/workspace" className="rounded-lg border border-border px-4 py-3 text-sm font-semibold">Build in Workspace</Link>
              <Link to="/portfolio" className="rounded-lg border border-border px-4 py-3 text-sm font-semibold">Document real work</Link>
            </div>
