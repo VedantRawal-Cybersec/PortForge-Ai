@@ -305,6 +305,18 @@ async function run(){
   await page.getByText(/concepts ready to review/).first().waitFor();
   await page.getByRole("link",{name:/Review Semantic HTML/}).waitFor();
   process.stdout.write("OK durable review scheduling, deep-linked retrieval and evidence-based next action\n");
+  // New applied project catalog remains usable on desktop and mobile.
+  await page.goto(base+"/practice");
+  await page.getByLabel("Search coding challenges").fill("Paginate");
+  await page.getByRole("button",{name:/Paginate accessible result cards/}).click();
+  await page.getByRole("heading",{name:"Paginate accessible result cards"}).waitFor();
+  await page.getByLabel("Your JavaScript solution").fill("function pageItems(items,page,size) { if(!Number.isInteger(page)||!Number.isInteger(size)||page<1||size<1)return []; return items.slice((page-1)*size,page*size); }");
+  await page.getByRole("button",{name:"Run practice tests"}).click();
+  await page.getByText("4/4 passed").waitFor({timeout:12000});
+  await page.getByLabel("Search coding challenges").fill("");
+  await page.getByLabel("Filter challenge difficulty").selectOption("Advanced");
+  await page.getByRole("button",{name:/Redact tokens from sample logs/}).waitFor();
+  process.stdout.write("OK searchable 24-challenge catalog, real pagination test execution and advanced filter\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }
