@@ -237,6 +237,22 @@ async function run(){
   await page.getByRole("link",{name:/Open Rust lessons/}).click();
   assert(page.url().includes("track=rust"),"Oracle must link to the matching learning path");
   process.stdout.write("OK 69-track catalog, search/filter, deep-links, persisted lessons and Oracle integration\n");
+  // Any of the 69 learning tracks must have a genuine objective check in Skill Test.
+  await page.goto(base + "/skill-test");
+  await page.getByRole("combobox",{name:"Objective check learning track"}).selectOption("rust");
+  await page.getByRole("button",{name:/Begin track check/}).click();
+  for(let i=0;i<3;i++){
+    await page.locator('input[name="all-track-check-answer"]').first().check();
+    await page.getByRole("button",{name:"Check answer",exact:true}).click();
+    await page.getByRole("button",{name:i<2?"Next question":"See track results"}).click();
+  }
+  await page.getByRole("heading",{name:/Track review:/}).waitFor();
+  const trackDownload=page.waitForEvent("download");
+  await page.getByRole("button",{name:"Download review"}).click();
+  assert((await trackDownload).suggestedFilename().includes("rust"),"objective track report should download");
+  await page.goto(base + "/dashboard");
+  await page.getByText("1 completed quick checks").waitFor();
+  process.stdout.write("OK cross-track Skill Test and Dashboard: 3 objective Rust questions, explanations, local result and export\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }

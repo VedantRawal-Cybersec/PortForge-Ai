@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { readKnowledgeSessions, knowledgeSummary } from "@/lib/knowledgeChecks";
+import {trackCheckSummary} from "@/lib/trackChecks";
 import { Link } from "react-router-dom";
 import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy, FlaskConical, MessageSquareText } from "lucide-react";
 import { getProfile, saveProfile, type LearnerProfile } from "@/lib/profile";
@@ -38,12 +39,25 @@ export default function Dashboard(){
   const submit=(event:React.FormEvent)=>{event.preventDefault();saveProfile(profile);setSaved(true);};
   const update=(key:keyof LearnerProfile,value:string)=>{setProfile(prev=>({...prev,[key]:value}));setSaved(false);};
   const knowledge=knowledgeSummary(readKnowledgeSessions());
+  const trackChecks=trackCheckSummary();
   return <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-8">
     <header className="max-w-4xl space-y-3">
       <div className="chip chip-cyan">MY LEARNING SPACE</div>
       <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{profile.name.trim()?"Welcome back, "+profile.name.trim()+".":"Your next step starts here."}</h1>
       <p className="text-muted-foreground text-lg leading-relaxed">Pick a direction, learn one concept, practice it and turn your work into a portfolio. You can start without experience.</p>
     </header>
+    <section className="panel p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <p className="text-[10px] font-mono tracking-widest text-led-cyan">OBJECTIVE PRACTICE ACROSS ALL TRACKS</p>
+        <h2 className="text-xl font-bold mt-2">{trackChecks.attempted} completed quick checks · {trackChecks.distinctTracks} learning tracks</h2>
+        <p className="text-sm text-muted-foreground mt-2">{trackChecks.attempted
+          ?"Average correct answers: "+trackChecks.average+"% across your saved three-question attempts. This is not a professional skill rating."
+          :"Take a short answer-key check in any of the 69 topics to identify what to learn next."}</p>
+      </div>
+      <Link to="/skill-test" className="rounded-xl bg-foreground text-background px-4 py-3 font-bold text-sm whitespace-nowrap">
+        Check a topic <ArrowRight size={16} className="inline ml-1"/>
+      </Link>
+    </section>
     <section className="panel p-5 sm:p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 className="text-xl font-bold">Knowledge checks and your next action</h2>
