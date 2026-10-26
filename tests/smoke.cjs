@@ -52,7 +52,7 @@ async function run(){
   await page.getByRole("button",{name:/A browser requests webpage content from a server/i}).click();
   await page.getByText("Correct — lesson completed.").waitFor({timeout:7000});
   await page.goto(base+"/dashboard");
-  assert((await page.locator("#main-content").innerText()).includes("1/207"),"lesson progress not reflected in dashboard");
+  assert((await page.locator("#main-content").innerText()).includes("1/225"),"lesson progress not reflected in dashboard");
   process.stdout.write("OK dashboard and learning persistence\n");
   await page.goto(base+"/practice");
   await page.getByLabel("Your JavaScript solution").fill("function sumEven(numbers) { return numbers.filter(n => n % 2 === 0).reduce((sum,n) => sum+n,0); }");
