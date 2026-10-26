@@ -2,6 +2,7 @@ import {webAndProgrammingTracks} from "./academyWeb";
 import {dataAndAiTracks} from "./academyData";
 import {cloudSecurityTracks} from "./academyCloudSecurity";
 import {mobileDesignTracks} from "./academyMobileDesign";
+import {additionalFlagshipLessons} from "./academyFlagship";
 export type Lesson = { id: string; title: string; summary: string; minutes: number; concept: string; example: string; prompt: string; choices: string[]; correct: number; why: string; hint: string };
 export type Track = { id: string; name: string; description: string; icon: string; lessons: Lesson[]; category?: string; deliverable?: string; resourceUrl?: string };
 const originalTracks: Track[] = [
@@ -30,7 +31,7 @@ export const tracks: Track[]=[
   ...originalTracks.map(t=>({...t,category:"Core Foundations",
     deliverable:"Apply the lessons in a small independent activity and explain what you learned."})),
   ...webAndProgrammingTracks,...dataAndAiTracks,...cloudSecurityTracks,...mobileDesignTracks,
-];
+].map(t=>({...t,lessons:[...t.lessons,...additionalFlagshipLessons(t.id)]}));
 export const trackCategories=["All tracks",...Array.from(new Set(tracks.map(t=>t.category||"Other")))];
 export function getLearningTrack(id:string):Track|undefined{return tracks.find(t=>t.id===id);}
 const KEY = "portforge_learning_v1";
