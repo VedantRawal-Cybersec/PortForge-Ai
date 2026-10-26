@@ -1,4 +1,5 @@
 import { runIsolatedJavaScript } from "@/lib/sandbox";
+import {flagshipExercises} from "./practiceFlagship";
 export type TestCase={label:string;args:unknown[];expected:unknown};
 export type Exercise={id:string;title:string;topic:string;level:string;brief:string;functionName:string;starter:string;hint:string;tests:TestCase[]};
 export type TestResult={label:string;pass:boolean;expected:string;actual:string};
@@ -12,6 +13,7 @@ export const exercises:Exercise[]=[
 {id:"score-summary",title:"Summarize scores",topic:"Data and functions",level:"Intermediate",brief:"Create scoreSummary(scores) that returns {count,total,average}. For no scores return all zeros. Do not round the average.",functionName:"scoreSummary",starter:"function scoreSummary(scores) {\n  return {count:0,total:0,average:0};\n}",hint:"Calculate a total with reduce(), then divide by the number of values only when it is nonzero.",tests:[{label:"Typical values",args:[[10,20,30]],expected:{count:3,total:60,average:20}},{label:"Empty values",args:[[]],expected:{count:0,total:0,average:0}},{label:"Decimal average",args:[[1,2]],expected:{count:2,total:3,average:1.5}},{label:"Single value",args:[[90]],expected:{count:1,total:90,average:90}}]},
 {id:"unique-values",title:"Remove duplicates",topic:"Arrays and sets",level:"Intermediate",brief:"Create uniqueValues(values) to remove repeated primitive values while preserving the order of first appearance.",functionName:"uniqueValues",starter:"function uniqueValues(values) {\n  return [];\n}",hint:"A Set remembers values already seen and maintains insertion order.",tests:[{label:"Repeated numbers",args:[[3,2,3,1,2]],expected:[3,2,1]},{label:"Different types",args:[["1",1,"1"]],expected:["1",1]},{label:"Empty list",args:[[]],expected:[]},{label:"Repeated booleans",args:[[false,false,true]],expected:[false,true]}]}
 ];
+exercises.push(...flagshipExercises);
 export function getPractice():PracticeAttempt[]{
  try{
   const raw=JSON.parse(localStorage.getItem(KEY)||"[]");

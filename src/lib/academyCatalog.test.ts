@@ -6,12 +6,12 @@ describe("expanded independent learning pathways",()=>{
  beforeEach(()=>localStorage.clear());
  it("publishes 69 discoverable real starter tracks with unique, answerable checks",()=>{
    expect(tracks.length).toBe(69);
-   expect(totalLessons()).toBe(207);
+   expect(totalLessons()).toBe(225);
    expect(new Set(tracks.map(t=>t.id)).size).toBe(tracks.length);
    const all=tracks.flatMap(t=>t.lessons);
    expect(new Set(all.map(x=>x.id)).size).toBe(all.length);
    for(const track of tracks){
-     expect(track.lessons.length).toBe(3);
+     expect(track.lessons.length).toBe(["frontend","data-analyst","cybersecurity"].includes(track.id)?9:3);
      expect(track.name.length).toBeGreaterThan(1);
      expect(track.description.length).toBeGreaterThan(15);
      expect(track.category).toBeTruthy();

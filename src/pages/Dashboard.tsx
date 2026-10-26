@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { readKnowledgeSessions, knowledgeSummary } from "@/lib/knowledgeChecks";
 import {trackCheckSummary} from "@/lib/trackChecks";
+import {getProofSummary} from "@/lib/proofEngine";
+import {readRealityResults} from "@/lib/roleReality";
 import { Link } from "react-router-dom";
-import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy, FlaskConical, MessageSquareText } from "lucide-react";
+import { BookOpen, BrainCircuit, Briefcase, Code2, Mic, Target, ArrowRight, Save, CheckCircle2, ChartNoAxesCombined, Trophy, FlaskConical, MessageSquareText, ShieldCheck } from "lucide-react";
 import { getProfile, saveProfile, type LearnerProfile } from "@/lib/profile";
 import { getLearning, tracks, totalLessons } from "@/lib/academy";
 import { getPortfolio } from "@/lib/portfolio";
@@ -18,7 +20,9 @@ const actions = [
   {to:"/oracle",title:"Plan a career",desc:"Explore skills and target roles",icon:Target},
   {to:"/portfolio",title:"My portfolio",desc:"Review my practice and projects",icon:Briefcase},
   {to:"/skill-dna",title:"Skill DNA",desc:"Explore progress across learning tracks",icon:ChartNoAxesCombined},
-  {to:"/missions",title:"Career Missions",desc:"Follow hands-on project challenges",icon:Trophy}
+  {to:"/missions",title:"Career Missions",desc:"Follow hands-on project challenges",icon:Trophy},
+  {to:"/role-lab",title:"Try a real career",desc:"Explore six guided workplace scenarios",icon:Target},
+  {to:"/proof",title:"Proof of work",desc:"See exactly which outcomes you have demonstrated",icon:ShieldCheck}
 ];
 export default function Dashboard(){
   const [profile,setProfile]=useState<LearnerProfile>(getProfile);
@@ -40,12 +44,45 @@ export default function Dashboard(){
   const update=(key:keyof LearnerProfile,value:string)=>{setProfile(prev=>({...prev,[key]:value}));setSaved(false);};
   const knowledge=knowledgeSummary(readKnowledgeSessions());
   const trackChecks=trackCheckSummary();
+  const proof=getProofSummary();
+  const roleCount=readRealityResults().length;
   return <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-8">
     <header className="max-w-4xl space-y-3">
       <div className="chip chip-cyan">MY LEARNING SPACE</div>
       <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{profile.name.trim()?"Welcome back, "+profile.name.trim()+".":"Your next step starts here."}</h1>
       <p className="text-muted-foreground text-lg leading-relaxed">Pick a direction, learn one concept, practice it and turn your work into a portfolio. You can start without experience.</p>
     </header>
+    <section className="panel p-5 sm:p-6 space-y-4 border-led-cyan/25" aria-labelledby="dashboard-next-step">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span className="text-xs font-mono tracking-widest text-led-cyan">YOUR NEXT REAL STEP</span>
+          <h2 id="dashboard-next-step" className="text-2xl font-bold mt-2">
+            {proof.lessons===0?"Explore a technical career before choosing it":
+              proof.testedExercises===0?"Turn your learning into tested practical work":
+              proof.authoredProjects===0?"Document the project you genuinely built":
+              "Explain and present your practical work"}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            {proof.lessons===0?"Try a realistic workplace scenario to discover what the role involves.":
+              proof.testedExercises===0?"Run a small code exercise with real sample tests rather than relying on multiple-choice scores.":
+              proof.authoredProjects===0?"Once you have completed and tested a real project, write a case study about the work.":
+              "Review your evidence and practise discussing your actual design decisions."}
+          </p>
+        </div>
+        <Link to={proof.lessons===0?"/role-lab":proof.testedExercises===0?"/practice":proof.authoredProjects===0?"/portfolio":"/proof"}
+          className="rounded-lg bg-foreground text-background px-5 py-3 text-sm font-bold whitespace-nowrap inline-flex gap-2 items-center">
+          Continue my journey <ArrowRight size={16}/>
+        </Link>
+      </div>
+      <div className="grid sm:grid-cols-3 gap-2 text-xs">
+        <div className="rounded-lg border border-border p-3"><strong className="text-lg block">{proof.testedExercises}</strong> Exercises with all recorded sample tests passed</div>
+        <div className="rounded-lg border border-border p-3"><strong className="text-lg block">{roleCount}</strong> Fictional workplace simulations completed</div>
+        <div className="rounded-lg border border-border p-3"><strong className="text-lg block">{proof.authoredProjects}</strong> User-authored project case studies</div>
+      </div>
+      <Link className="text-led-cyan text-sm font-semibold inline-flex items-center gap-2" to="/proof">
+        View my evidence and its limitations <ArrowRight size={15}/>
+      </Link>
+    </section>
     <section className="panel p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <p className="text-[10px] font-mono tracking-widest text-led-cyan">OBJECTIVE PRACTICE ACROSS ALL TRACKS</p>

@@ -8,11 +8,11 @@ describe("69-track locally assessed knowledge reviews",()=>{
  it("grades all introductory subjects deterministically, from each subject's actual answer keys",()=>{
   expect(tracks).toHaveLength(69);
   for(const t of tracks){
-   const full=evaluateTrackCheck(t.id,t.lessons.map(l=>l.correct));
+   const full=evaluateTrackCheck(t.id,t.lessons.slice(0,3).map(l=>l.correct));
    expect(full.correct).toBe(3);
    expect(full.trackId).toBe(t.id);
    expect(exportTrackCheck(full)).toContain(t.name);
-   const wrong=evaluateTrackCheck(t.id,t.lessons.map(l=>(l.correct+1)%l.choices.length));
+   const wrong=evaluateTrackCheck(t.id,t.lessons.slice(0,3).map(l=>(l.correct+1)%l.choices.length));
    expect(wrong.correct).toBe(0);
   }
  });
@@ -25,7 +25,7 @@ describe("69-track locally assessed knowledge reviews",()=>{
  });
  it("stores local attempts and an accurate evidence summary, without inventing credentials",()=>{
   const t=tracks.find(x=>x.id==="rust")!;
-  saveTrackCheck(evaluateTrackCheck(t.id,t.lessons.map(l=>l.correct)));
+  saveTrackCheck(evaluateTrackCheck(t.id,t.lessons.slice(0,3).map(l=>l.correct)));
   const s=trackCheckSummary();
   expect(s.attempted).toBe(1);
   expect(s.average).toBe(100);
@@ -36,7 +36,7 @@ describe("69-track locally assessed knowledge reviews",()=>{
  });
  it("exports and safely restores the track assessment record",()=>{
   const t=tracks.find(x=>x.id==="react")!;
-  saveTrackCheck(evaluateTrackCheck(t.id,t.lessons.map(l=>l.correct)));
+  saveTrackCheck(evaluateTrackCheck(t.id,t.lessons.slice(0,3).map(l=>l.correct)));
   expect(PORTABLE_KEYS).toContain(TRACK_CHECKS_KEY);
   const backup=JSON.stringify(exportLocalBackup());
   localStorage.clear();

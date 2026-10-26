@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Play, Save, Lightbulb, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { exercises, assessExercise, findPractice, getPractice, savePractice, type TestResult } from "@/lib/practice";
 
 export default function PracticeLab(){
- const [id,setId]=useState(exercises[0].id);
+ const [params,setParams]=useSearchParams();
+ const [id,setId]=useState(()=>exercises.some(e=>e.id===params.get("exercise"))?params.get("exercise")!:exercises[0].id);
  const exercise=exercises.find(e=>e.id===id)||exercises[0];
  const [drafts,setDrafts]=useState<Record<string,string>>(()=>Object.fromEntries(exercises.map(e=>[e.id,findPractice(e.id)?.code||e.starter])));
  const [notes,setNotes]=useState<Record<string,string>>(()=>Object.fromEntries(exercises.map(e=>[e.id,findPractice(e.id)?.reflection||""])));
@@ -16,7 +17,16 @@ export default function PracticeLab(){
  const [error,setError]=useState("");
  const code=drafts[id]||"";
  const completed=history.filter(h=>h.total>0&&h.passed===h.total).length;
- const select=(next:string)=>{setId(next);setResults([]);setError("");setHint(false);};
+ useEffect(()=>{
+   const requested=params.get("exercise");
+   if(requested&&requested!==id&&exercises.some(e=>e.id===requested)){
+     setId(requested);setResults([]);setError("");setHint(false);
+   }
+ },[params,id]);
+ const select=(next:string)=>{
+   setId(next);setResults([]);setError("");setHint(false);
+   setParams({exercise:next},{replace:true});
+ };
  function save(r?:TestResult[]){
   const old=findPractice(id);
   const latest=r||old?.results||[];

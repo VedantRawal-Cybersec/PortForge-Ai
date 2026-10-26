@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { starterCareers, getCareerPlan, saveCareerPlan, makeCuratedCareerPlan, type SavedCareer } from "@/lib/careerPlans";
 import { practiceLevels, levelGuidance, type PracticeLevel } from "@/lib/practiceLevels";
 import { readKnowledgeSessions, knowledgeSummary } from "@/lib/knowledgeChecks";
+import {realityRoles,readRealityResults} from "@/lib/roleReality";
 
 export default function Oracle(){
  const [plan,setPlan]=useState<SavedCareer|null>(getCareerPlan);
@@ -72,6 +73,25 @@ export default function Oracle(){
  }
  return <div className="max-w-[1300px] mx-auto px-4 sm:px-6 py-10 space-y-8">
   <header className="max-w-3xl space-y-3"><span className="chip chip-cyan"><BriefcaseBusiness className="size-4"/> CAREER EXPLORER</span><h1 className="text-4xl md:text-5xl font-bold tracking-tight">Turn a role into a practical plan.</h1><p className="text-muted-foreground text-lg leading-relaxed">Start with a researched-skill example pathway, adapt it to your interests, and track milestones. These are learning suggestions, not real-time job vacancies or verified salary forecasts.</p></header>
+  <section className="panel p-5 sm:p-6 space-y-4" aria-labelledby="oracle-career-trials">
+    <div className="flex flex-wrap gap-3 justify-between items-center">
+      <div>
+        <h2 id="oracle-career-trials" className="text-xl font-bold">Unsure which career to choose? Try the work first.</h2>
+        <p className="text-sm text-muted-foreground mt-2">Guided, fictional workplace scenarios let you explore actual activities before committing to a roadmap.</p>
+      </div>
+      <span className="chip chip-cyan">{readRealityResults().length} simulated sessions completed</span>
+    </div>
+    <div className="grid sm:grid-cols-3 gap-3">
+      {realityRoles.map(r=><Link key={r.id} to={"/role-lab?role="+r.id}
+        className="rounded-xl border border-border hover:border-led-cyan/60 p-4 space-y-2">
+        <span className="text-2xl block" aria-hidden="true">{r.icon}</span>
+        <strong className="text-sm">{r.title}</strong>
+        <p className="text-xs text-muted-foreground">{r.summary}</p>
+        <span className="text-xs text-led-cyan inline-flex gap-1 items-center">Try a role <ArrowRight size={13}/></span>
+      </Link>)}
+    </div>
+    <p className="text-xs text-muted-foreground">Role simulations are educational decisions, not employment readiness or career aptitude predictions.</p>
+  </section>
   <section className="panel p-5 sm:p-6 space-y-3" aria-labelledby="oracle-evidence-title">
     <h2 id="oracle-evidence-title" className="text-lg font-bold">Use your actual learning evidence</h2>
     <p className="text-xs text-muted-foreground">Your local answer-key results help you choose what to practise next. These are not verified professional qualifications or automatic career matches.</p>
