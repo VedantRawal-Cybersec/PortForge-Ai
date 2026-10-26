@@ -72,11 +72,11 @@ function valid(key:string,value:unknown):boolean{
     return Object.keys(x).length<=350&&Object.entries(x).every(([id,r])=>{
       if(!/^[a-z0-9-]{2,100}$/i.test(id)||!r||typeof r!=="object"||Array.isArray(r))return false;
       const v=r as Record<string,unknown>;
-      return v.id===id&&Number.isSafeInteger(v.lastAt)&&Number(v.lastAt)>=0&&
-        Number.isSafeInteger(v.dueAt)&&Number(v.dueAt)>=Number(v.lastAt)&&
-        Number.isSafeInteger(v.streak)&&Number(v.streak)>=0&&Number(v.streak)<=1000&&
-        Number.isSafeInteger(v.correct)&&Number(v.correct)>=0&&
-        Number.isSafeInteger(v.attempts)&&Number(v.attempts)>=1&&Number(v.attempts)<=100000&&
+      return v.id===id&&typeof v.lastAt==="number"&&Number.isSafeInteger(v.lastAt)&&Number(v.lastAt)>=0&&
+        typeof v.dueAt==="number"&&Number.isSafeInteger(v.dueAt)&&Number(v.dueAt)>=Number(v.lastAt)&&
+        typeof v.streak==="number"&&Number.isSafeInteger(v.streak)&&Number(v.streak)>=0&&Number(v.streak)<=1000&&
+        typeof v.correct==="number"&&Number.isSafeInteger(v.correct)&&Number(v.correct)>=0&&
+        typeof v.attempts==="number"&&Number.isSafeInteger(v.attempts)&&Number(v.attempts)>=1&&Number(v.attempts)<=100000&&
         Number(v.correct)<=Number(v.attempts);
     });
   case "portforge_career_plan_v1":return typeof x.role==="string"&&Array.isArray(x.steps)&&x.steps.length<=20&&Array.isArray(x.checked);
