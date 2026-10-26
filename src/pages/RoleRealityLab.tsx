@@ -6,7 +6,6 @@ import {
  realityRoles,realityScenarios,getRealityScenario,evaluateReality,readRealityResults,
  saveRealityResult,realityReport,type RealityRole,type RealityResult
 } from "@/lib/roleReality";
-import {getShowcaseProjects} from "@/lib/showcaseProjects";
 
 export default function RoleRealityLab(){
  const [searchParams,setSearchParams]=useSearchParams();
