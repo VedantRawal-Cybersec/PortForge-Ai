@@ -5,6 +5,7 @@ import { SkillAutocomplete } from "@/components/SkillAutocomplete";
 import { addToPortfolio } from "@/lib/portfolio";
 import { offlineSkillPrompt } from "@/lib/offlineCoach";
 import KnowledgeCheck from "@/components/KnowledgeCheck";
+import TrackQuickChecks from "@/components/TrackQuickChecks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowRight, BookOpen, ExternalLink, Loader2, Lightbulb, Rocket, Sparkles, Zap } from "lucide-react";
@@ -132,6 +133,7 @@ export default function SkillTest() {
       <ModuleIntro eyebrow="01 / ASSESS" title="Test your skills. Know your next move."
         description="Answer a focused question, understand your gaps and leave with a practical improvement plan. AI feedback is advisory, not a professional certification."
         highlights={["Choose a topic", "Answer with context", "Improve with feedback"]} icon={<BookOpen size={16}/>} />
+      <div className="lg:col-span-12"><TrackQuickChecks/></div>
       <div className="lg:col-span-12"><KnowledgeCheck/></div>
       {/* LEFT — Input */}
       <aside className="lg:col-span-3">
