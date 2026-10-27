@@ -317,6 +317,12 @@ async function run(){
   await page.getByLabel("Filter challenge difficulty").selectOption("Advanced");
   await page.getByRole("button",{name:/Redact tokens from sample logs/}).waitFor();
   process.stdout.write("OK searchable 24-challenge catalog, real pagination test execution and advanced filter\n");
+  await page.goto(base + "/flagships");
+  await page.getByRole("heading",{name:"Know what is actually finished."}).waitFor();
+  await page.getByRole("button",{name:/Data Analyst/}).click();
+  await page.getByRole("heading",{name:"Data Analyst milestone checklist"}).waitFor();
+  await page.getByRole("link",{name:"Do this milestone"}).first().waitFor();
+  process.stdout.write("OK flagship milestone evidence, role switching and direct next-action links\\n");
   assert.equal(errors.length,0,"unhandled browser errors: "+errors.join("; "));
   await context.close();
 }

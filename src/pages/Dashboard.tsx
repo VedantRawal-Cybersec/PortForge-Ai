@@ -23,7 +23,8 @@ const actions = [
   {to:"/skill-dna",title:"Skill DNA",desc:"Explore progress across learning tracks",icon:ChartNoAxesCombined},
   {to:"/missions",title:"Career Missions",desc:"Follow hands-on project challenges",icon:Trophy},
   {to:"/role-lab",title:"Try a real career",desc:"Explore six guided workplace scenarios",icon:Target},
-  {to:"/proof",title:"Proof of work",desc:"See exactly which outcomes you have demonstrated",icon:ShieldCheck}
+  {to:"/proof",title:"Proof of work",desc:"See exactly which outcomes you have demonstrated",icon:ShieldCheck},
+  {to:"/flagships",title:"Flagship milestones",desc:"Check concrete learning, practice and project outcomes",icon:CheckCircle2}
 ];
 export default function Dashboard(){
   const [profile,setProfile]=useState<LearnerProfile>(getProfile);

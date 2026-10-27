@@ -24,6 +24,7 @@ const PracticeLab = lazy(() => import("./pages/PracticeLab"));
 const ProjectInterview = lazy(() => import("./pages/ProjectInterview"));
 const RoleRealityLab = lazy(() => import("./pages/RoleRealityLab"));
 const ProofCenter = lazy(() => import("./pages/ProofCenter"));
+const FlagshipOutcomes = lazy(() => import("./pages/FlagshipOutcomes"));
 
 const queryClient = new QueryClient({defaultOptions:{queries:{retry:1,refetchOnWindowFocus:false}}});
 const loading = <div className="max-w-5xl mx-auto p-8" aria-live="polite" role="status">
@@ -57,6 +58,7 @@ const App = () => (
                 <Route path="/project-interview" element={<ProjectInterview />} />
                 <Route path="/role-lab" element={<RoleRealityLab />} />
                 <Route path="/proof" element={<ProofCenter />} />
+                <Route path="/flagships" element={<FlagshipOutcomes />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
